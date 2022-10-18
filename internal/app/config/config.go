@@ -1,10 +1,12 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/joho/godotenv"
+	"github.com/mitchellh/mapstructure"
 )
 
 var Info = new(Config)
@@ -25,13 +27,20 @@ func Load() error {
 	}
 
 	op := env.Options{Environment: envMap}
-	mariaCfg := new(MariaDB)
 
-	if err := env.Parse(mariaCfg, op); err != nil {
-		return err
+	data := make(map[string]interface{})
+	data["Redis"] = &Redis{}
+	data["MariaDB"] = &MariaDB{}
+
+	for _, v := range data {
+		if err := env.Parse(v, op); err != nil {
+			return err
+		}
 	}
 
-	Info.MariaDB = *mariaCfg
+	if err := mapstructure.Decode(data, &Info); err != nil {
+		fmt.Println(err)
+	}
 
 	return nil
 }
@@ -48,7 +57,8 @@ func envMode() EnvMode {
 }
 
 type Config struct {
-	MariaDB MariaDB
+	MariaDB MariaDB `mapstructure:"MariaDB"`
+	Redis   Redis   `mapstructure:"Redis"`
 }
 
 type MariaDB struct {
@@ -57,4 +67,9 @@ type MariaDB struct {
 	Port     int    `env:"MARIADB_PORT" envDefault:"3306"`
 	Database string `env:"MARIADB_DATABASE"`
 	Password string `env:"MARIADB_PASSWORD"`
+}
+
+type Redis struct {
+	Host string `env:"REDIS_HOST" envDefault:"localhost"`
+	Port int    `env:"REDIS_PORT" envDefault:"6379"`
 }
