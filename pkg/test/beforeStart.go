@@ -2,6 +2,6 @@ package test
 
 import "onthemat/internal/app/config"
 
-func BeforeStart() {
-	config.Load()
+func BeforeStart(filePath string) {
+	config.Load(filePath)
 }

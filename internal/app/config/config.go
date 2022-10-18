@@ -11,17 +11,36 @@ import (
 
 var Info = new(Config)
 
-type EnvMode string
+type envFile string
+
+type Config struct {
+	MariaDB MariaDB `mapstructure:"MariaDB"`
+	Redis   Redis   `mapstructure:"Redis"`
+}
+
+type MariaDB struct {
+	Host     string `env:"MARIADB_HOST"`
+	User     string `env:"MARIADB_USER"`
+	Port     int    `env:"MARIADB_PORT" envDefault:"3306"`
+	Database string `env:"MARIADB_DATABASE"`
+	Password string `env:"MARIADB_PASSWORD"`
+}
+
+type Redis struct {
+	Host string `env:"REDIS_HOST" envDefault:"localhost"`
+	Port int    `env:"REDIS_PORT" envDefault:"6379"`
+}
 
 const (
-	DEV  EnvMode = "../../../configs/.env.dev" // default
-	PROD EnvMode = "../../../configs/.env.prod"
-	TEST EnvMode = "../../../configs/.env.test"
+	DEV  envFile = ".env.dev" // default
+	PROD envFile = ".env.prod"
+	TEST envFile = ".env.test"
 )
 
-func Load() error {
-	modeUrl := envMode()
-	envMap, err := godotenv.Read(string(modeUrl))
+func Load(filePath string) error {
+	fileName := envMode()
+	url := fmt.Sprintf("%s%s", filePath, fileName)
+	envMap, err := godotenv.Read(url)
 	if err != nil {
 		return err
 	}
@@ -42,34 +61,17 @@ func Load() error {
 		fmt.Println(err)
 	}
 
+	fmt.Println(data)
+
 	return nil
 }
 
-func envMode() EnvMode {
+func envMode() envFile {
 	mode := os.Getenv("GO_ENV")
-
 	if mode == "TEST" {
 		return TEST
 	} else if mode == "PROD" {
 		return PROD
 	}
 	return DEV
-}
-
-type Config struct {
-	MariaDB MariaDB `mapstructure:"MariaDB"`
-	Redis   Redis   `mapstructure:"Redis"`
-}
-
-type MariaDB struct {
-	Host     string `env:"MARIADB_HOST"`
-	User     string `env:"MARIADB_USER"`
-	Port     int    `env:"MARIADB_PORT" envDefault:"3306"`
-	Database string `env:"MARIADB_DATABASE"`
-	Password string `env:"MARIADB_PASSWORD"`
-}
-
-type Redis struct {
-	Host string `env:"REDIS_HOST" envDefault:"localhost"`
-	Port int    `env:"REDIS_PORT" envDefault:"6379"`
 }
