@@ -13,6 +13,7 @@ func TestCustomClaim(t *testing.T) {
 		LoginType string
 		jwt.RegisteredClaims
 	}
+
 	jwtTime := time.Now().Add(time.Minute * 15)
 	claim := &AceessTokenPayload{
 		LoginType: "Admin",
