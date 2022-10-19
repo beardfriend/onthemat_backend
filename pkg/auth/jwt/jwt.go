@@ -30,7 +30,7 @@ type options struct {
 	claims        j.Claims
 }
 
-func NewAuth(opt *options) Jwt {
+func NewJwt(opt *options) Jwt {
 	expired := 24
 	if opt == nil {
 		return &jwt{
