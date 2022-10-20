@@ -7,7 +7,7 @@ import (
 )
 
 func TestInitMariaDB(t *testing.T) {
-	test.BeforeStart()
+	test.BeforeStart("../../../configs")
 
 	db := NewMariaDB()
 

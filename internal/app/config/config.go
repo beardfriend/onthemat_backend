@@ -39,7 +39,7 @@ const (
 
 func Load(filePath string) error {
 	fileName := envMode()
-	url := fmt.Sprintf("%s%s", filePath, fileName)
+	url := fmt.Sprintf("%s/%s", filePath, fileName)
 	envMap, err := godotenv.Read(url)
 	if err != nil {
 		return err

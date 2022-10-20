@@ -10,7 +10,7 @@ import (
 func TestRedisConnect(t *testing.T) {
 	ctx := context.Background()
 
-	test.BeforeStart()
+	test.BeforeStart("../../../configs")
 	redisCli := NewRedis()
 
 	if err := redisCli.Set(ctx, "key", "value", 0).Err(); err != nil {

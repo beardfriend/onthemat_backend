@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewJwt(t *testing.T) {
-	a := NewJwt(nil)
+	a := NewJwt()
 	fmt.Println(a.GetExpiredAt())
 	s1, _ := a.GenerateToken()
 	tokenInfo := &j.RegisteredClaims{}
@@ -23,7 +23,7 @@ func TestSetClaim(t *testing.T) {
 		j.RegisteredClaims
 	}
 
-	a := NewJwt(nil)
+	a := NewJwt()
 	custom := &customClaim{
 		LoginType: "Admin",
 		RegisteredClaims: j.RegisteredClaims{
@@ -35,6 +35,7 @@ func TestSetClaim(t *testing.T) {
 	}
 	s1, _ := a.
 		SetClaims(custom).
+		SetSignKey("asd").
 		GenerateToken()
 
 	tokenInfo := &customClaim{}

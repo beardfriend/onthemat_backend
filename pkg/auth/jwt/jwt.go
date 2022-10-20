@@ -11,6 +11,9 @@ type Jwt interface {
 	// Get Set
 	GetExpiredAt() int
 	SetClaims(claims j.Claims) Jwt
+	SetExpired(expired int) Jwt
+	SetSignKey(signKey string) Jwt
+	SetSigningMethod(signingMethod j.SigningMethod) Jwt
 
 	// Function
 	GenerateToken() (string, error)
@@ -23,43 +26,22 @@ type jwt struct {
 	options
 }
 
-type options struct {
-	signingMethod j.SigningMethod
-	signKey       string
-	expiredAt     int
-	claims        j.Claims
-}
-
-func NewJwt(opt *options) Jwt {
-	expired := 24
-	if opt == nil {
-		return &jwt{
-			options: options{
-				signingMethod: j.SigningMethodHS256,
-				signKey:       "asd",
-				expiredAt:     expired,
-				claims: j.RegisteredClaims{
-					Issuer:    "ontheMat",
-					ExpiresAt: j.NewNumericDate(time.Now().Add(time.Duration(expired) * time.Hour)),
-					IssuedAt:  j.NewNumericDate(time.Now()),
-					NotBefore: j.NewNumericDate(time.Now()),
-					Subject:   "normal",
-				},
-			},
-		}
-	}
+func NewJwt() Jwt {
+	expired := 1
 	return &jwt{
-		options: *opt,
+		options: options{
+			signingMethod: j.SigningMethodHS256,
+			signKey:       "asd",
+			expired:       expired,
+			claims: j.RegisteredClaims{
+				Issuer:    "ontheMat",
+				ExpiresAt: j.NewNumericDate(time.Now().Add(time.Duration(expired) * time.Hour)),
+				IssuedAt:  j.NewNumericDate(time.Now()),
+				NotBefore: j.NewNumericDate(time.Now()),
+				Subject:   "normal",
+			},
+		},
 	}
-}
-
-func (a *jwt) SetClaims(claims j.Claims) Jwt {
-	a.claims = claims
-	return a
-}
-
-func (a *jwt) GetExpiredAt() int {
-	return a.expiredAt
 }
 
 func (a *jwt) GenerateToken() (string, error) {
