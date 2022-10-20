@@ -10,11 +10,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewMariaDB() *gorm.DB {
-	config := config.Info
-
+func NewMariaDB(c *config.Config) *gorm.DB {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		config.MariaDB.User, config.MariaDB.Password, config.MariaDB.Host, config.MariaDB.Port, config.MariaDB.Database)
+		c.MariaDB.User, c.MariaDB.Password, c.MariaDB.Host, c.MariaDB.Port, c.MariaDB.Database)
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {

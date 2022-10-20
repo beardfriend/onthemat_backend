@@ -9,23 +9,27 @@ type options struct {
 	claims        j.Claims
 }
 
-func (a *jwt) SetClaims(claims j.Claims) Jwt {
+func (a *jwt) SetClaims(claims j.Claims) *jwt {
 	a.claims = claims
 	return a
 }
 
-func (a *jwt) SetExpired(expired int) Jwt {
+func (a *jwt) SetExpired(expired int) *jwt {
 	a.expired = expired
 	return a
 }
 
-func (a *jwt) SetSignKey(signKey string) Jwt {
+func (a *jwt) SetSignKey(signKey string) *jwt {
 	a.signKey = signKey
 	return a
 }
 
 func (a *jwt) SetSigningMethod(signingMethod j.SigningMethod) Jwt {
 	a.signingMethod = signingMethod
+	return a
+}
+
+func (a *jwt) Done() Jwt {
 	return a
 }
 

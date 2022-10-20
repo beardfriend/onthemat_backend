@@ -10,10 +10,9 @@ import (
 type Jwt interface {
 	// Get Set
 	GetExpiredAt() int
-	SetClaims(claims j.Claims) Jwt
-	SetExpired(expired int) Jwt
-	SetSignKey(signKey string) Jwt
-	SetSigningMethod(signingMethod j.SigningMethod) Jwt
+
+	SetSignKey(signKey string) *jwt
+	SetClaims(claims j.Claims) *jwt
 
 	// Function
 	GenerateToken() (string, error)
@@ -26,7 +25,7 @@ type jwt struct {
 	options
 }
 
-func NewJwt() Jwt {
+func NewJwt() *jwt {
 	expired := 1
 	return &jwt{
 		options: options{

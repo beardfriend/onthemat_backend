@@ -4,14 +4,16 @@ import (
 	"context"
 	"testing"
 
-	"onthemat/pkg/test"
+	"onthemat/internal/app/config"
 )
 
 func TestRedisConnect(t *testing.T) {
 	ctx := context.Background()
-
-	test.BeforeStart("../../../configs")
-	redisCli := NewRedis()
+	c := config.NewConfig()
+	if err := c.Load("../../../configs"); err != nil {
+		t.Error(err)
+	}
+	redisCli := NewRedis(c)
 
 	if err := redisCli.Set(ctx, "key", "value", 0).Err(); err != nil {
 		t.Error(err)

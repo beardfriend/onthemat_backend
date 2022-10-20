@@ -3,13 +3,16 @@ package infrastructor
 import (
 	"testing"
 
-	"onthemat/pkg/test"
+	"onthemat/internal/app/config"
 )
 
 func TestInitMariaDB(t *testing.T) {
-	test.BeforeStart("../../../configs")
+	c := config.NewConfig()
+	if err := c.Load("../../../configs"); err != nil {
+		t.Error(err)
+	}
 
-	db := NewMariaDB()
+	db := NewMariaDB(c)
 
 	if err := db.Raw(`SELECT 1`).Error; err != nil {
 		t.Error(err)

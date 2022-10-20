@@ -9,13 +9,12 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-var Info = new(Config)
-
 type envFile string
 
 type Config struct {
 	MariaDB MariaDB `mapstructure:"MariaDB"`
 	Redis   Redis   `mapstructure:"Redis"`
+	JWT     JWT     `mapstructure:"Jwt"`
 }
 
 type MariaDB struct {
@@ -31,13 +30,21 @@ type Redis struct {
 	Port int    `env:"REDIS_PORT" envDefault:"6379"`
 }
 
+type JWT struct {
+	SignKey string `env:"JWT_SignKey" envDefault:"1sfkfWjfOkQ8hFhka8"`
+}
+
 const (
 	DEV  envFile = ".env.dev" // default
 	PROD envFile = ".env.prod"
 	TEST envFile = ".env.test"
 )
 
-func Load(filePath string) error {
+func NewConfig() *Config {
+	return &Config{}
+}
+
+func (c *Config) Load(filePath string) error {
 	fileName := envMode()
 	url := fmt.Sprintf("%s/%s", filePath, fileName)
 	envMap, err := godotenv.Read(url)
@@ -50,18 +57,19 @@ func Load(filePath string) error {
 	data := make(map[string]interface{})
 	data["Redis"] = &Redis{}
 	data["MariaDB"] = &MariaDB{}
+	data["Jwt"] = &JWT{}
 
 	for _, v := range data {
 		if err := env.Parse(v, op); err != nil {
+			fmt.Println(err)
 			return err
 		}
 	}
 
-	if err := mapstructure.Decode(data, &Info); err != nil {
+	if err := mapstructure.Decode(data, &c); err != nil {
 		fmt.Println(err)
+		return err
 	}
-
-	fmt.Println(data)
 
 	return nil
 }

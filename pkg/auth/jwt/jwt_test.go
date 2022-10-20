@@ -36,7 +36,7 @@ func TestSetClaim(t *testing.T) {
 	s1, _ := a.
 		SetClaims(custom).
 		SetSignKey("asd").
-		GenerateToken()
+		Done().GenerateToken()
 
 	tokenInfo := &customClaim{}
 	a.ParseToken(s1, tokenInfo)
