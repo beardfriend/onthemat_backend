@@ -5,41 +5,28 @@ import (
 	"testing"
 	"time"
 
-	j "github.com/golang-jwt/jwt/v4"
+	jwtLib "github.com/golang-jwt/jwt/v4"
 )
 
-func TestNewJwt(t *testing.T) {
-	a := NewJwt()
-	fmt.Println(a.GetExpiredAt())
-	s1, _ := a.GenerateToken()
-	tokenInfo := &j.RegisteredClaims{}
-	a.ParseToken(s1, tokenInfo)
-	fmt.Println(tokenInfo)
-}
-
-func TestSetClaim(t *testing.T) {
+func TestInit(t *testing.T) {
 	type customClaim struct {
-		LoginType string
-		j.RegisteredClaims
+		Name string
+		jwtLib.RegisteredClaims
 	}
-
-	a := NewJwt()
-	custom := &customClaim{
-		LoginType: "Admin",
-		RegisteredClaims: j.RegisteredClaims{
-			IssuedAt:  j.NewNumericDate(time.Now()),
-			NotBefore: j.NewNumericDate(time.Now()),
-			ExpiresAt: j.NewNumericDate(time.Now().Add(time.Duration(a.GetExpiredAt()) * time.Hour)),
-			Issuer:    "onthemat",
+	module := NewJwt().WithClaim(&customClaim{
+		Name: "asdasd",
+		RegisteredClaims: jwtLib.RegisteredClaims{
+			Issuer:    "asd",
+			ExpiresAt: jwtLib.NewNumericDate(time.Now().Add(time.Duration(100) * time.Minute)),
+			IssuedAt:  jwtLib.NewNumericDate(time.Now()),
 		},
+	}).Init()
+
+	token, err := module.GenerateToken()
+	if err != nil {
+		t.Error(err)
 	}
-	s1, _ := a.
-		SetClaims(custom).
-		SetSignKey("asd").
-		Done().GenerateToken()
-
-	tokenInfo := &customClaim{}
-	a.ParseToken(s1, tokenInfo)
-
-	fmt.Println(tokenInfo)
+	result := &customClaim{}
+	module.ParseToken(token, result)
+	fmt.Println(result)
 }

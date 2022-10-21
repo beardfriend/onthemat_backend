@@ -1,8 +1,6 @@
 package jwt
 
 import (
-	"reflect"
-
 	jwtLib "github.com/golang-jwt/jwt/v4"
 )
 
@@ -13,7 +11,7 @@ type option struct {
 }
 
 type optionForInit struct {
-	option *option
+	option option
 }
 
 func (a *jwt) WithSigningMethod(method jwtLib.SigningMethod) JwtOption {
@@ -32,16 +30,8 @@ func (a *jwt) WithClaim(claim jwtLib.Claims) JwtOption {
 }
 
 func (a *jwt) Init() Jwt {
-	newOption := a.optionForInit.option
-	defaultOption := a.option
-
-	new := reflect.ValueOf(newOption).Elem()
-	old := reflect.ValueOf(defaultOption).Elem()
-
-	for i := 0; i < old.NumField(); i++ {
-		if old.Field(i) != new.Field(i) {
-			old.Set(new.Field(i))
-		}
+	if a.optionForInit != nil {
+		a.option = a.optionForInit.option
 	}
 
 	return a

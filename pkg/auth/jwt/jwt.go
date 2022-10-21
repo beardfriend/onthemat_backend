@@ -3,64 +3,69 @@ package jwt
 import (
 	"time"
 
-	j "github.com/golang-jwt/jwt/v4"
+	jwtLib "github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
 )
 
+type JwtOption interface {
+	WithSigningMethod(method jwtLib.SigningMethod) JwtOption
+	WithSignKey(key string) JwtOption
+	WithClaim(claim jwtLib.Claims) JwtOption
+
+	Init() Jwt
+}
+
 type Jwt interface {
-	// Get Set
-	GetExpiredAt() int
-
-	SetSignKey(signKey string) *jwt
-	SetClaims(claims j.Claims) *jwt
-
-	// Function
 	GenerateToken() (string, error)
-	ParseToken(tokenString string, result j.Claims) error
+	ParseToken(tokenString string, result jwtLib.Claims) error
 }
 
 var ErrInvalidToken = errors.New("ErrInvalidToken")
 
 type jwt struct {
-	options
+	*option
+	*optionForInit
 }
 
-func NewJwt() *jwt {
-	expired := 1
+func NewJwt() JwtOption {
+	defaultExpired := 2
+
+	defaultOption := option{
+		signingMethod: jwtLib.SigningMethodHS256,
+		signKey:       "defaultSignKey",
+		claim: &jwtLib.RegisteredClaims{
+			Issuer:    "OnTheMat",
+			ExpiresAt: jwtLib.NewNumericDate(time.Now().Add(time.Duration(defaultExpired) * time.Minute)),
+			IssuedAt:  jwtLib.NewNumericDate(time.Now()),
+		},
+	}
 	return &jwt{
-		options: options{
-			signingMethod: j.SigningMethodHS256,
-			signKey:       "asd",
-			expired:       expired,
-			claims: j.RegisteredClaims{
-				Issuer:    "ontheMat",
-				ExpiresAt: j.NewNumericDate(time.Now().Add(time.Duration(expired) * time.Hour)),
-				IssuedAt:  j.NewNumericDate(time.Now()),
-				NotBefore: j.NewNumericDate(time.Now()),
-				Subject:   "normal",
-			},
+		option: &defaultOption,
+		optionForInit: &optionForInit{
+			option: &defaultOption,
 		},
 	}
 }
 
 func (a *jwt) GenerateToken() (string, error) {
-	signKey := []byte(a.options.signKey)
+	signKey := []byte(a.option.signKey)
 
-	token := j.NewWithClaims(a.options.signingMethod, a.claims)
+	token := jwtLib.NewWithClaims(a.option.signingMethod, a.option.claim)
 	tokenString, err := token.SignedString(signKey)
 	if err != nil {
 		return "", err
 	}
+	// a.optionDefaultSetting()
 
 	return tokenString, nil
 }
 
-func (a *jwt) ParseToken(tokenString string, result j.Claims) error {
-	token, err := j.ParseWithClaims(tokenString, result, func(token *j.Token) (interface{}, error) {
-		if _, ok := token.Method.(*j.SigningMethodHMAC); !ok {
+func (a *jwt) ParseToken(tokenString string, result jwtLib.Claims) error {
+	token, err := jwtLib.ParseWithClaims(tokenString, result, func(token *jwtLib.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwtLib.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidToken
 		}
-		return []byte(a.options.signKey), nil
+		return []byte(a.option.signKey), nil
 	})
 
 	if err != nil || !token.Valid {
