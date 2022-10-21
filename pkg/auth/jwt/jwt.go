@@ -24,7 +24,6 @@ var ErrInvalidToken = errors.New("ErrInvalidToken")
 
 type jwt struct {
 	*option
-	*optionForInit
 }
 
 func NewJwt() JwtOption {
@@ -41,9 +40,6 @@ func NewJwt() JwtOption {
 	}
 	return &jwt{
 		option: &defaultOption,
-		optionForInit: &optionForInit{
-			option: &defaultOption,
-		},
 	}
 }
 
