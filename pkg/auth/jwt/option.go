@@ -7,7 +7,6 @@ import (
 type option struct {
 	signKey       string
 	signingMethod jwtLib.SigningMethod
-	claim         jwtLib.Claims
 }
 
 func (a *jwt) WithSigningMethod(method jwtLib.SigningMethod) JwtOption {
@@ -17,11 +16,6 @@ func (a *jwt) WithSigningMethod(method jwtLib.SigningMethod) JwtOption {
 
 func (a *jwt) WithSignKey(key string) JwtOption {
 	a.option.signKey = key
-	return a
-}
-
-func (a *jwt) WithClaim(claim jwtLib.Claims) JwtOption {
-	a.option.claim = claim
 	return a
 }
 
