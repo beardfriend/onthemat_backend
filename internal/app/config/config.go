@@ -15,6 +15,7 @@ type Config struct {
 	MariaDB MariaDB `mapstructure:"MariaDB"`
 	Redis   Redis   `mapstructure:"Redis"`
 	JWT     JWT     `mapstructure:"Jwt"`
+	Oauth   Oauth   `mapstructure:"Oauth"`
 }
 
 type MariaDB struct {
@@ -34,6 +35,11 @@ type JWT struct {
 	SignKey             string `env:"JWT_SignKey" envDefault:"1sfkfWjfOkQ8hFhka8"`
 	AccessTokenExpired  int    `env:"JWT_A_EXPIRED" envDefault:"15"` // min
 	RefreshTokenExpired int    `env:"JWT_R_EXPIRED" envDefault:"15"` // day
+}
+
+type Oauth struct {
+	KaKaoRedirect string `env:"KAKAO_LOGIN_REDIRECT_URL"`
+	KaKaoClientId string `env:"KAKAO_LOGIN_CLIENT_ID"`
 }
 
 const (
@@ -60,6 +66,7 @@ func (c *Config) Load(filePath string) error {
 	data["Redis"] = &Redis{}
 	data["MariaDB"] = &MariaDB{}
 	data["Jwt"] = &JWT{}
+	data["Oauth"] = &Oauth{}
 
 	for _, v := range data {
 		if err := env.Parse(v, op); err != nil {
