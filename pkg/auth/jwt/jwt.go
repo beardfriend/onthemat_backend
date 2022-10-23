@@ -17,7 +17,7 @@ type Jwt interface {
 	ParseToken(tokenString string, result jwtLib.Claims) error
 }
 
-var ErrInvalidToken = errors.New("ErrInvalidToken")
+const ErrInvalidToken = "ErrInvalidToken"
 
 type jwt struct {
 	*option
@@ -48,13 +48,13 @@ func (a *jwt) GenerateToken(claim jwtLib.Claims) (string, error) {
 func (a *jwt) ParseToken(tokenString string, result jwtLib.Claims) error {
 	token, err := jwtLib.ParseWithClaims(tokenString, result, func(token *jwtLib.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwtLib.SigningMethodHMAC); !ok {
-			return nil, ErrInvalidToken
+			return nil, errors.New(ErrInvalidToken)
 		}
 		return []byte(a.option.signKey), nil
 	})
 
 	if err != nil || !token.Valid {
-		return ErrInvalidToken
+		return errors.New(ErrInvalidToken)
 	}
 
 	return nil

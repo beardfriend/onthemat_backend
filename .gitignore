@@ -2,3 +2,4 @@ __debug_bin
 .vscode
 init/initdata.sql
 .env.prod
+pkg/ent

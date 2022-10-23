@@ -92,7 +92,7 @@ func TestJwtCustomConfig(t *testing.T) {
 	})
 
 	t.Run("커스텀 claim 생성", func(t *testing.T) {
-		module := NewJwt().Init()
+		module := NewJwt().WithSignKey("asdsdfkq").WithSigningMethod(jwtLib.SigningMethodHS512).Init()
 		token, err := module.GenerateToken(customClm)
 		if err != nil {
 			t.Error(err)
@@ -102,7 +102,7 @@ func TestJwtCustomConfig(t *testing.T) {
 	})
 
 	t.Run("토큰 파싱 잘 되는지", func(t *testing.T) {
-		module := NewJwt().Init()
+		module := NewJwt().WithSignKey("asdsdfkq").WithSigningMethod(jwtLib.SigningMethodHS512).Init()
 		token, err := module.GenerateToken(customClm)
 		if err != nil {
 			t.Error(err)
@@ -119,7 +119,7 @@ func TestJwtCustomConfig(t *testing.T) {
 	})
 
 	t.Run("만료기간이 지나면 에러 넘어오는지", func(t *testing.T) {
-		module := NewJwt().WithSignKey("asdasd").Init()
+		module := NewJwt().WithSignKey("asdsdfkq").WithSigningMethod(jwtLib.SigningMethodHS512).Init()
 
 		token, _ := module.GenerateToken(customClm)
 		time.Sleep(3 * time.Second)
