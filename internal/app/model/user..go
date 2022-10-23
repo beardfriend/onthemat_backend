@@ -23,6 +23,25 @@ func (User) Annotations() []schema.Annotation {
 
 func (User) Fields() []ent.Field {
 	return []ent.Field{
+		field.String("email").SchemaType(map[string]string{
+			dialect.Postgres: "varchar(100)",
+		}).MaxLen(100).
+			NotEmpty().
+			Comment("이메일"),
+
+		field.String("password").
+			NotEmpty().
+			Sensitive().
+			Comment("패스워드"),
+
+		field.String("social_name").
+			Nillable().
+			Comment("소셜 로그인을 제공한 업체 이름"),
+
+		field.String("social_key").
+			Nillable().
+			Comment("소셜 로그인 시 발급되는 고유 키"),
+
 		field.String("nickname").SchemaType(map[string]string{
 			dialect.Postgres: "varchar(20)",
 		}).
@@ -37,17 +56,9 @@ func (User) Fields() []ent.Field {
 			MaxLen(11).
 			Comment("휴대폰 번호"),
 
-		field.Bool("is_super").
-			Default(false).
-			Comment("슈퍼 어드민인지 여부"),
-
-		field.Bool("is_lock").
-			Default(false).
-			Comment("계정 잠겼는지 여부"),
-
-		field.Int8("tries").Max(6).
-			Default(0).
-			Comment("로그인 시도 횟수"),
+		field.Time("term_agree_at").
+			Default(time.Now()).
+			Comment("약관 동의 일시"),
 
 		field.Time("last_login_at").
 			Default(time.Now()).
@@ -63,9 +74,6 @@ func (User) Mixin() []ent.Mixin {
 
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("UserNormal", UserNormal.Type).
-			StorageKey(edge.Column("id")),
-
 		edge.To("Academy", Acadmey.Type).
 			StorageKey(edge.Column("id")),
 
