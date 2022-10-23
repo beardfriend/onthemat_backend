@@ -2,13 +2,13 @@ package repository
 
 import (
 	"context"
-	"fmt"
 
 	"onthemat/pkg/ent"
+	"onthemat/pkg/entx"
 )
 
 type AcademyRepository interface {
-	Create(ctx context.Context) error
+	Create(ctx context.Context, academy *ent.Acadmey) error
 }
 
 type academyRepository struct {
@@ -21,37 +21,34 @@ func NewAcademyRepository(db *ent.Client) AcademyRepository {
 	}
 }
 
-func (svc *academyRepository) Create(ctx context.Context) error {
-	u, err := svc.db.User.Create().SetPhoneNum("010").SetNickname("nick").Save(ctx)
+func (svc *academyRepository) Create(ctx context.Context, academy *ent.Acadmey) error {
+	err := entx.WithTx(ctx, svc.db, func(tx *ent.Tx) error {
+		user := academy.Edges.User
+
+		u, err := tx.User.Create().
+			SetEmail(user.Email).
+			SetPassword(user.Password).
+			SetNickname(user.Nickname).
+			Save(ctx)
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.Acadmey.Create().
+			SetName(academy.Name).
+			SetBusinessCode(*academy.BusinessCode).
+			SetFullAddress(academy.FullAddress).
+			SetUser(u).
+			Save(ctx)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return err
 	}
 
-	_, err = svc.db.UserNormal.Create().SetEmail("asd").SetPassword("pass").SetUser(u).Save(ctx)
-	if err != nil {
-		return err
-	}
-	_, err = svc.db.Acadmey.Create().SetName("test").SetUser(u).Save(ctx)
-	return err
-}
-
-func (svc *academyRepository) CreateTransaction(ctx context.Context) error {
-	tx, err := svc.db.Tx(ctx)
-	if err != nil {
-		return err
-	}
-	txClient := tx.Client()
-	svc.db = txClient
-	// Use the "Gen" below, but give it the transactional client; no code changes to "Gen".
-	if err := svc.Create(ctx); err != nil {
-		return rollback(tx, err)
-	}
-	return tx.Commit()
-}
-
-func rollback(tx *ent.Tx, err error) error {
-	if rerr := tx.Rollback(); rerr != nil {
-		err = fmt.Errorf("%w: %v", err, rerr)
-	}
-	return err
+	return nil
 }

@@ -27,6 +27,41 @@ func (Acadmey) Fields() []ent.Field {
 			MaxLen(30).
 			NotEmpty().
 			Comment("학원 이름"),
+
+		field.String("business_code").SchemaType(map[string]string{
+			dialect.Postgres: "varchar(30)",
+		}).
+			MaxLen(15).
+			Nillable().
+			Comment("사업자 번호"),
+
+		field.String("full_address").
+			Optional().
+			Comment("주소"),
+
+		field.String("si").
+			Optional().
+			Comment("시"),
+
+		field.String("gun").
+			Optional().
+			Comment("군"),
+
+		field.String("gu").
+			Optional().
+			Comment("구"),
+
+		field.String("dong").
+			Optional().
+			Comment("동"),
+
+		field.String("x").
+			Optional().
+			Comment("x좌표"),
+
+		field.String("y").
+			Optional().
+			Comment("y좌표"),
 	}
 }
 

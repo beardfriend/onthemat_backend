@@ -30,16 +30,15 @@ func (User) Fields() []ent.Field {
 			Comment("이메일"),
 
 		field.String("password").
-			NotEmpty().
+			Optional().
 			Sensitive().
 			Comment("패스워드"),
 
 		field.String("social_name").
-			Nillable().
+			Optional().
 			Comment("소셜 로그인을 제공한 업체 이름"),
 
-		field.String("social_key").
-			Nillable().
+		field.String("social_key").Optional().
 			Comment("소셜 로그인 시 발급되는 고유 키"),
 
 		field.String("nickname").SchemaType(map[string]string{
@@ -54,6 +53,7 @@ func (User) Fields() []ent.Field {
 				dialect.Postgres: "varchar(11)",
 			}).
 			MaxLen(11).
+			Optional().
 			Comment("휴대폰 번호"),
 
 		field.Time("term_agree_at").
