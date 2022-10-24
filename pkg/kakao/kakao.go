@@ -9,21 +9,21 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-type kakao struct {
+type Kakao struct {
 	AuthUrl string
 	client  *fasthttp.Client
 	config  *config.Config
 }
 
-func NewKakao(config *config.Config) *kakao {
-	return &kakao{
+func NewKakao(config *config.Config) *Kakao {
+	return &Kakao{
 		AuthUrl: "https://kauth.kakao.com/",
 		client:  &fasthttp.Client{},
 		config:  config,
 	}
 }
 
-func (k *kakao) Authorize() string {
+func (k *Kakao) Authorize() string {
 	req := fasthttp.AcquireRequest()
 	req.SetRequestURI(k.AuthUrl)
 	req.Header.Add("Content-Type", "text/html")

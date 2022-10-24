@@ -2,13 +2,10 @@ package dto
 
 type UserSignupBody struct{}
 
-type AcademyNormalSignUpBody struct {
-	NickName     string `json:"nickname"`
-	PhoneNum     string `json:"phoneNum"`
+type SignUpBody struct {
 	Email        string `json:"email"`
 	Password     string `json:"password"`
-	BusinessCode string `json:"bussinessCode"`
-	Address      string `json:"address"`
+	NickName     string `json:"nickname"`
 }
 
 type LoginRequestQuery struct{}
