@@ -5,9 +5,11 @@ import (
 	"onthemat/internal/app/delivery/http"
 	"onthemat/internal/app/infrastructor"
 	"onthemat/internal/app/repository"
+	"onthemat/internal/app/service"
 	"onthemat/internal/app/service/token"
 	"onthemat/internal/app/usecase"
 	"onthemat/pkg/auth/jwt"
+	"onthemat/pkg/kakao"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -21,9 +23,10 @@ func main() {
 	if err := c.Load("../../configs"); err != nil {
 		panic(err)
 	}
-	// service
+	// pkg
 	jwt := jwt.NewJwt().Init()
 	tokenModule := token.NewToken(jwt)
+	k := kakao.NewKakao(c)
 
 	// db
 	db := infrastructor.NewPostgresDB()
@@ -31,8 +34,11 @@ func main() {
 	// repo
 	userRepo := repository.NewUserRepository(db)
 
+	// service
+	authSvc := service.NewAuthService(k)
+
 	// usecase
-	authUseCase := usecase.NewAuthUseCase(c, tokenModule, userRepo)
+	authUseCase := usecase.NewAuthUseCase(tokenModule, userRepo, authSvc)
 
 	// handler
 	router := app.Group("/api/v1")
