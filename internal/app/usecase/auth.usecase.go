@@ -40,7 +40,10 @@ func (a *authUseCase) KakaoLogin(ctx *fasthttp.RequestCtx, code string) error {
 		return err
 	}
 
-	u := &ent.User{SocialKey: kakaoId, SocialName: "kakao"}
+	u := &ent.User{
+		SocialKey:  kakaoId,
+		SocialName: "kakao",
+	}
 	exist, err := a.userRepo.FindBySocialKey(ctx, u)
 	if err != nil {
 		return err
@@ -57,9 +60,8 @@ func (a *authUseCase) KakaoLogin(ctx *fasthttp.RequestCtx, code string) error {
 }
 
 func (a *authUseCase) SignUp(ctx *fasthttp.RequestCtx, body *dto.SignUpBody) error {
-	user := &ent.User{
+	return a.userRepo.Create(ctx, &ent.User{
 		Email:    body.Email,
 		Password: body.Password,
-	}
-	return a.userRepo.Create(ctx, user)
+	})
 }

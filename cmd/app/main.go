@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+
 	"onthemat/internal/app/config"
 	"onthemat/internal/app/delivery/http"
 	"onthemat/internal/app/infrastructor"
@@ -15,12 +17,16 @@ import (
 )
 
 func main() {
-	app := fiber.New()
-
+	// debugmode check
+	configPath := "./configs"
+	isDebug := flag.Bool("mode", false, "debug")
+	flag.Parse()
+	if *isDebug {
+		configPath = "../../configs"
+	}
 	// config
 	c := config.NewConfig()
-	// if run  "./configs"
-	if err := c.Load("../../configs"); err != nil {
+	if err := c.Load(configPath); err != nil {
 		panic(err)
 	}
 	// pkg
@@ -39,6 +45,9 @@ func main() {
 
 	// usecase
 	authUseCase := usecase.NewAuthUseCase(tokenModule, userRepo, authSvc)
+
+	// app
+	app := fiber.New()
 
 	// handler
 	router := app.Group("/api/v1")
