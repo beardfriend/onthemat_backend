@@ -11,6 +11,10 @@ type AuthService interface {
 
 type authService struct{}
 
+func NewAuthService() AuthService {
+	return &authService{}
+}
+
 var ErrNotBearerToken = "Token unavailable"
 
 func (a *authService) ExtractTokenFromHeader(token string) (string, error) {

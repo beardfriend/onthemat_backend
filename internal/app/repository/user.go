@@ -4,10 +4,12 @@ import (
 	"context"
 
 	"onthemat/pkg/ent"
+	"onthemat/pkg/ent/user"
 )
 
 type UserRepository interface {
 	Create(ctx context.Context, user *ent.User) error
+	FindBySocialKey(ctx context.Context, u *ent.User) (bool, error)
 }
 
 type userRepository struct {
@@ -28,4 +30,13 @@ func (repo *userRepository) Create(ctx context.Context, user *ent.User) error {
 		return err
 	}
 	return nil
+}
+
+func (repo *userRepository) FindBySocialKey(ctx context.Context, u *ent.User) (bool, error) {
+	return repo.db.User.
+		Query().
+		Where(
+			user.SocialKeyEQ(u.SocialKey),
+			user.SocialNameNEQ(u.SocialName)).
+		Exist(ctx)
 }

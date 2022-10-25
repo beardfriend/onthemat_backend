@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -13,6 +14,7 @@ func TestLoad(t *testing.T) {
 		if err := c.Load("../../../configs"); err != nil {
 			t.Error(err)
 		}
+		fmt.Println(c)
 		assert.Equal(t, c.MariaDB.Host, "localhost")
 	})
 

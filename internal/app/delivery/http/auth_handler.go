@@ -1,38 +1,50 @@
 package http
 
 import (
-	"context"
 	"crypto/sha256"
 
 	"onthemat/internal/app/dto"
 	"onthemat/internal/app/usecase"
-	"onthemat/pkg/kakao"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-type AuthHandler interface {
-	SignUp(c *fiber.Ctx) error
-}
-
 type authHandler struct {
 	AuthUseCase usecase.AuthUseCase
-	KakaoModule kakao.Kakao
 }
 
-func NewAuthHandler(kakao kakao.Kakao, authUseCase usecase.AuthUseCase) AuthHandler {
-	return &authHandler{
+func NewAuthHandler(authUseCase usecase.AuthUseCase, router fiber.Router) {
+	handler := &authHandler{
 		AuthUseCase: authUseCase,
 	}
+	g := router.Group("/auth")
+	g.Get("/kakao", handler.KakaoLogin)
+	g.Get("/kakao/callback", handler.KakaoLoginCallBack)
 }
 
 func (h *authHandler) KakaoLogin(c *fiber.Ctx) error {
-	return c.Redirect(h.KakaoModule.Authorize())
+	ctx := c.Context()
+	defer ctx.Done()
+
+	// 리프레쉬 있으면
+
+	return c.Redirect(h.AuthUseCase.KakaoRedirectUrl(ctx))
+}
+
+func (h *authHandler) KakaoLoginCallBack(c *fiber.Ctx) error {
+	ctx := c.Context()
+	defer ctx.Done()
+
+	code := c.Query("code")
+	h.AuthUseCase.KakaoLogin(ctx, code)
+
+	return c.SendStatus(200)
 }
 
 func (h *authHandler) SignUp(c *fiber.Ctx) error {
-	ctx := context.Background()
+	ctx := c.Context()
 	defer ctx.Done()
+
 	body := new(dto.SignUpBody)
 	if err := c.BodyParser(body); err != nil {
 		return err
