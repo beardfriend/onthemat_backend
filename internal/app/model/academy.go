@@ -32,35 +32,39 @@ func (Acadmey) Fields() []ent.Field {
 			dialect.Postgres: "varchar(30)",
 		}).
 			MaxLen(15).
-			Nillable().
+			NotEmpty().
 			Comment("사업자 번호"),
 
-		field.String("full_address").
-			Optional().
-			Comment("주소"),
+		field.String("call_number").
+			NotEmpty().
+			Comment("학원 연락처"),
 
-		field.String("si").
-			Optional().
-			Comment("시"),
+		field.String("address_road").
+			NotEmpty().
+			Comment("전체 주소"),
 
-		field.String("gun").
-			Optional().
-			Comment("군"),
+		field.String("address_sigun").
+			NotEmpty().
+			Comment("시 or 군"),
 
-		field.String("gu").
-			Optional().
+		field.String("address_gu").
+			NotEmpty().
 			Comment("구"),
 
-		field.String("dong").
-			Optional().
+		field.String("address_dong").
+			NotEmpty().
 			Comment("동"),
 
-		field.String("x").
+		field.String("address_detail").
 			Optional().
+			Comment("상세주소"),
+
+		field.String("address_x").
+			NotEmpty().
 			Comment("x좌표"),
 
-		field.String("y").
-			Optional().
+		field.String("address_y").
+			NotEmpty().
 			Comment("y좌표"),
 	}
 }

@@ -23,10 +23,11 @@ func (User) Annotations() []schema.Annotation {
 
 func (User) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("email").SchemaType(map[string]string{
-			dialect.Postgres: "varchar(100)",
-		}).MaxLen(100).
-			NotEmpty().
+		field.String("email").
+			SchemaType(map[string]string{
+				dialect.Postgres: "varchar(100)",
+			}).MaxLen(100).
+			Optional().
 			Comment("이메일"),
 
 		field.String("password").
@@ -38,15 +39,22 @@ func (User) Fields() []ent.Field {
 			Optional().
 			Comment("소셜 로그인을 제공한 업체 이름"),
 
-		field.String("social_key").Optional().
+		field.Int("social_key").
+			Optional().
 			Comment("소셜 로그인 시 발급되는 고유 키"),
 
-		field.String("nickname").SchemaType(map[string]string{
-			dialect.Postgres: "varchar(20)",
-		}).
+		field.String("nickname").
+			SchemaType(map[string]string{
+				dialect.Postgres: "varchar(20)",
+			}).
 			MaxLen(20).
-			NotEmpty().
+			Optional().
 			Comment("닉네임"),
+
+		field.Enum("type").
+			Optional().
+			Values("teacher", "academy").
+			Comment("유저 타입"),
 
 		field.String("phone_num").
 			SchemaType(map[string]string{
@@ -57,7 +65,7 @@ func (User) Fields() []ent.Field {
 			Comment("휴대폰 번호"),
 
 		field.Time("term_agree_at").
-			Default(time.Now()).
+			Optional().
 			Comment("약관 동의 일시"),
 
 		field.Time("last_login_at").

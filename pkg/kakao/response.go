@@ -15,5 +15,5 @@ type GetTokenSuccessBody struct {
 }
 
 type GetUserInfoSuccessBody struct {
-	Id uint64 `json:"id"`
+	Id uint `json:"id"`
 }

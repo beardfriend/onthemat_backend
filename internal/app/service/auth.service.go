@@ -11,7 +11,7 @@ import (
 type AuthService interface {
 	ExtractTokenFromHeader(token string) (string, error)
 	GetKakaoRedirectUrl() string
-	GetKakaoID(code string) (string, error)
+	GetKakaoInfo(code string) (*kakao.GetUserInfoSuccessBody, error)
 }
 
 type authService struct {
@@ -35,30 +35,31 @@ func (a *authService) ExtractTokenFromHeader(token string) (string, error) {
 	return splitedToken[1], nil
 }
 
-func (a *authService) GetKakaoID(code string) (string, error) {
+func (a *authService) GetKakaoInfo(code string) (*kakao.GetUserInfoSuccessBody, error) {
 	// kakao
-	resp := a.kakao.GetToken(code)
-	if resp.StatusCode() != 200 {
+	tokenResp := a.kakao.GetToken(code)
+	if tokenResp.StatusCode() != 200 {
 		body := new(kakao.GetTokenErrorBody)
-		json.Unmarshal(resp.Body(), body)
+		json.Unmarshal(tokenResp.Body(), body)
 
-		return "", errors.New(body.Error + body.ErrorCode)
+		return nil, errors.New(body.Error + body.ErrorCode)
 	}
 
-	// json
-	body := new(kakao.GetTokenSuccessBody)
-	json.Unmarshal(resp.Body(), body)
+	tokenRespBody := new(kakao.GetTokenSuccessBody)
+	json.Unmarshal(tokenResp.Body(), tokenRespBody)
 
 	// kakao
-	respInfo := a.kakao.GetUserInfo(body.AccessToken)
-	if respInfo.StatusCode() != 200 {
+	infoResp := a.kakao.GetUserInfo(tokenRespBody.AccessToken)
+	if infoResp.StatusCode() != 200 {
 		body := new(kakao.GetTokenErrorBody)
-		json.Unmarshal(resp.Body(), body)
+		json.Unmarshal(infoResp.Body(), body)
 
-		return "", errors.New(body.Error + body.ErrorCode)
+		return nil, errors.New(body.Error + body.ErrorCode)
 	}
 
-	return body.AccessToken, nil
+	infoRespBody := new(kakao.GetUserInfoSuccessBody)
+	json.Unmarshal(infoResp.Body(), infoRespBody)
+	return infoRespBody, nil
 }
 
 func (a *authService) GetKakaoRedirectUrl() string {

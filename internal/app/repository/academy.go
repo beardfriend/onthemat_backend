@@ -4,11 +4,12 @@ import (
 	"context"
 
 	"onthemat/pkg/ent"
-	"onthemat/pkg/entx"
+	"onthemat/pkg/ent/acadmey"
 )
 
 type AcademyRepository interface {
-	Create(ctx context.Context, academy *ent.Acadmey) error
+	Create(ctx context.Context, academy *ent.Acadmey, userId int) error
+	Get(ctx context.Context, userId int) (*ent.Acadmey, error)
 }
 
 type academyRepository struct {
@@ -21,34 +22,23 @@ func NewAcademyRepository(db *ent.Client) AcademyRepository {
 	}
 }
 
-func (svc *academyRepository) Create(ctx context.Context, academy *ent.Acadmey) error {
-	err := entx.WithTx(ctx, svc.db, func(tx *ent.Tx) error {
-		user := academy.Edges.User
+func (svc *academyRepository) Create(ctx context.Context, academy *ent.Acadmey, userId int) error {
+	return svc.db.Acadmey.Create().
+		SetName(academy.Name).
+		SetBusinessCode(academy.BusinessCode).
+		SetCallNumber(academy.CallNumber).
+		SetAddressRoad(academy.AddressRoad).
+		SetAddressSigun(academy.AddressSigun).
+		SetAddressGu(academy.AddressGu).
+		SetAddressDong(academy.AddressDong).
+		SetAddressX(academy.AddressX).
+		SetAddressY(academy.AddressY).SetUserID(userId).Exec(ctx)
+}
 
-		u, err := tx.User.Create().
-			SetEmail(user.Email).
-			SetPassword(user.Password).
-			SetNickname(user.Nickname).
-			Save(ctx)
-		if err != nil {
-			return err
-		}
-
-		_, err = tx.Acadmey.Create().
-			SetName(academy.Name).
-			SetBusinessCode(*academy.BusinessCode).
-			SetFullAddress(academy.FullAddress).
-			SetUser(u).
-			Save(ctx)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (svc *academyRepository) Get(ctx context.Context, userId int) (*ent.Acadmey, error) {
+	return svc.db.Acadmey.
+		Query().
+		Where(acadmey.ID(userId)).
+		WithUser().
+		Only(ctx)
 }

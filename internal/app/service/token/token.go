@@ -9,7 +9,7 @@ import (
 )
 
 type TokenService interface {
-	GenerateToken(uuid string, userId uint, loginType string, userType string, expired int) (string, error)
+	GenerateToken(uuid *string, userId int, loginType string, userType *string, expired int) (string, error)
 	ParseToken(tokenString string, result jwtLib.Claims) error
 }
 
@@ -30,16 +30,16 @@ func NewToken(jwtPackage jwt.Jwt) TokenService {
 // ------------------- Model -------------------
 
 type TokenClaim struct {
-	Uuid      string
-	UserId    uint
+	Uuid      *string
+	UserId    int
 	LoginType string
-	UserType  string
+	UserType  *string
 	jwtLib.RegisteredClaims
 }
 
 // ------------------- Service -------------------
 
-func (t *tokenService) GenerateToken(uuid string, userId uint, loginType string, userType string, expired int) (string, error) {
+func (t *tokenService) GenerateToken(uuid *string, userId int, loginType string, userType *string, expired int) (string, error) {
 	claim := TokenClaim{
 		Uuid:      uuid,
 		UserId:    userId,

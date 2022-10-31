@@ -40,7 +40,6 @@ func (TimeWithRemovedAtMixin) Fields() []ent.Field {
 			Default(time.Now).
 			UpdateDefault(time.Now),
 		field.Time("removed_at").
-			Default(time.Now).
 			UpdateDefault(time.Now),
 	}
 }

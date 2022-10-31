@@ -18,7 +18,7 @@ type Kakao struct {
 
 func NewKakao(config *config.Config) *Kakao {
 	return &Kakao{
-		AuthUrl: "https://kauth.kakao.com/",
+		AuthUrl: "https://kauth.kakao.com",
 		ApiUrl:  "https://kapi.kakao.com",
 		client:  &fasthttp.Client{},
 		config:  config,

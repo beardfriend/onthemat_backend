@@ -1,7 +1,8 @@
-package main
+package test
 
 import (
 	"flag"
+	"fmt"
 
 	"onthemat/internal/app/config"
 	"onthemat/internal/app/delivery/http"
@@ -16,7 +17,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func main() {
+func Module() *fiber.App {
 	// debugmode check
 	configPath := "./configs"
 	isDebug := flag.Bool("mode", false, "debug")
@@ -26,9 +27,11 @@ func main() {
 	}
 	// config
 	c := config.NewConfig()
+
 	if err := c.Load(configPath); err != nil {
 		panic(err)
 	}
+	fmt.Println(c)
 	// pkg
 	jwt := jwt.NewJwt().Init()
 	tokenModule := token.NewToken(jwt)
@@ -53,5 +56,5 @@ func main() {
 	router := app.Group("/api/v1")
 	http.NewAuthHandler(authUseCase, router)
 
-	app.Listen(":3000")
+	return app
 }
