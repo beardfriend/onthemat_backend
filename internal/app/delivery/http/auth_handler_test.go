@@ -43,12 +43,13 @@ func Init() *fiber.App {
 	authSvc := service.NewAuthService(k)
 
 	// usecase
-	authUseCase := usecase.NewAuthUseCase(tokenModule, userRepo, authSvc)
+	authUseCase := usecase.NewAuthUseCase(tokenModule, userRepo, authSvc, c)
+	userUseCase := usecase.NewUserUseCase(userRepo)
 
 	// app
 	app := fiber.New()
 	router := app.Group("/api/v1")
-	NewAuthHandler(authUseCase, router)
+	NewAuthHandler(authUseCase, userUseCase, router)
 
 	return app
 }

@@ -15,14 +15,12 @@ type userUseCase struct {
 	userRepo repository.UserRepository
 }
 
-func NewUserUseCase(
-	userRepo repository.UserRepository,
-) AuthUseCase {
-	return &authUseCase{
+func NewUserUseCase(userRepo repository.UserRepository) UserUseCase {
+	return &userUseCase{
 		userRepo: userRepo,
 	}
 }
 
-func (a *authUseCase) GetMe(ctx *fasthttp.RequestCtx, id int) (*ent.User, error) {
-	return a.userRepo.Get(ctx, id)
+func (u *userUseCase) GetMe(ctx *fasthttp.RequestCtx, id int) (*ent.User, error) {
+	return u.userRepo.Get(ctx, id)
 }

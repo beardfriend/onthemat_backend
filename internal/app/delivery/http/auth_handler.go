@@ -11,11 +11,13 @@ import (
 
 type authHandler struct {
 	AuthUseCase usecase.AuthUseCase
+	UserUseCase usecase.UserUseCase
 }
 
-func NewAuthHandler(authUseCase usecase.AuthUseCase, router fiber.Router) {
+func NewAuthHandler(authUseCase usecase.AuthUseCase, userUseCase usecase.UserUseCase, router fiber.Router) {
 	handler := &authHandler{
 		AuthUseCase: authUseCase,
+		UserUseCase: userUseCase,
 	}
 	g := router.Group("/auth")
 	g.Get("/kakao", handler.Kakao)
@@ -47,7 +49,7 @@ func (h *authHandler) GetMe(c *fiber.Ctx) error {
 	ctx := c.Context()
 	defer ctx.Done()
 
-	u, e := h.AuthUseCase.GetMe(ctx, 1)
+	u, e := h.UserUseCase.GetMe(ctx, 1)
 
 	if e != nil {
 		panic(e)
