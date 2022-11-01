@@ -12,7 +12,7 @@ import (
 // ------------------- Request -------------------
 
 type SignUpBody struct {
-	Email    string `json:"email"`
+	Email    string `json:"email" validate:"required, email"`
 	Password string `json:"password"`
 	NickName string `json:"nickname"`
 }

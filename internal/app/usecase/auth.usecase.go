@@ -72,8 +72,8 @@ func (a *authUseCase) KakaoLogin(ctx *fasthttp.RequestCtx, code string) (string,
 
 	// 토큰 발행
 	uid := uuid.New().String()
-	refresh, _ := a.tokenSvc.GenerateToken(&uid, user.ID, "kakao", nil, a.config.JWT.RefreshTokenExpired)
-	access, _ := a.tokenSvc.GenerateToken(&uid, user.ID, "kakao", nil, a.config.JWT.AccessTokenExpired)
+	refresh, _ := a.tokenSvc.GenerateToken(uid, user.ID, "kakao", "", a.config.JWT.RefreshTokenExpired)
+	access, _ := a.tokenSvc.GenerateToken(uid, user.ID, "kakao", "", a.config.JWT.AccessTokenExpired)
 	return access, refresh
 }
 

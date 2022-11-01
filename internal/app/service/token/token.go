@@ -9,7 +9,7 @@ import (
 )
 
 type TokenService interface {
-	GenerateToken(uuid *string, userId int, loginType string, userType *string, expired int) (string, error)
+	GenerateToken(uuid string, userId int, loginType string, userType string, expired int) (string, error)
 	ParseToken(tokenString string, result jwtLib.Claims) error
 }
 
@@ -30,16 +30,16 @@ func NewToken(jwtPackage jwt.Jwt) TokenService {
 // ------------------- Model -------------------
 
 type TokenClaim struct {
-	Uuid      *string
+	Uuid      string
 	UserId    int
 	LoginType string
-	UserType  *string
+	UserType  string
 	jwtLib.RegisteredClaims
 }
 
 // ------------------- Service -------------------
 
-func (t *tokenService) GenerateToken(uuid *string, userId int, loginType string, userType *string, expired int) (string, error) {
+func (t *tokenService) GenerateToken(uuid string, userId int, loginType string, userType string, expired int) (string, error) {
 	claim := TokenClaim{
 		Uuid:      uuid,
 		UserId:    userId,
@@ -49,7 +49,6 @@ func (t *tokenService) GenerateToken(uuid *string, userId int, loginType string,
 			Issuer:    "oneTheMat",
 			IssuedAt:  jwtLib.NewNumericDate(time.Now()),
 			ExpiresAt: jwtLib.NewNumericDate(time.Now().Add(time.Duration(expired) * time.Minute)),
-			NotBefore: jwtLib.NewNumericDate(time.Now().Add(time.Duration(expired) * time.Minute)),
 		},
 	}
 	return t.jwtPackage.GenerateToken(claim)
