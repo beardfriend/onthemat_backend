@@ -30,6 +30,7 @@ func main() {
 	if err := c.Load(configPath); err != nil {
 		panic(err)
 	}
+
 	// pkg
 	jwt := jwt.NewJwt().WithSignKey(c.JWT.SignKey).Init()
 	tokenModule := token.NewToken(jwt)
@@ -52,12 +53,16 @@ func main() {
 
 	middleWare := middlewares.NewMiddelwWare(authSvc, tokenModule)
 
+	defer func() {
+		infrastructor.ClosePostgres(db)
+	}()
 	// app
 	app := fiber.New()
 
 	// handler
 	router := app.Group("/api/v1")
-	http.NewAuthHandler(authUseCase, userUsecase, middleWare, router)
+	http.NewAuthHandler(authUseCase, router)
+	http.NewUserHandler(middleWare, userUsecase, router)
 
 	app.Listen(":3000")
 }

@@ -47,7 +47,7 @@ func (repo *userRepository) Update(ctx context.Context, user *ent.User) (*ent.Us
 	u, err := repo.db.User.UpdateOneID(user.ID).
 		SetNillableEmail(&user.Email).
 		SetNillableTermAgreeAt(&user.TermAgreeAt).
-		SetNillableType(&user.Type).
+		SetNillableType(user.Type).
 		SetNillablePhoneNum(&user.PhoneNum).
 		Save(ctx)
 	if err != nil {
@@ -57,9 +57,9 @@ func (repo *userRepository) Update(ctx context.Context, user *ent.User) (*ent.Us
 }
 
 func (repo *userRepository) GetBySocialKey(ctx context.Context, u *ent.User) (*ent.User, error) {
-	return repo.db.User.
+	return repo.db.Debug().User.
 		Query().
 		Where(
 			user.SocialKeyEQ(u.SocialKey),
-			user.SocialNameNEQ(u.SocialName)).Only(ctx)
+			user.SocialNameEQ(u.SocialName)).Only(ctx)
 }

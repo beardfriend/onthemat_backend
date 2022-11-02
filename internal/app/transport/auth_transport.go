@@ -18,6 +18,7 @@ type SignUpBody struct {
 }
 
 type SocialSignUpBody struct {
+	UserID    int    `json:"userId"`
 	Email     string `json:"email"`
 	TermAgree bool   `json:"termAgree"`
 	NickName  string `json:"nickname"`
@@ -26,6 +27,7 @@ type SocialSignUpBody struct {
 // ------------------- Response -------------------
 
 type UserMeResponse struct {
+	ID          int       `json:"id"`
 	Email       string    `json:"email"`
 	Nickname    string    `json:"nickname"`
 	CreatedAt   time.Time `json:"created_at"`

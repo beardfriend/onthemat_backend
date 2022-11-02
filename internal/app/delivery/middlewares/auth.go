@@ -23,6 +23,7 @@ func (m *MiddleWare) Auth(c *fiber.Ctx) error {
 		return c.Status(http.StatusUnauthorized).JSON("파싱")
 	}
 
+	ctx.SetUserValue("login_type", claim.LoginType)
 	ctx.SetUserValue("user_id", claim.UserId)
 	return c.Next()
 }

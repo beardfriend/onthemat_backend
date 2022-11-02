@@ -41,6 +41,7 @@ func (User) Fields() []ent.Field {
 
 		field.Int("social_key").
 			Optional().
+			Unique().
 			Comment("소셜 로그인 시 발급되는 고유 키"),
 
 		field.String("nickname").
@@ -53,6 +54,7 @@ func (User) Fields() []ent.Field {
 
 		field.Enum("type").
 			Optional().
+			Nillable().
 			Values("teacher", "academy").
 			Comment("유저 타입"),
 

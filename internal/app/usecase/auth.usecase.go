@@ -18,7 +18,7 @@ type AuthUseCase interface {
 	SignUp(ctx *fasthttp.RequestCtx, body *transport.SignUpBody) error
 	SocialSignUp(ctx *fasthttp.RequestCtx, body *transport.SocialSignUpBody) error
 	KakaoRedirectUrl(ctx *fasthttp.RequestCtx) string
-	KakaoLogin(ctx *fasthttp.RequestCtx, code string) (string, string)
+	KakaoLogin(ctx *fasthttp.RequestCtx, code string) *kakaoLoginResult
 }
 
 type authUseCase struct {
@@ -46,7 +46,14 @@ func (a *authUseCase) KakaoRedirectUrl(ctx *fasthttp.RequestCtx) string {
 	return a.authSvc.GetKakaoRedirectUrl()
 }
 
-func (a *authUseCase) KakaoLogin(ctx *fasthttp.RequestCtx, code string) (string, string) {
+type kakaoLoginResult struct {
+	AccessToken           string
+	AccessToeknExpiredAt  time.Time
+	RefreshToken          string
+	RefreshTokenExpiredAt time.Time
+}
+
+func (a *authUseCase) KakaoLogin(ctx *fasthttp.RequestCtx, code string) *kakaoLoginResult {
 	// get kakao Info FROM kakao
 	kakaoInfo, err := a.authSvc.GetKakaoInfo(code)
 	if err != nil {
@@ -74,19 +81,22 @@ func (a *authUseCase) KakaoLogin(ctx *fasthttp.RequestCtx, code string) (string,
 	uid := uuid.New().String()
 	refresh, _ := a.tokenSvc.GenerateToken(uid, user.ID, "kakao", "", a.config.JWT.RefreshTokenExpired)
 	access, _ := a.tokenSvc.GenerateToken(uid, user.ID, "kakao", "", a.config.JWT.AccessTokenExpired)
-	return access, refresh
+
+	return &kakaoLoginResult{
+		AccessToken:           access,
+		AccessToeknExpiredAt:  a.tokenSvc.GetExpiredAt(a.config.JWT.AccessTokenExpired),
+		RefreshToken:          refresh,
+		RefreshTokenExpiredAt: a.tokenSvc.GetExpiredAt(a.config.JWT.RefreshTokenExpired),
+	}
 }
 
 func (a *authUseCase) SocialSignUp(ctx *fasthttp.RequestCtx, body *transport.SocialSignUpBody) error {
-	var termAgreeAt *time.Time
-	if body.TermAgree {
-		*termAgreeAt = time.Now()
-	}
-
 	_, err := a.userRepo.Update(ctx, &ent.User{
+		ID:          body.UserID,
 		Email:       body.Email,
 		Nickname:    body.NickName,
-		TermAgreeAt: *termAgreeAt,
+		TermAgreeAt: time.Now(),
+		Type:        nil,
 	})
 	return err
 }

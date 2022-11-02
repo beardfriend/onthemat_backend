@@ -3,7 +3,6 @@ package http
 import (
 	"crypto/sha256"
 
-	"onthemat/internal/app/delivery/middlewares"
 	"onthemat/internal/app/transport"
 	"onthemat/internal/app/usecase"
 
@@ -13,25 +12,20 @@ import (
 type authHandler struct {
 	AuthUseCase usecase.AuthUseCase
 	UserUseCase usecase.UserUseCase
-	Middleware  *middlewares.MiddleWare
 }
 
 func NewAuthHandler(
 	authUseCase usecase.AuthUseCase,
-	userUseCase usecase.UserUseCase,
-	middleware *middlewares.MiddleWare,
 	router fiber.Router,
 ) {
 	handler := &authHandler{
 		AuthUseCase: authUseCase,
-		UserUseCase: userUseCase,
-		Middleware:  middleware,
 	}
 	g := router.Group("/auth")
-	g.Get("/me", middleware.Auth, handler.GetMe)
 	g.Get("/kakao", handler.Kakao)
 	g.Get("/kakao/callback", handler.CallBackToken)
-	g.Get("/signup", handler.SignUp)
+	g.Post("/signup", handler.SignUp)
+	g.Post("/social/signup", handler.SocialSignUp)
 }
 
 func (h *authHandler) Kakao(c *fiber.Ctx) error {
@@ -44,24 +38,9 @@ func (h *authHandler) CallBackToken(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	code := c.Query("code")
-	access, refresh := h.AuthUseCase.KakaoLogin(ctx, code)
+	data := h.AuthUseCase.KakaoLogin(ctx, code)
 
-	return c.JSON(fiber.Map{
-		"access":  access,
-		"refresh": refresh,
-	})
-}
-
-func (h *authHandler) GetMe(c *fiber.Ctx) error {
-	ctx := c.Context()
-
-	u, e := h.UserUseCase.GetMe(ctx, c.Context().UserValue("user_id").(int))
-
-	if e != nil {
-		panic(e)
-	}
-	resp := transport.NewUserMeResponse(u)
-	return c.JSON(resp)
+	return c.JSON(data)
 }
 
 func (h *authHandler) SignUp(c *fiber.Ctx) error {

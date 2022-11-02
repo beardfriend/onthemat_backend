@@ -10,6 +10,7 @@ import (
 
 type TokenService interface {
 	GenerateToken(uuid string, userId int, loginType string, userType string, expired int) (string, error)
+	GetExpiredAt(expired int) time.Time
 	ParseToken(tokenString string, result jwtLib.Claims) error
 }
 
@@ -52,6 +53,10 @@ func (t *tokenService) GenerateToken(uuid string, userId int, loginType string, 
 		},
 	}
 	return t.jwtPackage.GenerateToken(claim)
+}
+
+func (t *tokenService) GetExpiredAt(expired int) time.Time {
+	return time.Now().Add(time.Minute * time.Duration(expired)).Local()
 }
 
 func (t *tokenService) ParseToken(tokenString string, result jwtLib.Claims) error {
