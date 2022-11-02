@@ -5,6 +5,7 @@ import (
 
 	"onthemat/internal/app/transport"
 	"onthemat/internal/app/usecase"
+	"onthemat/pkg/validatorx"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -49,6 +50,10 @@ func (h *authHandler) SignUp(c *fiber.Ctx) error {
 	body := new(transport.SignUpBody)
 	if err := c.BodyParser(body); err != nil {
 		return err
+	}
+
+	if err := validatorx.ValidateStruct(body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(err)
 	}
 
 	body.Password = string(sha256.New().Sum([]byte(body.Password)))

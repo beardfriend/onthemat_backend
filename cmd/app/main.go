@@ -15,6 +15,7 @@ import (
 	"onthemat/pkg/kakao"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
 func main() {
@@ -57,8 +58,14 @@ func main() {
 		infrastructor.ClosePostgres(db)
 	}()
 	// app
-	app := fiber.New()
-
+	app := fiber.New(fiber.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return c.Status(500).JSON(fiber.Map{
+				"message": "일시적인 에러가 발생했습니다",
+			})
+		},
+	})
+	app.Use(recover.New())
 	// handler
 	router := app.Group("/api/v1")
 	http.NewAuthHandler(authUseCase, router)
