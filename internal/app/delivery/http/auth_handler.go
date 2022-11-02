@@ -2,7 +2,9 @@ package http
 
 import (
 	"crypto/sha256"
+	"net/http"
 
+	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/transport"
 	"onthemat/internal/app/usecase"
 	"onthemat/pkg/validatorx"
@@ -49,17 +51,17 @@ func (h *authHandler) SignUp(c *fiber.Ctx) error {
 
 	body := new(transport.SignUpBody)
 	if err := c.BodyParser(body); err != nil {
-		return err
+		return c.Status(http.StatusUnprocessableEntity).JSON(ex.NewUnprocessableEntityError("JSON을 입력해주세요"))
 	}
 
 	if err := validatorx.ValidateStruct(body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(err)
+		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
 	}
 
 	body.Password = string(sha256.New().Sum([]byte(body.Password)))
 
 	if err := h.AuthUseCase.SignUp(ctx, body); err != nil {
-		return c.SendStatus(500)
+		return c.Status(http.StatusInternalServerError).JSON(ex.NewInternalServerError(err))
 	}
 
 	return c.SendStatus(200)
