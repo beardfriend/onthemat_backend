@@ -32,10 +32,10 @@ func (repo *userRepository) Create(ctx context.Context, user *ent.User) (*ent.Us
 	u, err := repo.db.User.Create().
 		SetNillableEmail(&user.Email).
 		SetNillablePassword(&user.Password).
-		SetNillableSocialKey(&user.SocialKey).
-		SetNillableSocialName(&user.SocialName).
-		SetNillableTermAgreeAt(&user.TermAgreeAt).
-		SetNillablePhoneNum(&user.PhoneNum).
+		SetNillableSocialKey(user.SocialKey).
+		SetNillableSocialName(user.SocialName).
+		SetNillableTermAgreeAt(user.TermAgreeAt).
+		SetNillablePhoneNum(user.PhoneNum).
 		Save(ctx)
 	if err != nil {
 		return nil, err
@@ -46,9 +46,9 @@ func (repo *userRepository) Create(ctx context.Context, user *ent.User) (*ent.Us
 func (repo *userRepository) Update(ctx context.Context, user *ent.User) (*ent.User, error) {
 	u, err := repo.db.User.UpdateOneID(user.ID).
 		SetNillableEmail(&user.Email).
-		SetNillableTermAgreeAt(&user.TermAgreeAt).
+		SetNillableTermAgreeAt(user.TermAgreeAt).
 		SetNillableType(user.Type).
-		SetNillablePhoneNum(&user.PhoneNum).
+		SetNillablePhoneNum(user.PhoneNum).
 		Save(ctx)
 	if err != nil {
 		return nil, err
@@ -60,6 +60,6 @@ func (repo *userRepository) GetBySocialKey(ctx context.Context, u *ent.User) (*e
 	return repo.db.Debug().User.
 		Query().
 		Where(
-			user.SocialKeyEQ(u.SocialKey),
-			user.SocialNameEQ(u.SocialName)).Only(ctx)
+			user.SocialKeyEQ(*u.SocialKey),
+			user.SocialNameEQ(*u.SocialName)).Only(ctx)
 }

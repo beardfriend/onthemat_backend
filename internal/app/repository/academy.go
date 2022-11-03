@@ -9,6 +9,7 @@ import (
 
 type AcademyRepository interface {
 	Create(ctx context.Context, academy *ent.Acadmey, userId int) error
+	Update(ctx context.Context, academy *ent.Acadmey, userId int) error
 	Get(ctx context.Context, userId int) (*ent.Acadmey, error)
 }
 
@@ -22,8 +23,8 @@ func NewAcademyRepository(db *ent.Client) AcademyRepository {
 	}
 }
 
-func (svc *academyRepository) Create(ctx context.Context, academy *ent.Acadmey, userId int) error {
-	return svc.db.Acadmey.Create().
+func (repo *academyRepository) Create(ctx context.Context, academy *ent.Acadmey, userId int) error {
+	return repo.db.Acadmey.Create().
 		SetName(academy.Name).
 		SetBusinessCode(academy.BusinessCode).
 		SetCallNumber(academy.CallNumber).
@@ -35,8 +36,14 @@ func (svc *academyRepository) Create(ctx context.Context, academy *ent.Acadmey, 
 		SetAddressY(academy.AddressY).SetUserID(userId).Exec(ctx)
 }
 
-func (svc *academyRepository) Get(ctx context.Context, userId int) (*ent.Acadmey, error) {
-	return svc.db.Acadmey.
+func (repo *academyRepository) Update(ctx context.Context, academy *ent.Acadmey, userId int) error {
+	return repo.db.Acadmey.
+		Update().
+		SetAddressDetail(academy.AddressDetail).SetAddressDong(academy.AddressDong).Exec(ctx)
+}
+
+func (repo *academyRepository) Get(ctx context.Context, userId int) (*ent.Acadmey, error) {
+	return repo.db.Acadmey.
 		Query().
 		Where(acadmey.ID(userId)).
 		WithUser().

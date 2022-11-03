@@ -37,10 +37,12 @@ func (User) Fields() []ent.Field {
 
 		field.String("social_name").
 			Optional().
+			Nillable().
 			Comment("소셜 로그인을 제공한 업체 이름"),
 
 		field.Int("social_key").
 			Optional().
+			Nillable().
 			Unique().
 			Comment("소셜 로그인 시 발급되는 고유 키"),
 
@@ -50,6 +52,7 @@ func (User) Fields() []ent.Field {
 			}).
 			MaxLen(20).
 			Optional().
+			Nillable().
 			Comment("닉네임"),
 
 		field.Enum("type").
@@ -64,10 +67,12 @@ func (User) Fields() []ent.Field {
 			}).
 			MaxLen(11).
 			Optional().
+			Nillable().
 			Comment("휴대폰 번호"),
 
 		field.Time("term_agree_at").
 			Optional().
+			Nillable().
 			Comment("약관 동의 일시"),
 
 		field.Time("last_login_at").
