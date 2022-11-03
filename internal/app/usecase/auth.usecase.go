@@ -59,10 +59,11 @@ func (a *authUseCase) KakaoLogin(ctx *fasthttp.RequestCtx, code string) *kakaoLo
 	if err != nil {
 		panic(err)
 	}
-
+	dd := int(kakaoInfo.Id)
+	socialName := "kakao"
 	u := &ent.User{
-		SocialKey:  int(kakaoInfo.Id),
-		SocialName: "kakao",
+		SocialKey:  &dd,
+		SocialName: &socialName,
 	}
 	user, err := a.userRepo.GetBySocialKey(ctx, u)
 	if err != nil && !ent.IsNotFound(err) {
@@ -91,11 +92,12 @@ func (a *authUseCase) KakaoLogin(ctx *fasthttp.RequestCtx, code string) *kakaoLo
 }
 
 func (a *authUseCase) SocialSignUp(ctx *fasthttp.RequestCtx, body *transport.SocialSignUpBody) error {
+	termAgreeAt := time.Now()
 	_, err := a.userRepo.Update(ctx, &ent.User{
 		ID:          body.UserID,
 		Email:       body.Email,
-		Nickname:    body.NickName,
-		TermAgreeAt: time.Now(),
+		Nickname:    &body.NickName,
+		TermAgreeAt: &termAgreeAt,
 		Type:        nil,
 	})
 	return err
