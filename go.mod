@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	entgo.io/ent v0.11.3
+	github.com/arsmn/fiber-swagger/v2 v2.31.1
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/chromedp/chromedp v0.8.6
 	github.com/go-playground/validator v9.31.0+incompatible
@@ -14,16 +15,22 @@ require (
 	github.com/lib/pq v1.10.7
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/stretchr/testify v1.8.0
+	github.com/swaggo/swag v1.8.7
 )
 
 require (
 	ariga.io/atlas v0.7.2-0.20220927111110-867ee0cca56a // indirect
+	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/chromedp/cdproto v0.0.0-20221023212508-67ada9507fb2 // indirect
 	github.com/chromedp/sysutil v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
+	github.com/go-openapi/jsonpointer v0.19.5 // indirect
+	github.com/go-openapi/jsonreference v0.20.0 // indirect
+	github.com/go-openapi/spec v0.20.7 // indirect
+	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
@@ -39,10 +46,13 @@ require (
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7 // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/rivo/uniseg v0.4.2 // indirect
+	github.com/swaggo/files v0.0.0-20220728132757-551d4a08d97a // indirect
 	github.com/zclconf/go-cty v1.8.0 // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/mod v0.6.0 // indirect
+	golang.org/x/net v0.1.0 // indirect
+	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/tools v0.2.0 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 )
 
@@ -54,11 +64,11 @@ require (
 	github.com/go-redis/redis/v9 v9.0.0-rc.1
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gofiber/fiber/v2 v2.39.0
-	github.com/klauspost/compress v1.15.0 // indirect
+	github.com/klauspost/compress v1.15.12 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.40.0
+	github.com/valyala/fasthttp v1.41.0
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	golang.org/x/sys v0.1.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

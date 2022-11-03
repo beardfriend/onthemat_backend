@@ -1,0 +1,25 @@
+info:
+  contact: {}
+  termsOfService: http://swagger.io/terms/
+  title: Go Boilerplate
+  version: 1.0.4
+paths:
+  /api/v1/auth/kakao:
+    get:
+      consumes:
+      - application/json
+      description: Kakao
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Kakao
+      tags:
+      - Auth
+securityDefinitions:
+  JwtToken:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

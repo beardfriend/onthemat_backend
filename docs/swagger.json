@@ -1,0 +1,38 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Go Boilerplate",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {},
+        "version": "1.0.4"
+    },
+    "paths": {
+        "/api/v1/auth/kakao": {
+            "get": {
+                "description": "Kakao",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Kakao",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "JwtToken": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

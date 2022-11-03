@@ -31,6 +31,14 @@ func NewAuthHandler(
 	g.Post("/social/signup", handler.SocialSignUp)
 }
 
+// Kakao godoc
+// @Summary Kakao
+// @Description Kakao
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Success 200
+// @Router /api/v1/auth/kakao [get]
 func (h *authHandler) Kakao(c *fiber.Ctx) error {
 	ctx := c.Context()
 
