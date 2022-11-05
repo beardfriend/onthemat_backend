@@ -38,8 +38,10 @@ type JWT struct {
 }
 
 type Oauth struct {
-	KaKaoRedirect string `env:"KAKAO_LOGIN_REDIRECT_URL"`
-	KaKaoClientId string `env:"KAKAO_LOGIN_CLIENT_ID"`
+	KaKaoRedirect  string `env:"KAKAO_LOGIN_REDIRECT_URL"`
+	KaKaoClientId  string `env:"KAKAO_LOGIN_CLIENT_ID"`
+	GoogleRedirect string `env:"GOOGLE_LOGIN_REDIRECT_URL"`
+	GoogleClientId string `env:"GOOGLE_LOGIN_CLIENT_ID"`
 }
 
 const (

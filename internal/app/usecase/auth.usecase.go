@@ -19,6 +19,7 @@ type AuthUseCase interface {
 	SocialSignUp(ctx *fasthttp.RequestCtx, body *transport.SocialSignUpBody) error
 	KakaoRedirectUrl(ctx *fasthttp.RequestCtx) string
 	KakaoLogin(ctx *fasthttp.RequestCtx, code string) *kakaoLoginResult
+	GoogleRedirectUrl(ctx *fasthttp.RequestCtx) string
 }
 
 type authUseCase struct {
@@ -89,6 +90,10 @@ func (a *authUseCase) KakaoLogin(ctx *fasthttp.RequestCtx, code string) *kakaoLo
 		RefreshToken:          refresh,
 		RefreshTokenExpiredAt: a.tokenSvc.GetExpiredAt(a.config.JWT.RefreshTokenExpired),
 	}
+}
+
+func (a *authUseCase) GoogleRedirectUrl(ctx *fasthttp.RequestCtx) string {
+	return a.authSvc.GetGoogleRedirectUrl()
 }
 
 func (a *authUseCase) SocialSignUp(ctx *fasthttp.RequestCtx, body *transport.SocialSignUpBody) error {

@@ -12,6 +12,7 @@ import (
 	"onthemat/internal/app/service/token"
 	"onthemat/internal/app/usecase"
 	"onthemat/pkg/auth/jwt"
+	"onthemat/pkg/google"
 	"onthemat/pkg/kakao"
 
 	swagger "github.com/arsmn/fiber-swagger/v2"
@@ -46,6 +47,7 @@ func main() {
 	jwt := jwt.NewJwt().WithSignKey(c.JWT.SignKey).Init()
 	tokenModule := token.NewToken(jwt)
 	k := kakao.NewKakao(c)
+	g := google.NewGoogle(c)
 
 	// db
 	db := infrastructor.NewPostgresDB()
@@ -54,7 +56,7 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 
 	// service
-	authSvc := service.NewAuthService(k)
+	authSvc := service.NewAuthService(k, g)
 
 	// usecase
 	authUseCase := usecase.NewAuthUseCase(tokenModule, userRepo, authSvc, c)

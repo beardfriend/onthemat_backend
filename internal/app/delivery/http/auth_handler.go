@@ -2,6 +2,7 @@ package http
 
 import (
 	"crypto/sha256"
+	"fmt"
 	"net/http"
 
 	ex "onthemat/internal/app/common"
@@ -26,7 +27,9 @@ func NewAuthHandler(
 	}
 	g := router.Group("/auth")
 	g.Get("/kakao", handler.Kakao)
-	g.Get("/kakao/callback", handler.CallBackToken)
+	g.Get("/kakao/callback", handler.KakaoCallBackToken)
+	g.Get("/google", handler.Google)
+	g.Get("/google/callback", handler.GoogleCallBackToken)
 	g.Post("/signup", handler.SignUp)
 	g.Post("/social/signup", handler.SocialSignUp)
 }
@@ -45,13 +48,28 @@ func (h *authHandler) Kakao(c *fiber.Ctx) error {
 	return c.Redirect(h.AuthUseCase.KakaoRedirectUrl(ctx))
 }
 
-func (h *authHandler) CallBackToken(c *fiber.Ctx) error {
+func (h *authHandler) KakaoCallBackToken(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	code := c.Query("code")
 	data := h.AuthUseCase.KakaoLogin(ctx, code)
 
 	return c.JSON(data)
+}
+
+func (h *authHandler) Google(c *fiber.Ctx) error {
+	ctx := c.Context()
+
+	return c.Redirect(h.AuthUseCase.GoogleRedirectUrl(ctx))
+}
+
+func (h *authHandler) GoogleCallBackToken(c *fiber.Ctx) error {
+	// ctx := c.Context()
+
+	code := c.Query("code")
+	fmt.Println(code)
+
+	return c.JSON(code)
 }
 
 func (h *authHandler) SignUp(c *fiber.Ctx) error {

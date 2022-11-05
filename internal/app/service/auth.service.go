@@ -5,22 +5,26 @@ import (
 	"errors"
 	"strings"
 
+	"onthemat/pkg/google"
 	"onthemat/pkg/kakao"
 )
 
 type AuthService interface {
 	ExtractTokenFromHeader(token string) (string, error)
 	GetKakaoRedirectUrl() string
+	GetGoogleRedirectUrl() string
 	GetKakaoInfo(code string) (*kakao.GetUserInfoSuccessBody, error)
 }
 
 type authService struct {
-	kakao *kakao.Kakao
+	kakao  *kakao.Kakao
+	google *google.Google
 }
 
-func NewAuthService(kakao *kakao.Kakao) AuthService {
+func NewAuthService(kakao *kakao.Kakao, google *google.Google) AuthService {
 	return &authService{
-		kakao: kakao,
+		kakao:  kakao,
+		google: google,
 	}
 }
 
@@ -67,4 +71,8 @@ func (a *authService) GetKakaoRedirectUrl() string {
 	resp := a.kakao.Authorize()
 	r := resp.Header.Peek("Location")
 	return string(r)
+}
+
+func (a *authService) GetGoogleRedirectUrl() string {
+	return a.google.Authorize()
 }
