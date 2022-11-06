@@ -12,6 +12,7 @@ import (
 	"onthemat/internal/app/service/token"
 	"onthemat/internal/app/usecase"
 	"onthemat/pkg/auth/jwt"
+	"onthemat/pkg/email"
 	"onthemat/pkg/google"
 	"onthemat/pkg/kakao"
 	"onthemat/pkg/naver"
@@ -50,6 +51,7 @@ func main() {
 	k := kakao.NewKakao(c)
 	g := google.NewGoogle(c)
 	n := naver.NewNaver(c)
+	emailM := email.NewEmail(c)
 
 	// db
 	db := infrastructor.NewPostgresDB()
@@ -58,7 +60,7 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 
 	// service
-	authSvc := service.NewAuthService(k, g, n)
+	authSvc := service.NewAuthService(k, g, n, emailM)
 
 	// usecase
 	authUseCase := usecase.NewAuthUseCase(tokenModule, userRepo, authSvc, c)

@@ -10,8 +10,10 @@ import (
 type UserRepository interface {
 	Create(ctx context.Context, user *ent.User) (*ent.User, error)
 	Update(ctx context.Context, user *ent.User) (*ent.User, error)
+	UpdateTempPassword(ctx context.Context, u *ent.User) error
 	GetBySocialKey(ctx context.Context, u *ent.User) (*ent.User, error)
 	GetByEmailPassword(ctx context.Context, u *ent.User) (*ent.User, error)
+	FindByEmail(ctx context.Context, email string) (bool, error)
 	Get(ctx context.Context, id int) (*ent.User, error)
 }
 
@@ -57,6 +59,13 @@ func (repo *userRepository) Update(ctx context.Context, user *ent.User) (*ent.Us
 	return u, nil
 }
 
+func (repo *userRepository) UpdateTempPassword(ctx context.Context, u *ent.User) error {
+	return repo.db.User.Update().
+		SetTempPassword(u.TempPassword).Where(
+		user.EmailEQ(u.Email),
+	).Exec(ctx)
+}
+
 func (repo *userRepository) GetBySocialKey(ctx context.Context, u *ent.User) (*ent.User, error) {
 	return repo.db.User.
 		Query().
@@ -69,7 +78,13 @@ func (repo *userRepository) GetByEmailPassword(ctx context.Context, u *ent.User)
 	return repo.db.User.
 		Query().
 		Where(
+			user.Or(user.PasswordEQ(u.Password), user.TempPasswordEQ(u.Password)),
 			user.EmailEQ(u.Email),
-			user.PasswordEQ(u.Password),
 		).Only(ctx)
+}
+
+func (repo *userRepository) FindByEmail(ctx context.Context, email string) (bool, error) {
+	return repo.db.User.Query().Where(
+		user.EmailEQ(email),
+	).Exist(ctx)
 }

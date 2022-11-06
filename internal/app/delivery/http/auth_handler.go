@@ -34,6 +34,8 @@ func NewAuthHandler(
 	g.Post("/signup", handler.SignUp)
 	g.Post("/login", handler.Login)
 	g.Post("/social/signup", handler.SocialSignUp)
+	g.Get("/reset-password", handler.SendResetPassword)
+	g.Get("/check-email", handler.CheckDuplicatedEmail)
 }
 
 // Kakao godoc
@@ -164,4 +166,42 @@ func (h *authHandler) Login(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(data)
+}
+
+func (h *authHandler) CheckDuplicatedEmail(c *fiber.Ctx) error {
+	ctx := c.Context()
+	queries := new(transport.CheckDuplicatedEmailQueries)
+
+	if err := c.QueryParser(queries); err != nil {
+		return c.Status(http.StatusUnprocessableEntity).JSON(ex.NewUnprocessableEntityError("파라메터를 입력해주세요"))
+	}
+
+	if err := validatorx.ValidateStruct(queries); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
+	}
+
+	if err := h.AuthUseCase.CheckDuplicatedEmail(ctx, queries.Email); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewHttpError(http.StatusBadRequest, err.Error(), nil))
+	}
+
+	return c.SendStatus(http.StatusOK)
+}
+
+func (h *authHandler) SendResetPassword(c *fiber.Ctx) error {
+	ctx := c.Context()
+	queries := new(transport.CheckDuplicatedEmailQueries)
+
+	if err := c.QueryParser(queries); err != nil {
+		return c.Status(http.StatusUnprocessableEntity).JSON(ex.NewUnprocessableEntityError("파라메터를 입력해주세요"))
+	}
+
+	if err := validatorx.ValidateStruct(queries); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
+	}
+
+	if err := h.AuthUseCase.SendEmailResetPassword(ctx, queries.Email); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewHttpError(http.StatusBadRequest, err.Error(), nil))
+	}
+
+	return c.SendStatus(http.StatusOK)
 }

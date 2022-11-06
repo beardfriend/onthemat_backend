@@ -29,6 +29,10 @@ type SocialSignUpBody struct {
 	NickName  string `json:"nickname"`
 }
 
+type CheckDuplicatedEmailQueries struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
 // ------------------- Response -------------------
 
 type UserMeResponse struct {

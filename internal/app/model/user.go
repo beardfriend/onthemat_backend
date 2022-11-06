@@ -35,6 +35,11 @@ func (User) Fields() []ent.Field {
 			Sensitive().
 			Comment("패스워드"),
 
+		field.String("temp_password").
+			Optional().
+			Sensitive().
+			Comment("임시 비밀번호"),
+
 		field.String("social_name").
 			Optional().
 			Nillable().

@@ -16,6 +16,7 @@ type Config struct {
 	Redis   Redis   `mapstructure:"Redis"`
 	JWT     JWT     `mapstructure:"Jwt"`
 	Oauth   Oauth   `mapstructure:"Oauth"`
+	Email   Email   `mapstructure:"Email"`
 }
 
 type MariaDB struct {
@@ -48,6 +49,12 @@ type Oauth struct {
 	GoogleClientSecret string `env:"GOOGLE_LOGIN_CLIENT_SECRET"`
 }
 
+type Email struct {
+	Host     string `env:"EMAIL_HOST"`
+	Password string `env:"EMAIL_PASSWORD"`
+	UserName string `env:"EMAIL_USERNAME"`
+}
+
 const (
 	DEV  envFile = ".env.dev" // default
 	PROD envFile = ".env.prod"
@@ -73,6 +80,7 @@ func (c *Config) Load(filePath string) error {
 	data["MariaDB"] = &MariaDB{}
 	data["Jwt"] = &JWT{}
 	data["Oauth"] = &Oauth{}
+	data["Email"] = &Email{}
 
 	for _, v := range data {
 		if err := env.Parse(v, op); err != nil {

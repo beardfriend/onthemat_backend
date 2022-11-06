@@ -25,6 +25,9 @@ type AuthUseCase interface {
 	KakaoRedirectUrl(ctx *fasthttp.RequestCtx) string
 	NaverRedirectUrl(ctx *fasthttp.RequestCtx) string
 	GoogleRedirectUrl(ctx *fasthttp.RequestCtx) string
+
+	SendEmailResetPassword(ctx *fasthttp.RequestCtx, email string) error
+	CheckDuplicatedEmail(ctx *fasthttp.RequestCtx, email string) error
 }
 
 type authUseCase struct {
@@ -99,7 +102,7 @@ func (a *authUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName, code str
 			panic(err)
 		}
 
-		kakaoId := int(kakaoInfo.Id)
+		kakaoId := strconv.FormatUint(uint64(kakaoInfo.Id), 10)
 
 		user.SocialKey = &kakaoId
 
@@ -110,7 +113,7 @@ func (a *authUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName, code str
 			panic(err)
 		}
 
-		googleId := int(googleInfo.Sub)
+		googleId := strconv.FormatUint(uint64(googleInfo.Sub), 10)
 		user.SocialKey = &googleId
 		user.Email = googleInfo.Email
 	} else if socialName == "naver" {
@@ -119,8 +122,7 @@ func (a *authUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName, code str
 			panic(err)
 		}
 
-		naverId, _ := strconv.Atoi(naverInfo.Id)
-		user.SocialKey = string(&naverId
+		user.SocialKey = &naverInfo.Id
 		user.Email = naverInfo.Email
 	}
 	user.SocialName = &socialName
@@ -173,4 +175,38 @@ func (a *authUseCase) SignUp(ctx *fasthttp.RequestCtx, body *transport.SignUpBod
 		Password: body.Password,
 	})
 	return err
+}
+
+func (a *authUseCase) CheckDuplicatedEmail(ctx *fasthttp.RequestCtx, email string) error {
+	isExist, err := a.userRepo.FindByEmail(ctx, email)
+	if err != nil {
+		panic(err)
+	}
+
+	if isExist {
+		return errors.New("이미 존재하는 이메일입니다. ")
+	}
+
+	return nil
+}
+
+func (a authUseCase) SendEmailResetPassword(ctx *fasthttp.RequestCtx, email string) error {
+	isExist, err := a.userRepo.FindByEmail(ctx, email)
+	if err != nil {
+		panic(err)
+	}
+
+	if !isExist {
+		return errors.New("존재하지 않는 이메일입니다. ")
+	}
+
+	u := &ent.User{
+		Email:        email,
+		TempPassword: a.authSvc.GenerateRandomPassword(),
+	}
+	a.userRepo.UpdateTempPassword(ctx, u)
+	a.authSvc.SendEmailResetPassword(u)
+
+	return nil
+	// 이메일로 패스워드 찾아서,
 }

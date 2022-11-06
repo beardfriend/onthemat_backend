@@ -3,8 +3,12 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"math/rand"
 	"strings"
+	"time"
 
+	"onthemat/pkg/email"
+	"onthemat/pkg/ent"
 	"onthemat/pkg/google"
 	"onthemat/pkg/kakao"
 	"onthemat/pkg/naver"
@@ -20,19 +24,24 @@ type AuthService interface {
 	GetKakaoInfo(code string) (*kakao.GetUserInfoSuccessBody, error)
 	GetGoogleInfo(code string) (*google.GetUserInfo, error)
 	GetNaverInfo(code string) (*naver.GetUserInfo, error)
+
+	SendEmailResetPassword(user *ent.User)
+	GenerateRandomPassword() string
 }
 
 type authService struct {
 	kakao  *kakao.Kakao
 	google *google.Google
 	naver  *naver.Naver
+	email  *email.Email
 }
 
-func NewAuthService(kakao *kakao.Kakao, google *google.Google, naver *naver.Naver) AuthService {
+func NewAuthService(kakao *kakao.Kakao, google *google.Google, naver *naver.Naver, email *email.Email) AuthService {
 	return &authService{
 		kakao:  kakao,
 		google: google,
 		naver:  naver,
+		email:  email,
 	}
 }
 
@@ -48,20 +57,20 @@ func (a *authService) ExtractTokenFromHeader(token string) (string, error) {
 }
 
 func (a *authService) GetKakaoInfo(code string) (*kakao.GetUserInfoSuccessBody, error) {
-	// kakao
-	tokenResp := a.kakao.GetToken(code)
-	if tokenResp.StatusCode() != 200 {
+	tokenResponse := a.kakao.GetToken(code)
+
+	if tokenResponse.StatusCode() != 200 {
 		body := new(kakao.GetTokenErrorBody)
-		json.Unmarshal(tokenResp.Body(), body)
+		json.Unmarshal(tokenResponse.Body(), body)
 
 		return nil, errors.New(body.Error + body.ErrorCode)
 	}
 
-	tokenRespBody := new(kakao.GetTokenSuccessBody)
-	json.Unmarshal(tokenResp.Body(), tokenRespBody)
+	tokenResponseBody := new(kakao.GetTokenSuccessBody)
+	json.Unmarshal(tokenResponse.Body(), tokenResponseBody)
 
-	// kakao
-	infoResp := a.kakao.GetUserInfo(tokenRespBody.AccessToken)
+	infoResp := a.kakao.GetUserInfo(tokenResponseBody.AccessToken)
+
 	if infoResp.StatusCode() != 200 {
 		body := new(kakao.GetTokenErrorBody)
 		json.Unmarshal(infoResp.Body(), body)
@@ -71,6 +80,7 @@ func (a *authService) GetKakaoInfo(code string) (*kakao.GetUserInfoSuccessBody, 
 
 	infoRespBody := new(kakao.GetUserInfoSuccessBody)
 	json.Unmarshal(infoResp.Body(), infoRespBody)
+
 	return infoRespBody, nil
 }
 
@@ -80,6 +90,7 @@ func (a *authService) GetGoogleInfo(code string) (*google.GetUserInfo, error) {
 	if tokenResp.StatusCode() != 200 {
 		body := new(google.GetTokenErrorBody)
 		json.Unmarshal(tokenResp.Body(), body)
+
 		return nil, errors.New(body.Error + body.ErrorDescription)
 	}
 
@@ -88,6 +99,7 @@ func (a *authService) GetGoogleInfo(code string) (*google.GetUserInfo, error) {
 
 	googleUserInfo := jwt.MapClaims{}
 	jwt.ParseWithClaims(tokenRespBody.IdToken, &googleUserInfo, nil)
+
 	infoRespBody := &google.GetUserInfo{
 		Email: googleUserInfo["email"].(string),
 		Sub:   googleUserInfo["sub"].(uint),
@@ -141,4 +153,24 @@ func (a *authService) GetGoogleRedirectUrl() string {
 
 func (a *authService) GetNaverRedirectUrl() string {
 	return a.naver.Authorize()
+}
+
+func (a *authService) SendEmailResetPassword(user *ent.User) {
+	subject := "임시 비밀번호 발급안내" + "!\n"
+	body := "임시비밀번호는 " + user.TempPassword + " 입니다."
+	msg := []byte(subject + "\n" + body)
+	go a.email.Send([]string{user.Email}, msg)
+}
+
+func (a *authService) GenerateRandomPassword() string {
+	rand.Seed(time.Now().UnixNano())
+	chars := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+		"abcdefghijklmnopqrstuvwxyz" +
+		"0123456789")
+	length := 8
+	var b strings.Builder
+	for i := 0; i < length; i++ {
+		b.WriteRune(chars[rand.Intn(len(chars))])
+	}
+	return b.String()
 }
