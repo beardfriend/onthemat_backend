@@ -11,6 +11,7 @@ type UserRepository interface {
 	Create(ctx context.Context, user *ent.User) (*ent.User, error)
 	Update(ctx context.Context, user *ent.User) (*ent.User, error)
 	GetBySocialKey(ctx context.Context, u *ent.User) (*ent.User, error)
+	GetByEmailPassword(ctx context.Context, u *ent.User) (*ent.User, error)
 	Get(ctx context.Context, id int) (*ent.User, error)
 }
 
@@ -57,9 +58,18 @@ func (repo *userRepository) Update(ctx context.Context, user *ent.User) (*ent.Us
 }
 
 func (repo *userRepository) GetBySocialKey(ctx context.Context, u *ent.User) (*ent.User, error) {
-	return repo.db.Debug().User.
+	return repo.db.User.
 		Query().
 		Where(
 			user.SocialKeyEQ(*u.SocialKey),
 			user.SocialNameEQ(*u.SocialName)).Only(ctx)
+}
+
+func (repo *userRepository) GetByEmailPassword(ctx context.Context, u *ent.User) (*ent.User, error) {
+	return repo.db.User.
+		Query().
+		Where(
+			user.EmailEQ(u.Email),
+			user.PasswordEQ(u.Password),
+		).Only(ctx)
 }

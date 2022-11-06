@@ -14,6 +14,7 @@ import (
 	"onthemat/pkg/auth/jwt"
 	"onthemat/pkg/google"
 	"onthemat/pkg/kakao"
+	"onthemat/pkg/naver"
 
 	swagger "github.com/arsmn/fiber-swagger/v2"
 
@@ -48,6 +49,7 @@ func main() {
 	tokenModule := token.NewToken(jwt)
 	k := kakao.NewKakao(c)
 	g := google.NewGoogle(c)
+	n := naver.NewNaver(c)
 
 	// db
 	db := infrastructor.NewPostgresDB()
@@ -56,7 +58,7 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 
 	// service
-	authSvc := service.NewAuthService(k, g)
+	authSvc := service.NewAuthService(k, g, n)
 
 	// usecase
 	authUseCase := usecase.NewAuthUseCase(tokenModule, userRepo, authSvc, c)

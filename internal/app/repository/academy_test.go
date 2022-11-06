@@ -39,7 +39,11 @@ func TestCreate(t *testing.T) {
 		t.Error(err)
 	}
 
-	academyRepo.Update(context, &ent.Acadmey{
-		AddressDetail: "asd",
-	})
+	err = academyRepo.Update(context, &ent.Acadmey{
+		AddressX: "asd",
+		AddressY: "",
+	}, newUser.ID)
+	if err != nil {
+		t.Error(err)
+	}
 }

@@ -7,24 +7,32 @@ import (
 
 	"onthemat/pkg/google"
 	"onthemat/pkg/kakao"
+	"onthemat/pkg/naver"
+
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type AuthService interface {
 	ExtractTokenFromHeader(token string) (string, error)
 	GetKakaoRedirectUrl() string
 	GetGoogleRedirectUrl() string
+	GetNaverRedirectUrl() string
 	GetKakaoInfo(code string) (*kakao.GetUserInfoSuccessBody, error)
+	GetGoogleInfo(code string) (*google.GetUserInfo, error)
+	GetNaverInfo(code string) (*naver.GetUserInfo, error)
 }
 
 type authService struct {
 	kakao  *kakao.Kakao
 	google *google.Google
+	naver  *naver.Naver
 }
 
-func NewAuthService(kakao *kakao.Kakao, google *google.Google) AuthService {
+func NewAuthService(kakao *kakao.Kakao, google *google.Google, naver *naver.Naver) AuthService {
 	return &authService{
 		kakao:  kakao,
 		google: google,
+		naver:  naver,
 	}
 }
 
@@ -66,6 +74,60 @@ func (a *authService) GetKakaoInfo(code string) (*kakao.GetUserInfoSuccessBody, 
 	return infoRespBody, nil
 }
 
+func (a *authService) GetGoogleInfo(code string) (*google.GetUserInfo, error) {
+	tokenResp := a.google.GetToken(code)
+
+	if tokenResp.StatusCode() != 200 {
+		body := new(google.GetTokenErrorBody)
+		json.Unmarshal(tokenResp.Body(), body)
+		return nil, errors.New(body.Error + body.ErrorDescription)
+	}
+
+	tokenRespBody := new(google.GetTokenSuccessBody)
+	json.Unmarshal(tokenResp.Body(), tokenRespBody)
+
+	googleUserInfo := jwt.MapClaims{}
+	jwt.ParseWithClaims(tokenRespBody.IdToken, &googleUserInfo, nil)
+	infoRespBody := &google.GetUserInfo{
+		Email: googleUserInfo["email"].(string),
+		Sub:   googleUserInfo["sub"].(uint),
+	}
+
+	return infoRespBody, nil
+}
+
+func (a *authService) GetNaverInfo(code string) (*naver.GetUserInfo, error) {
+	// naver
+	tokenResp := a.naver.GetToken(code)
+	if tokenResp.StatusCode() != 200 {
+		body := new(naver.GetTokenErrorBody)
+		json.Unmarshal(tokenResp.Body(), body)
+
+		return nil, errors.New(body.Error + body.ErrorDescription)
+	}
+
+	tokenRespBody := new(naver.GetTokenSuccessBody)
+	json.Unmarshal(tokenResp.Body(), tokenRespBody)
+
+	// naver
+	infoResp := a.naver.GetUserInfo(tokenRespBody.AccessToken)
+	if infoResp.StatusCode() != 200 {
+		body := new(naver.GetTokenErrorBody)
+		json.Unmarshal(infoResp.Body(), body)
+
+		return nil, errors.New(body.Error + body.ErrorDescription)
+	}
+
+	type res struct {
+		Response naver.GetUserInfo `json:"response"`
+	}
+	response := new(res)
+
+	json.Unmarshal(infoResp.Body(), &response)
+
+	return &response.Response, nil
+}
+
 func (a *authService) GetKakaoRedirectUrl() string {
 	// kakao
 	resp := a.kakao.Authorize()
@@ -75,4 +137,8 @@ func (a *authService) GetKakaoRedirectUrl() string {
 
 func (a *authService) GetGoogleRedirectUrl() string {
 	return a.google.Authorize()
+}
+
+func (a *authService) GetNaverRedirectUrl() string {
+	return a.naver.Authorize()
 }

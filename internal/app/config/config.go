@@ -38,10 +38,14 @@ type JWT struct {
 }
 
 type Oauth struct {
-	KaKaoRedirect  string `env:"KAKAO_LOGIN_REDIRECT_URL"`
-	KaKaoClientId  string `env:"KAKAO_LOGIN_CLIENT_ID"`
-	GoogleRedirect string `env:"GOOGLE_LOGIN_REDIRECT_URL"`
-	GoogleClientId string `env:"GOOGLE_LOGIN_CLIENT_ID"`
+	NaverRedirect      string `env:"NAVER_LOGIN_REDIRECT_URL"`
+	NaverClientId      string `env:"NAVER_LOGIN_CLIENT_ID"`
+	NaverClientSecret  string `env:"NAVER_LOGIN_CLIENT_SECRET"`
+	KaKaoRedirect      string `env:"KAKAO_LOGIN_REDIRECT_URL"`
+	KaKaoClientId      string `env:"KAKAO_LOGIN_CLIENT_ID"`
+	GoogleRedirect     string `env:"GOOGLE_LOGIN_REDIRECT_URL"`
+	GoogleClientId     string `env:"GOOGLE_LOGIN_CLIENT_ID"`
+	GoogleClientSecret string `env:"GOOGLE_LOGIN_CLIENT_SECRET"`
 }
 
 const (

@@ -17,6 +17,11 @@ type SignUpBody struct {
 	NickName string `json:"nickname" validate:"required,min=2,max=10"`
 }
 
+type LoginBody struct {
+	Email    string `json:"email" validate:"required,email,min=6,max=32"`
+	Password string `json:"password" validate:"required,min=10,max=20"`
+}
+
 type SocialSignUpBody struct {
 	UserID    int    `json:"userId"`
 	Email     string `json:"email"`

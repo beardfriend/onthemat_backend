@@ -35,6 +35,6 @@ func (u *academyUseCase) Create(ctx context.Context, academy *transport.AcademyC
 	}, userId)
 }
 
-func (u *academyUseCase) Get(ctx context.Context, userId int) {
-	u.academyRepo.Get(ctx, userId)
+func (u *academyUseCase) Get(ctx context.Context, userId int) (*ent.Acadmey, error) {
+	return u.academyRepo.Get(ctx, userId)
 }

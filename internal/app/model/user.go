@@ -40,7 +40,7 @@ func (User) Fields() []ent.Field {
 			Nillable().
 			Comment("소셜 로그인을 제공한 업체 이름"),
 
-		field.Int("social_key").
+		field.String("social_key").
 			Optional().
 			Nillable().
 			Unique().

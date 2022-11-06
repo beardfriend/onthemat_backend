@@ -19,7 +19,7 @@ const docTemplate = `{
     "paths": {
         "/api/v1/auth/kakao": {
             "get": {
-                "description": "Kakao",
+                "description": "카카오 리디렉션 URL을 가져오는 API",
                 "consumes": [
                     "application/json"
                 ],
@@ -29,10 +29,13 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Kakao",
+                "summary": "카카오 로그인 URL",
                 "responses": {
-                    "200": {
-                        "description": "OK"
+                    "302": {
+                        "description": "Found"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
                     }
                 }
             }
