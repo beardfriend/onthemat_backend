@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"crypto/sha256"
 	"errors"
 	"strconv"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"onthemat/internal/app/service"
 	"onthemat/internal/app/service/token"
 	"onthemat/internal/app/transport"
+	"onthemat/pkg/auth/store"
 	"onthemat/pkg/ent"
 
 	"github.com/google/uuid"
@@ -28,12 +28,15 @@ type AuthUseCase interface {
 
 	SendEmailResetPassword(ctx *fasthttp.RequestCtx, email string) error
 	CheckDuplicatedEmail(ctx *fasthttp.RequestCtx, email string) error
+	VerifiedEmail(ctx *fasthttp.RequestCtx, email string, authKey string) error
+	RefreshToken(ctx *fasthttp.RequestCtx, refreshToken string) error
 }
 
 type authUseCase struct {
 	tokenSvc token.TokenService
 	authSvc  service.AuthService
 	userRepo repository.UserRepository
+	store    store.Store
 	config   *config.Config
 }
 
@@ -41,12 +44,14 @@ func NewAuthUseCase(
 	tokenSvc token.TokenService,
 	userRepo repository.UserRepository,
 	authsvc service.AuthService,
+	store store.Store,
 	config *config.Config,
 ) AuthUseCase {
 	return &authUseCase{
 		tokenSvc: tokenSvc,
 		authSvc:  authsvc,
 		userRepo: userRepo,
+		store:    store,
 		config:   config,
 	}
 }
@@ -67,19 +72,31 @@ type LoginResult struct {
 }
 
 func (a *authUseCase) Login(ctx *fasthttp.RequestCtx, body *transport.LoginBody) (*LoginResult, error) {
-	body.Password = string(sha256.New().Sum([]byte(body.Password)))
 	user, err := a.userRepo.GetByEmailPassword(ctx, &ent.User{
 		Email:    body.Email,
 		Password: body.Password,
 	})
 	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errors.New("이메일 혹은 비밀번호를 다시 확인해주세요. ")
+		}
 		panic(err)
+	}
+
+	if !user.IsEmailVerified {
+		return nil, errors.New("이메일 인증이 필요합니다. ")
+	}
+
+	userType := ""
+
+	if user.Type != nil {
+		userType = string(*user.Type)
 	}
 
 	// 토큰 발행
 	uid := uuid.New().String()
-	refresh, _ := a.tokenSvc.GenerateToken(uid, user.ID, "normal", string(*user.Type), a.config.JWT.RefreshTokenExpired)
-	access, _ := a.tokenSvc.GenerateToken(uid, user.ID, "normal", string(*user.Type), a.config.JWT.AccessTokenExpired)
+	refresh, _ := a.tokenSvc.GenerateToken(uid, user.ID, "normal", userType, a.config.JWT.RefreshTokenExpired)
+	access, _ := a.tokenSvc.GenerateToken(uid, user.ID, "normal", userType, a.config.JWT.AccessTokenExpired)
 
 	return &LoginResult{
 		AccessToken:           access,
@@ -170,10 +187,31 @@ func (a *authUseCase) SocialSignUp(ctx *fasthttp.RequestCtx, body *transport.Soc
 }
 
 func (a *authUseCase) SignUp(ctx *fasthttp.RequestCtx, body *transport.SignUpBody) error {
-	_, err := a.userRepo.Create(ctx, &ent.User{
+	isExist, err := a.userRepo.FindByEmail(ctx, body.Email)
+	if err != nil {
+		panic(err)
+	}
+
+	if isExist {
+		return errors.New("이미 존재하는 이메일입니다. ")
+	}
+
+	_, err = a.userRepo.Create(ctx, &ent.User{
 		Email:    body.Email,
 		Password: body.Password,
 	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	key := a.authSvc.GenerateRandomString()
+	if err := a.store.Set(ctx, body.Email, key, time.Duration(time.Hour*24)); err != nil {
+		panic(err)
+	}
+
+	a.authSvc.SendEmailVerifiedUser(body.Email, key)
+
 	return err
 }
 
@@ -186,6 +224,22 @@ func (a *authUseCase) CheckDuplicatedEmail(ctx *fasthttp.RequestCtx, email strin
 	if isExist {
 		return errors.New("이미 존재하는 이메일입니다. ")
 	}
+
+	return nil
+}
+
+func (a *authUseCase) VerifiedEmail(ctx *fasthttp.RequestCtx, email string, authKey string) error {
+	key := a.store.Get(ctx, email)
+
+	if key != authKey {
+		return errors.New("올바르지 않은 인증키 입니다. ")
+	}
+
+	if err := a.userRepo.UpdateEmailVerified(ctx, email); err != nil {
+		panic(err)
+	}
+
+	a.store.Set(ctx, email, "", 0)
 
 	return nil
 }

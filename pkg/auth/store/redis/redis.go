@@ -17,12 +17,16 @@ func NewStore(client *redis.Client) *store {
 	}
 }
 
-func (s *store) Set(ctx context.Context, tokenString string, expiration time.Duration) error {
-	return s.cli.Set(ctx, tokenString, "val", expiration).Err()
+func (s *store) Set(ctx context.Context, key string, value string, expiration time.Duration) error {
+	return s.cli.Set(ctx, key, value, expiration).Err()
 }
 
-func (s *store) Check(ctx context.Context, tokenString string) (bool, error) {
-	val, err := s.cli.Exists(ctx, tokenString).Result()
+func (s *store) Get(ctx context.Context, key string) string {
+	return s.cli.Get(ctx, key).Val()
+}
+
+func (s *store) Check(ctx context.Context, key string) (bool, error) {
+	val, err := s.cli.Exists(ctx, key).Result()
 	if err != nil {
 		return false, err
 	}

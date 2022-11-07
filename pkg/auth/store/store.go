@@ -6,6 +6,7 @@ import (
 )
 
 type Store interface {
-	Set(ctx context.Context, tokenString string, expiration time.Duration) error
-	Check(ctx context.Context, tokenString string) (bool, error)
+	Set(ctx context.Context, key string, value string, expiration time.Duration) error
+	Get(ctx context.Context, key string) string
+	Check(ctx context.Context, key string) (bool, error)
 }

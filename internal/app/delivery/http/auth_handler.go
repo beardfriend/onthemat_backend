@@ -1,7 +1,6 @@
 package http
 
 import (
-	"crypto/sha256"
 	"net/http"
 
 	ex "onthemat/internal/app/common"
@@ -36,6 +35,7 @@ func NewAuthHandler(
 	g.Post("/social/signup", handler.SocialSignUp)
 	g.Get("/reset-password", handler.SendResetPassword)
 	g.Get("/check-email", handler.CheckDuplicatedEmail)
+	g.Get("/verify-email", handler.VerifiyEmail)
 }
 
 // Kakao godoc
@@ -124,10 +124,8 @@ func (h *authHandler) SignUp(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
 	}
 
-	body.Password = string(sha256.New().Sum([]byte(body.Password)))
-
 	if err := h.AuthUseCase.SignUp(ctx, body); err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(ex.NewInternalServerError(err))
+		return c.Status(http.StatusBadRequest).JSON(ex.NewHttpError(http.StatusBadRequest, err.Error(), nil))
 	}
 
 	return c.SendStatus(201)
@@ -162,7 +160,7 @@ func (h *authHandler) Login(c *fiber.Ctx) error {
 
 	data, err := h.AuthUseCase.Login(ctx, body)
 	if err != nil {
-		panic(err)
+		return c.Status(http.StatusBadRequest).JSON(ex.NewHttpError(http.StatusBadRequest, err.Error(), nil))
 	}
 
 	return c.JSON(data)
@@ -204,4 +202,23 @@ func (h *authHandler) SendResetPassword(c *fiber.Ctx) error {
 	}
 
 	return c.SendStatus(http.StatusOK)
+}
+
+func (h *authHandler) VerifiyEmail(c *fiber.Ctx) error {
+	ctx := c.Context()
+	queries := new(transport.VerifyEmailQueries)
+
+	if err := c.QueryParser(queries); err != nil {
+		return c.Status(http.StatusUnprocessableEntity).JSON(ex.NewUnprocessableEntityError("파라메터를 입력해주세요"))
+	}
+
+	if err := validatorx.ValidateStruct(queries); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
+	}
+
+	if err := h.AuthUseCase.VerifiedEmail(ctx, queries.Email, queries.Key); err != nil {
+		return c.Status(http.StatusUnauthorized).JSON(ex.NewUnauthorizedError("인증이 유효하지 않습니다."))
+	}
+
+	return c.SendStatus(200)
 }

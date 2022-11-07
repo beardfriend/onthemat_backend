@@ -33,6 +33,11 @@ type CheckDuplicatedEmailQueries struct {
 	Email string `json:"email" validate:"required,email"`
 }
 
+type VerifyEmailQueries struct {
+	Email string `json:"email" validate:"required,email"`
+	Key   string `json:"key" validate:"required"`
+}
+
 // ------------------- Response -------------------
 
 type UserMeResponse struct {

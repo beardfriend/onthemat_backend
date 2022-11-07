@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/rand"
 	"strings"
 	"time"
@@ -26,6 +27,8 @@ type AuthService interface {
 	GetNaverInfo(code string) (*naver.GetUserInfo, error)
 
 	SendEmailResetPassword(user *ent.User)
+	GenerateRandomString() string
+	SendEmailVerifiedUser(email string, authKey string)
 	GenerateRandomPassword() string
 }
 
@@ -160,6 +163,36 @@ func (a *authService) SendEmailResetPassword(user *ent.User) {
 	body := "임시비밀번호는 " + user.TempPassword + " 입니다."
 	msg := []byte(subject + "\n" + body)
 	go a.email.Send([]string{user.Email}, msg)
+}
+
+func (a *authService) SendEmailVerifiedUser(email string, authKey string) {
+	href := fmt.Sprintf("http://localhost:3000/api/v1/auth/verify-email?key=%s", authKey)
+	subject := "Subject: Test email from Go!\n"
+	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+	body := fmt.Sprintf(`
+	<html>
+		<body>
+			<h1>이메일 인증입니다.</h1>
+			<a href="%s">클릭</a>
+		</body>
+		</html>
+		`, href)
+
+	msg := []byte(subject + mime + body)
+	go a.email.Send([]string{email}, msg)
+}
+
+func (a *authService) GenerateRandomString() string {
+	rand.Seed(time.Now().UnixNano())
+	chars := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+		"abcdefghijklmnopqrstuvwxyz" +
+		"0123456789")
+	length := 15
+	var b strings.Builder
+	for i := 0; i < length; i++ {
+		b.WriteRune(chars[rand.Intn(len(chars))])
+	}
+	return b.String()
 }
 
 func (a *authService) GenerateRandomPassword() string {

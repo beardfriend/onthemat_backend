@@ -30,6 +30,10 @@ func (User) Fields() []ent.Field {
 			Optional().
 			Comment("이메일"),
 
+		field.Bool("is_email_verified").
+			Default(false).
+			Comment("이메일 인증 여부"),
+
 		field.String("password").
 			Optional().
 			Sensitive().

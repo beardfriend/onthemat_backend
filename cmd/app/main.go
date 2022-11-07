@@ -12,6 +12,7 @@ import (
 	"onthemat/internal/app/service/token"
 	"onthemat/internal/app/usecase"
 	"onthemat/pkg/auth/jwt"
+	"onthemat/pkg/auth/store/redis"
 	"onthemat/pkg/email"
 	"onthemat/pkg/google"
 	"onthemat/pkg/kakao"
@@ -55,19 +56,20 @@ func main() {
 
 	// db
 	db := infrastructor.NewPostgresDB()
+	redisCli := infrastructor.NewRedis(c)
 
 	// repo
 	userRepo := repository.NewUserRepository(db)
 
 	// service
 	authSvc := service.NewAuthService(k, g, n, emailM)
+	authStore := redis.NewStore(redisCli)
 
 	// usecase
-	authUseCase := usecase.NewAuthUseCase(tokenModule, userRepo, authSvc, c)
+	authUseCase := usecase.NewAuthUseCase(tokenModule, userRepo, authSvc, authStore, c)
 	userUsecase := usecase.NewUserUseCase(userRepo)
 
 	// middleware
-
 	middleWare := middlewares.NewMiddelwWare(authSvc, tokenModule)
 
 	defer func() {

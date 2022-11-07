@@ -11,6 +11,7 @@ type UserRepository interface {
 	Create(ctx context.Context, user *ent.User) (*ent.User, error)
 	Update(ctx context.Context, user *ent.User) (*ent.User, error)
 	UpdateTempPassword(ctx context.Context, u *ent.User) error
+	UpdateEmailVerified(ctx context.Context, email string) error
 	GetBySocialKey(ctx context.Context, u *ent.User) (*ent.User, error)
 	GetByEmailPassword(ctx context.Context, u *ent.User) (*ent.User, error)
 	FindByEmail(ctx context.Context, email string) (bool, error)
@@ -63,6 +64,13 @@ func (repo *userRepository) UpdateTempPassword(ctx context.Context, u *ent.User)
 	return repo.db.User.Update().
 		SetTempPassword(u.TempPassword).Where(
 		user.EmailEQ(u.Email),
+	).Exec(ctx)
+}
+
+func (repo *userRepository) UpdateEmailVerified(ctx context.Context, email string) error {
+	return repo.db.User.Update().
+		SetIsEmailVerified(true).Where(
+		user.EmailEQ(email),
 	).Exec(ctx)
 }
 
