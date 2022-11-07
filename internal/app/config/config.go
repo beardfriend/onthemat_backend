@@ -17,6 +17,7 @@ type Config struct {
 	JWT     JWT     `mapstructure:"Jwt"`
 	Oauth   Oauth   `mapstructure:"Oauth"`
 	Email   Email   `mapstructure:"Email"`
+	APIKey  APIKey  `mapstructure:"ApiKey"`
 }
 
 type MariaDB struct {
@@ -55,6 +56,10 @@ type Email struct {
 	UserName string `env:"EMAIL_USERNAME"`
 }
 
+type APIKey struct {
+	Businessman string `env:"API_BUSINESS_MAN"`
+}
+
 const (
 	DEV  envFile = ".env.dev" // default
 	PROD envFile = ".env.prod"
@@ -81,6 +86,7 @@ func (c *Config) Load(filePath string) error {
 	data["Jwt"] = &JWT{}
 	data["Oauth"] = &Oauth{}
 	data["Email"] = &Email{}
+	data["ApiKey"] = &APIKey{}
 
 	for _, v := range data {
 		if err := env.Parse(v, op); err != nil {

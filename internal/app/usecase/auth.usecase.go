@@ -255,7 +255,19 @@ func (a *authUseCase) VerifiedEmail(ctx *fasthttp.RequestCtx, email string, auth
 		return common.NewBadRequestError("올바르지 않은 인증키입니다.")
 	}
 
-	if err := a.userRepo.UpdateEmailVerified(ctx, email); err != nil {
+	u, err := a.userRepo.GetByEmail(ctx, email)
+	if err != nil {
+		return err
+	}
+
+	if u.IsEmailVerified {
+		return common.NewConflictError("이미 인증된 유저입니다.")
+	}
+
+	_, err = a.userRepo.Update(ctx, &ent.User{
+		IsEmailVerified: true,
+	})
+	if err != nil {
 		return err
 	}
 

@@ -455,6 +455,13 @@ func NewAuthHandler(
 		"detail": "올바르지 않은 인증키입니다."
 	}
 
+	HTTP/1.1 400 Bad Request
+	{
+		"code": 400,
+		"message": "bad request",
+		"detail": "이미 인증된 유저입니다."
+	}
+
 
 	HTTP/1.1 500 Internal Server Error
 	{

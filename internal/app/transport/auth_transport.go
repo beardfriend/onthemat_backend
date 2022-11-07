@@ -46,7 +46,7 @@ type UserMeResponse struct {
 	Nickname    string    `json:"nickname"`
 	CreatedAt   time.Time `json:"created_at"`
 	SocialName  string    `json:"social_name"`
-	SocialKey   int       `json:"social_key"`
+	SocialKey   string    `json:"social_key"`
 	Type        user.Type `json:"type"`
 	PhoneNum    string    `json:"phone_num"`
 	LastLoginAt time.Time `json:"last_login_at"`

@@ -13,6 +13,7 @@ type UserRepository interface {
 	UpdateTempPassword(ctx context.Context, u *ent.User) error
 	UpdateEmailVerified(ctx context.Context, email string) error
 	GetBySocialKey(ctx context.Context, u *ent.User) (*ent.User, error)
+	GetByEmail(ctx context.Context, email string) (*ent.User, error)
 	GetByEmailPassword(ctx context.Context, u *ent.User) (*ent.User, error)
 	FindByEmail(ctx context.Context, email string) (bool, error)
 	Get(ctx context.Context, id int) (*ent.User, error)
@@ -53,6 +54,7 @@ func (repo *userRepository) Update(ctx context.Context, user *ent.User) (*ent.Us
 		SetNillableTermAgreeAt(user.TermAgreeAt).
 		SetNillableType(user.Type).
 		SetNillablePhoneNum(user.PhoneNum).
+		SetNillableIsEmailVerified(&user.IsEmailVerified).
 		Save(ctx)
 	if err != nil {
 		return nil, err
@@ -80,6 +82,13 @@ func (repo *userRepository) GetBySocialKey(ctx context.Context, u *ent.User) (*e
 		Where(
 			user.SocialKeyEQ(*u.SocialKey),
 			user.SocialNameEQ(*u.SocialName)).Only(ctx)
+}
+
+func (repo *userRepository) GetByEmail(ctx context.Context, email string) (*ent.User, error) {
+	return repo.db.User.
+		Query().
+		Where(
+			user.EmailEQ(email)).Only(ctx)
 }
 
 func (repo *userRepository) GetByEmailPassword(ctx context.Context, u *ent.User) (*ent.User, error) {
