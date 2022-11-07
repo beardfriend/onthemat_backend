@@ -13,6 +13,7 @@ var (
 	ErrUnauthorized         = errors.New("unauthorized")
 	ErrAuthenticationFailed = errors.New("authentication vailed")
 	ErrBadRequest           = errors.New("bad request")
+	ErrConflict             = errors.New("conflict")
 	ErrNotFound             = errors.New("not found")
 	ErrUnprocessableEntity  = errors.New("unprocessable entity")
 	ErrInternalServerError  = errors.New("internal server error")
@@ -60,10 +61,35 @@ func NewAuthenticationFailedError(details interface{}) HttpErr {
 	}
 }
 
+func NewBadRequestError(details interface{}) HttpErr {
+	return HttpError{
+		ErrCode:    http.StatusBadRequest,
+		ErrMessage: ErrBadRequest.Error(),
+		ErrDetails: details,
+	}
+}
+
+func NewConflictError(details interface{}) HttpErr {
+	return HttpError{
+		ErrCode:    http.StatusConflict,
+		ErrMessage: ErrConflict.Error(),
+		ErrDetails: details,
+	}
+}
+
 func NewUnauthorizedError(details interface{}) HttpErr {
 	return HttpError{
 		ErrCode:    http.StatusUnauthorized,
 		ErrMessage: ErrUnauthorized.Error(),
+		ErrDetails: details,
+	}
+}
+
+// New Not Found Error
+func NewNotFoundError(details interface{}) HttpErr {
+	return HttpError{
+		ErrCode:    http.StatusNotFound,
+		ErrMessage: ErrNotFound.Error(),
 		ErrDetails: details,
 	}
 }
@@ -83,7 +109,7 @@ func NewInternalServerError(details interface{}) HttpErr {
 	return HttpError{
 		ErrCode:    http.StatusInternalServerError,
 		ErrMessage: ErrInternalServerError.Error(),
-		ErrDetails: nil,
+		ErrDetails: "일시적인 에러가 발생했습니다.",
 	}
 }
 
@@ -91,10 +117,12 @@ func NewInternalServerError(details interface{}) HttpErr {
 func NewInvalidInputError(errs []*validatorx.ErrorResponse) HttpErr {
 	var errors []interface{}
 	for _, field := range errs {
+
 		splited := strings.Split(field.FailedField, ".")
 		fieldName := splited[1]
+
 		errors = append(errors, map[string]interface{}{
-			fieldName: field.Tag + field.Value,
+			strings.ToLower(fieldName): field.Tag,
 		})
 
 	}
@@ -104,4 +132,12 @@ func NewInvalidInputError(errs []*validatorx.ErrorResponse) HttpErr {
 		ErrMessage: ErrBadRequest.Error(),
 		ErrDetails: errors,
 	}
+}
+
+// Parse Http Error
+func ParseHttpError(err error) (int, interface{}) {
+	if httpErr, ok := err.(HttpErr); ok {
+		return httpErr.Status(), httpErr
+	}
+	return http.StatusInternalServerError, NewInternalServerError(err)
 }

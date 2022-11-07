@@ -17,6 +17,10 @@ func NewStore(client *redis.Client) *store {
 	}
 }
 
+func (s *store) Del(ctx context.Context, key string) error {
+	return s.cli.Del(ctx, key).Err()
+}
+
 func (s *store) Set(ctx context.Context, key string, value string, expiration time.Duration) error {
 	return s.cli.Set(ctx, key, value, expiration).Err()
 }

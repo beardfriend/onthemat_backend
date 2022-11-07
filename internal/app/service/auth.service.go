@@ -26,10 +26,10 @@ type AuthService interface {
 	GetGoogleInfo(code string) (*google.GetUserInfo, error)
 	GetNaverInfo(code string) (*naver.GetUserInfo, error)
 
-	SendEmailResetPassword(user *ent.User)
 	GenerateRandomString() string
-	SendEmailVerifiedUser(email string, authKey string)
 	GenerateRandomPassword() string
+	SendEmailResetPassword(user *ent.User) error
+	SendEmailVerifiedUser(email string, authKey string) error
 }
 
 type authService struct {
@@ -158,15 +158,15 @@ func (a *authService) GetNaverRedirectUrl() string {
 	return a.naver.Authorize()
 }
 
-func (a *authService) SendEmailResetPassword(user *ent.User) {
+func (a *authService) SendEmailResetPassword(user *ent.User) error {
 	subject := "임시 비밀번호 발급안내" + "!\n"
 	body := "임시비밀번호는 " + user.TempPassword + " 입니다."
 	msg := []byte(subject + "\n" + body)
-	go a.email.Send([]string{user.Email}, msg)
+	return a.email.Send([]string{user.Email}, msg)
 }
 
-func (a *authService) SendEmailVerifiedUser(email string, authKey string) {
-	href := fmt.Sprintf("http://localhost:3000/api/v1/auth/verify-email?key=%s", authKey)
+func (a *authService) SendEmailVerifiedUser(email string, authKey string) error {
+	href := fmt.Sprintf("http://localhost:3000/api/v1/auth/verify-email?key=%s&email=%s", authKey, email)
 	subject := "Subject: Test email from Go!\n"
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 	body := fmt.Sprintf(`
@@ -179,7 +179,7 @@ func (a *authService) SendEmailVerifiedUser(email string, authKey string) {
 		`, href)
 
 	msg := []byte(subject + mime + body)
-	go a.email.Send([]string{email}, msg)
+	return a.email.Send([]string{email}, msg)
 }
 
 func (a *authService) GenerateRandomString() string {

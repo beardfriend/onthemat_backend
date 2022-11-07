@@ -5,3 +5,4 @@ init/initdata.sql
 pkg/ent
 .env.dev
 .env.test
+apidocs

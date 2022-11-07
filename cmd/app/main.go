@@ -18,20 +18,10 @@ import (
 	"onthemat/pkg/kakao"
 	"onthemat/pkg/naver"
 
-	swagger "github.com/arsmn/fiber-swagger/v2"
-
-	_ "onthemat/docs"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
-// @title Go Boilerplate
-// @version 1.0.4
-// @termsOfService http://swagger.io/terms/
-// @securityDefinitions.apikey JwtToken
-// @in header
-// @name Authorization
 func main() {
 	// debugmode check
 	configPath := "./configs"
@@ -76,15 +66,8 @@ func main() {
 		infrastructor.ClosePostgres(db)
 	}()
 	// app
-	app := fiber.New(fiber.Config{
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			return c.Status(500).JSON(fiber.Map{
-				"message": "일시적인 에러가 발생했습니다",
-			})
-		},
-	})
+	app := fiber.New()
 	app.Use(recover.New())
-	app.Get("/swagger/*", swagger.HandlerDefault)
 
 	// handler
 	router := app.Group("/api/v1")
