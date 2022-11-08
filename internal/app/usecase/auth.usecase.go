@@ -313,9 +313,14 @@ func (a *authUseCase) SendEmailResetPassword(ctx *fasthttp.RequestCtx, email str
 		return common.NewBadRequestError("존재하지 않는 이메일입니다.")
 	}
 
+	sha := sha256.New()
+	sha.Write([]byte(a.config.Secret.Password))
+	sha.Write([]byte(a.authSvc.GenerateRandomPassword()))
+	hashPassword := fmt.Sprintf("%x", sha.Sum(nil))
+
 	u := &ent.User{
 		Email:        email,
-		TempPassword: a.authSvc.GenerateRandomPassword(),
+		TempPassword: hashPassword,
 	}
 	if err := a.userRepo.UpdateTempPassword(ctx, u); err != nil {
 		return err
