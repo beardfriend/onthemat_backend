@@ -351,6 +351,9 @@ func (a *authUseCase) Refresh(ctx *fasthttp.RequestCtx, authorizationHeader []by
 
 	u, err := a.userRepo.Get(ctx, claim.UserId)
 	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, common.NewNotFoundError("존재하지 않는 유저입니다.")
+		}
 		return nil, err
 	}
 

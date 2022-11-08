@@ -767,6 +767,13 @@ HTTP/1.1 401 Authentication Vailed
 	"detail": "잘못된 토큰입니다."
 }
 
+HTTP/1.1 404 Not Found
+{
+    "code": 404,
+    "message": "not found",
+    "details": "존재하지 않는 유저입니다."
+}
+
 
 HTTP/1.1 500 Internal Server Error
 {

@@ -31,7 +31,7 @@ func NewUserRepository(db *ent.Client) UserRepository {
 }
 
 func (repo *userRepository) Get(ctx context.Context, id int) (*ent.User, error) {
-	return repo.db.User.Get(ctx, id)
+	return repo.db.User.Query().Where(user.IDEQ(id)).Only(ctx)
 }
 
 func (repo *userRepository) Create(ctx context.Context, user *ent.User) (*ent.User, error) {
