@@ -1,6 +1,8 @@
 package jwt
 
 import (
+	"strings"
+
 	jwtLib "github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
 )
@@ -17,7 +19,10 @@ type Jwt interface {
 	ParseToken(tokenString string, result jwtLib.Claims) error
 }
 
-const ErrInvalidToken = "ErrInvalidToken"
+const (
+	ErrInvalidToken = "ErrInvalidToken"
+	ErrExiredToken  = "ErrExpired"
+)
 
 type jwt struct {
 	*option
@@ -54,6 +59,9 @@ func (a *jwt) ParseToken(tokenString string, result jwtLib.Claims) error {
 	})
 
 	if err != nil || !token.Valid {
+		if strings.Contains(err.Error(), "expired") {
+			return errors.New(ErrExiredToken)
+		}
 		return errors.New(ErrInvalidToken)
 	}
 

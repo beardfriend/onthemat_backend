@@ -15,5 +15,6 @@ func TestBusineessMan(t *testing.T) {
 	}
 	businessModule := NewBusinessMan(c)
 	resp := businessModule.GetStatus("1138621886")
+	fmt.Println(resp.StatusCode())
 	fmt.Println(resp)
 }

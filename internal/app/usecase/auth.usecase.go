@@ -29,7 +29,7 @@ type AuthUseCase interface {
 	SendEmailResetPassword(ctx *fasthttp.RequestCtx, email string) error
 	CheckDuplicatedEmail(ctx *fasthttp.RequestCtx, email string) error
 	VerifiedEmail(ctx *fasthttp.RequestCtx, email string, authKey string) error
-	// RefreshToken(ctx *fasthttp.RequestCtx, refreshToken string) error
+	Refresh(ctx *fasthttp.RequestCtx, authorizationHeader []byte) (*RefreshResult, error)
 }
 
 type authUseCase struct {
@@ -66,7 +66,7 @@ func (a *authUseCase) NaverRedirectUrl(ctx *fasthttp.RequestCtx) string {
 
 type LoginResult struct {
 	AccessToken           string    `json:"accessToken"`
-	AccessToeknExpiredAt  time.Time `json:"accessTokenexpiredAt"`
+	AccessTokenExpiredAt  time.Time `json:"accessTokenExpiredAt"`
 	RefreshToken          string    `json:"refreshToken"`
 	RefreshTokenExpiredAt time.Time `json:"refreshTokenExpiredAt"`
 }
@@ -100,6 +100,11 @@ func (a *authUseCase) Login(ctx *fasthttp.RequestCtx, body *transport.LoginBody)
 	if err != nil {
 		return nil, err
 	}
+
+	if err := a.store.Set(ctx, uid, strconv.Itoa(user.ID), time.Duration(a.config.JWT.RefreshTokenExpired)*time.Minute); err != nil {
+		return nil, err
+	}
+
 	access, err := a.tokenSvc.GenerateToken(uid, user.ID, "normal", userType, a.config.JWT.AccessTokenExpired)
 	if err != nil {
 		return nil, err
@@ -107,7 +112,7 @@ func (a *authUseCase) Login(ctx *fasthttp.RequestCtx, body *transport.LoginBody)
 
 	return &LoginResult{
 		AccessToken:           access,
-		AccessToeknExpiredAt:  a.tokenSvc.GetExpiredAt(a.config.JWT.AccessTokenExpired),
+		AccessTokenExpiredAt:  a.tokenSvc.GetExpiredAt(a.config.JWT.AccessTokenExpired),
 		RefreshToken:          refresh,
 		RefreshTokenExpiredAt: a.tokenSvc.GetExpiredAt(a.config.JWT.RefreshTokenExpired),
 	}, nil
@@ -115,6 +120,7 @@ func (a *authUseCase) Login(ctx *fasthttp.RequestCtx, body *transport.LoginBody)
 
 func (a *authUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName, code string) (*LoginResult, error) {
 	user := new(ent.User)
+	// TODO: 일반 에러로 빼기.
 	if socialName != "kakao" && socialName != "google" && socialName != "naver" {
 		return nil, common.NewBadRequestError("올바르지 않은 소셜 이름입니다.")
 	}
@@ -177,6 +183,11 @@ func (a *authUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName, code str
 	if err != nil {
 		return nil, err
 	}
+
+	if err := a.store.Set(ctx, uid, strconv.Itoa(user.ID), time.Duration(a.config.JWT.RefreshTokenExpired)*time.Minute); err != nil {
+		return nil, err
+	}
+
 	access, err := a.tokenSvc.GenerateToken(uid, user.ID, socialName, userType, a.config.JWT.AccessTokenExpired)
 	if err != nil {
 		return nil, err
@@ -184,7 +195,7 @@ func (a *authUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName, code str
 
 	return &LoginResult{
 		AccessToken:           access,
-		AccessToeknExpiredAt:  a.tokenSvc.GetExpiredAt(a.config.JWT.AccessTokenExpired),
+		AccessTokenExpiredAt:  a.tokenSvc.GetExpiredAt(a.config.JWT.AccessTokenExpired),
 		RefreshToken:          refresh,
 		RefreshTokenExpiredAt: a.tokenSvc.GetExpiredAt(a.config.JWT.RefreshTokenExpired),
 	}, nil
@@ -278,7 +289,7 @@ func (a *authUseCase) VerifiedEmail(ctx *fasthttp.RequestCtx, email string, auth
 	return nil
 }
 
-func (a authUseCase) SendEmailResetPassword(ctx *fasthttp.RequestCtx, email string) error {
+func (a *authUseCase) SendEmailResetPassword(ctx *fasthttp.RequestCtx, email string) error {
 	isExist, err := a.userRepo.FindByEmail(ctx, email)
 	if err != nil {
 		return err
@@ -301,4 +312,53 @@ func (a authUseCase) SendEmailResetPassword(ctx *fasthttp.RequestCtx, email stri
 
 	return nil
 	// 이메일로 패스워드 찾아서,
+}
+
+type RefreshResult struct {
+	AccessToken          string    `json:"accessToken"`
+	AccessTokenExpiredAt time.Time `json:"accessTokenExpiredAt"`
+}
+
+func (a *authUseCase) Refresh(ctx *fasthttp.RequestCtx, authorizationHeader []byte) (*RefreshResult, error) {
+	refreshToken, err := a.authSvc.ExtractTokenFromHeader(string(authorizationHeader))
+	if err != nil {
+		return nil, common.NewBadRequestError("헤더를 확인해주세요.")
+	}
+
+	claim := new(token.TokenClaim)
+	if err := a.tokenSvc.ParseToken(refreshToken, claim); err != nil {
+		return nil, err
+	}
+
+	val := a.store.Get(ctx, claim.Uuid)
+	if val != strconv.Itoa(claim.UserId) {
+		return nil, common.NewAuthenticationFailedError("잘못된 토큰입니다.")
+	}
+
+	u, err := a.userRepo.Get(ctx, claim.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	uid := uuid.New().String()
+
+	userType := ""
+	if u.Type != nil {
+		userType = string(*u.Type)
+	}
+
+	loginType := ""
+	if u.SocialName != nil || u.SocialName != &loginType {
+		loginType = "social"
+	}
+
+	access, err := a.tokenSvc.GenerateToken(uid, u.ID, loginType, userType, a.config.JWT.AccessTokenExpired)
+	if err != nil {
+		return nil, err
+	}
+
+	return &RefreshResult{
+		AccessToken:          access,
+		AccessTokenExpiredAt: a.tokenSvc.GetExpiredAt(a.config.JWT.AccessTokenExpired),
+	}, nil
 }

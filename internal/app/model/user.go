@@ -99,9 +99,17 @@ func (User) Mixin() []ent.Mixin {
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("Academy", Acadmey.Type).
-			StorageKey(edge.Column("id")),
+			StorageKey(edge.Column("id")).
+			Annotations(entsql.Annotation{
+				OnDelete: entsql.Cascade,
+			}),
 
 		edge.To("Teacher", Teacher.Type).
-			StorageKey(edge.Column("id")),
+			StorageKey(edge.Column("id")).
+			Annotations(entsql.Annotation{
+				OnDelete: entsql.Cascade,
+			}),
+
+		edge.To("Image", Image.Type),
 	}
 }

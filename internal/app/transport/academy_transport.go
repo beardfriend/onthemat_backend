@@ -6,6 +6,7 @@ package transport
 
 type AcademyCreateRequestBody struct {
 	Name          string `json:"name"`
+	LogoUrl       string `json:"logoUrl"`
 	BusinessCode  string `json:"businessCode"`
 	CallNumber    string `json:"callNumber"`
 	AddressRoad   string `json:"addressRoad"`

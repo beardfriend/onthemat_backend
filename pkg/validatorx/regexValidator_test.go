@@ -7,12 +7,12 @@ import (
 )
 
 func TestImageContentTypeValidator(t *testing.T) {
-	res1, _ := ImageContentTypeValidator("pngg")
+	res1, _ := ImageExtensionValidator(".pngg")
 	assert.Equal(t, res1, false)
 
-	res2, _ := ImageContentTypeValidator("aa")
+	res2, _ := ImageExtensionValidator(".aa")
 	assert.Equal(t, res2, false)
 
-	res3, _ := ImageContentTypeValidator("png")
+	res3, _ := ImageExtensionValidator(".png")
 	assert.Equal(t, res3, true)
 }

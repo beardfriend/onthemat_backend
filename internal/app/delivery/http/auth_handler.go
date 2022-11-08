@@ -49,6 +49,8 @@ func NewAuthHandler(
 	g.Get("/check-email", handler.CheckDuplicatedEmail)
 	// 이메일 인증
 	g.Get("/verify-email", handler.VerifiyEmail)
+	// Access Token 리프레쉬
+	g.Get("/token/refresh", handler.Refresh)
 }
 
 // 카카오 리디렉션
@@ -727,5 +729,67 @@ func (h *authHandler) VerifiyEmail(c *fiber.Ctx) error {
 		JSON(ex.Response{
 			Code:    200,
 			Message: "",
+		})
+}
+
+// Access Token 리프레쉬
+/**
+@api {get} /auth/token/refresh Access 토큰 리프레쉬
+@apiName acessTokenRefresh
+@apiVersion 1.0.0
+@apiGroup auth
+@apiDescription 엑세스 토큰을 재발급하는 API
+
+@apiHeader {String} Authorization Bearer 리프레쉬토큰
+
+@apiSuccessExample Success-Response:
+HTTP/1.1 200 OK
+{
+	"code": 200,
+	"message": "",
+	"result": {
+		"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVdWlkIjoiNjE5YWUxYTYtN2YyNy00NDZmLTkzZGUtNDBjNjJkM2MwOWU3IiwiVXNlcklkIjowLCJMb2dpblR5cGUiOiJrYWthbyIsIlVzZXJUeXBlIjoiIiwiaXNzIjoib25lVGhlTWF0IiwiZXhwIjoxNjY3ODAzMTAyLCJpYXQiOjE2Njc4MDIyMDJ9.wFaNMotM7E38mM_Rcyk5GlAe7WTUX-zJv9CPGgixpds",
+		"accessTokenexpiredAt": "2022-11-07T15:38:22.270238+09:00"
+	}
+}
+@apiErrorExample Error-Response:
+HTTP/1.1 400 Bad Request
+{
+	"code": 400,
+	"message": "bad request",
+	"detail": "헤더를 확인해주세요."
+}
+
+HTTP/1.1 401 Authentication Vailed
+{
+	"code": 401,
+	"message": "authentication vailed",
+	"detail": "잘못된 토큰입니다."
+}
+
+
+HTTP/1.1 500 Internal Server Error
+{
+	"code": 500,
+	"message": "internal server error",
+	"detail": "일시적인 에러가 발생했습니다."
+}
+*/
+func (h *authHandler) Refresh(c *fiber.Ctx) error {
+	ctx := c.Context()
+
+	authorizationHeader := c.Request().Header.Peek("Authorization")
+
+	data, err := h.AuthUseCase.Refresh(ctx, authorizationHeader)
+	if err != nil {
+		code, json := ex.ParseHttpError(err)
+		return c.Status(code).JSON(json)
+	}
+
+	return c.Status(200).
+		JSON(ex.ResponseWithData{
+			Code:    200,
+			Message: "",
+			Result:  data,
 		})
 }

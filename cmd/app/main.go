@@ -13,10 +13,12 @@ import (
 	"onthemat/internal/app/usecase"
 	"onthemat/pkg/auth/jwt"
 	"onthemat/pkg/auth/store/redis"
+	"onthemat/pkg/aws"
 	"onthemat/pkg/email"
 	"onthemat/pkg/google"
 	"onthemat/pkg/kakao"
 	"onthemat/pkg/naver"
+	"onthemat/pkg/openapi"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -44,20 +46,33 @@ func main() {
 	n := naver.NewNaver(c)
 	emailM := email.NewEmail(c)
 
+	// ------- s3 ----------
+	s3 := aws.NewS3(c)
+	if err := s3.SetConfig(); err != nil {
+		panic(err)
+	}
+
+	businessManM := openapi.NewBusinessMan(c)
+
 	// db
 	db := infrastructor.NewPostgresDB()
 	redisCli := infrastructor.NewRedis(c)
 
 	// repo
 	userRepo := repository.NewUserRepository(db)
+	imageRepo := repository.NewImageRepository(db)
+	academyRepo := repository.NewAcademyRepository(db)
 
 	// service
 	authSvc := service.NewAuthService(k, g, n, emailM)
 	authStore := redis.NewStore(redisCli)
+	academySvc := service.NewAcademyService(businessManM)
 
 	// usecase
 	authUseCase := usecase.NewAuthUseCase(tokenModule, userRepo, authSvc, authStore, c)
 	userUsecase := usecase.NewUserUseCase(userRepo)
+	academyUsecase := usecase.NewAcademyUsecase(academyRepo, academySvc, userRepo)
+	uploadUsecase := usecase.NewUploadUsecase(imageRepo, s3)
 
 	// middleware
 	middleWare := middlewares.NewMiddelwWare(authSvc, tokenModule)
@@ -72,7 +87,9 @@ func main() {
 	// handler
 	router := app.Group("/api/v1")
 	http.NewAuthHandler(authUseCase, router)
+	http.NewUploadHandler(middleWare, uploadUsecase, router)
 	http.NewUserHandler(middleWare, userUsecase, router)
+	http.NewAcademyHandler(middleWare, academyUsecase, router)
 
 	app.Listen(":3000")
 }
