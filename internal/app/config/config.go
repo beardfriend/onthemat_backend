@@ -18,6 +18,8 @@ type Config struct {
 	Oauth   Oauth   `mapstructure:"Oauth"`
 	Email   Email   `mapstructure:"Email"`
 	APIKey  APIKey  `mapstructure:"ApiKey"`
+	AWS     AWS     `mapstructure:"Aws"`
+	AWSS3   AWSS3   `mapstructure:"AwsS3"`
 }
 
 type MariaDB struct {
@@ -60,6 +62,16 @@ type APIKey struct {
 	Businessman string `env:"API_BUSINESS_MAN"`
 }
 
+type AWS struct {
+	AceessKey string `env:"AWS_ACCESS_KEY"`
+	SecretKey string `env:"AWS_SECRET_KEY"`
+}
+
+type AWSS3 struct {
+	Region     string `env:"AWS_S3_REGION"`
+	BucketName string `env:"AWS_S3_BUCKET"`
+}
+
 const (
 	DEV  envFile = ".env.dev" // default
 	PROD envFile = ".env.prod"
@@ -87,6 +99,8 @@ func (c *Config) Load(filePath string) error {
 	data["Oauth"] = &Oauth{}
 	data["Email"] = &Email{}
 	data["ApiKey"] = &APIKey{}
+	data["Aws"] = &AWS{}
+	data["AwsS3"] = &AWSS3{}
 
 	for _, v := range data {
 		if err := env.Parse(v, op); err != nil {
