@@ -11,7 +11,6 @@ type AcademyCreateRequestBody struct {
 	CallNumber    string `json:"callNumber"`
 	AddressRoad   string `json:"addressRoad"`
 	AddressSigun  string `json:"addressSiGun"`
-	AddressGun    string `json:"addressGun"`
 	AddressGu     string `json:"addressGu"`
 	AddressDong   string `json:"addressDong"`
 	AddressDetail string `json:"addressDetail"`

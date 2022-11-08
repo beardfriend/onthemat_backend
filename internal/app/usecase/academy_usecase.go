@@ -8,7 +8,6 @@ import (
 	"onthemat/internal/app/service"
 	"onthemat/internal/app/transport"
 	"onthemat/pkg/ent"
-	"onthemat/pkg/ent/user"
 )
 
 type AcademyUsecase interface {
@@ -45,15 +44,6 @@ func (u *academyUseCase) Create(ctx context.Context, academy *transport.AcademyC
 
 	if getUser.Type != nil {
 		return ex.NewConflictError("이미 존재하는 유저입니다.")
-	}
-
-	userType := user.TypeAcademy
-	_, err = u.userRepo.Update(ctx, &ent.User{
-		ID:   userId,
-		Type: &userType,
-	})
-	if err != nil {
-		return err
 	}
 
 	return u.academyRepo.Create(ctx, &ent.Acadmey{

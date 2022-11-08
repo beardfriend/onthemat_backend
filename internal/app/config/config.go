@@ -12,6 +12,7 @@ import (
 type envFile string
 
 type Config struct {
+	Secret  Secret  `mapstructure:"Secret"`
 	MariaDB MariaDB `mapstructure:"MariaDB"`
 	Redis   Redis   `mapstructure:"Redis"`
 	JWT     JWT     `mapstructure:"Jwt"`
@@ -57,6 +58,9 @@ type Email struct {
 	Password string `env:"EMAIL_PASSWORD"`
 	UserName string `env:"EMAIL_USERNAME"`
 }
+type Secret struct {
+	Password string `env:"PASSWORD_SECRET"`
+}
 
 type APIKey struct {
 	Businessman string `env:"API_BUSINESS_MAN"`
@@ -101,6 +105,7 @@ func (c *Config) Load(filePath string) error {
 	data["ApiKey"] = &APIKey{}
 	data["Aws"] = &AWS{}
 	data["AwsS3"] = &AWSS3{}
+	data["Secret"] = &Secret{}
 
 	for _, v := range data {
 		if err := env.Parse(v, op); err != nil {

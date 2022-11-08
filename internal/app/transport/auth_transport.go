@@ -12,9 +12,10 @@ import (
 // ------------------- Request -------------------
 
 type SignUpBody struct {
-	Email    string `json:"email" validate:"required,email,min=6,max=32"`
-	Password string `json:"password" validate:"required,min=10,max=20"`
-	NickName string `json:"nickname" validate:"required,min=2,max=10"`
+	Email     string `json:"email" validate:"required,email,min=6,max=32"`
+	Password  string `json:"password" validate:"required,min=10,max=20"`
+	NickName  string `json:"nickname" validate:"required,min=2,max=10"`
+	TermAgree bool   `json:"termAgree" validate:"required"`
 }
 
 type LoginBody struct {

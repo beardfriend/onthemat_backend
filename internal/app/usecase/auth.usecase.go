@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -73,9 +75,15 @@ type LoginResult struct {
 
 func (a *authUseCase) Login(ctx *fasthttp.RequestCtx, body *transport.LoginBody) (*LoginResult, error) {
 	defer ctx.Done()
+
+	sha := sha256.New()
+	sha.Write([]byte(a.config.Secret.Password))
+	sha.Write([]byte(body.Password))
+	hashPassword := fmt.Sprintf("%x", sha.Sum(nil))
+
 	user, err := a.userRepo.GetByEmailPassword(ctx, &ent.User{
 		Email:    body.Email,
-		Password: body.Password,
+		Password: hashPassword,
 	})
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -227,9 +235,18 @@ func (a *authUseCase) SignUp(ctx *fasthttp.RequestCtx, body *transport.SignUpBod
 		return common.NewConflictError("이미 존재하는 이메일입니다.")
 	}
 
+	termAgreeAt := time.Now()
+
+	sha := sha256.New()
+	sha.Write([]byte(a.config.Secret.Password))
+	sha.Write([]byte(body.Password))
+	hashPassword := fmt.Sprintf("%x", sha.Sum(nil))
+
 	_, err = a.userRepo.Create(ctx, &ent.User{
-		Email:    body.Email,
-		Password: body.Password,
+		Email:       body.Email,
+		Password:    hashPassword,
+		Nickname:    &body.NickName,
+		TermAgreeAt: &termAgreeAt,
 	})
 
 	if err != nil {
@@ -241,7 +258,7 @@ func (a *authUseCase) SignUp(ctx *fasthttp.RequestCtx, body *transport.SignUpBod
 		return err
 	}
 
-	a.authSvc.SendEmailVerifiedUser(body.Email, key)
+	go a.authSvc.SendEmailVerifiedUser(body.Email, key)
 
 	return err
 }
@@ -275,10 +292,7 @@ func (a *authUseCase) VerifiedEmail(ctx *fasthttp.RequestCtx, email string, auth
 		return common.NewConflictError("이미 인증된 유저입니다.")
 	}
 
-	_, err = a.userRepo.Update(ctx, &ent.User{
-		IsEmailVerified: true,
-	})
-	if err != nil {
+	if err := a.userRepo.UpdateEmailVerifeid(ctx, u.ID); err != nil {
 		return err
 	}
 
