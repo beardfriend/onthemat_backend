@@ -71,6 +71,8 @@ func (Acadmey) Fields() []ent.Field {
 
 func (Acadmey) Edges() []ent.Edge {
 	return []ent.Edge{
+		edge.To("recruitment", Recruitment.Type),
+
 		edge.From("user", User.Type).
 			Ref("Academy").Unique().Required(),
 	}

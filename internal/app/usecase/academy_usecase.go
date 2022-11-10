@@ -12,6 +12,8 @@ import (
 
 type AcademyUsecase interface {
 	Create(ctx context.Context, academy *transport.AcademyCreateRequestBody, userId int) error
+	Get(ctx context.Context, userId int) (*ent.Acadmey, error)
+	Update(ctx context.Context, a *transport.AcademyUpdateRequestBody, userId int) error
 }
 
 type academyUseCase struct {
@@ -61,5 +63,29 @@ func (u *academyUseCase) Create(ctx context.Context, academy *transport.AcademyC
 }
 
 func (u *academyUseCase) Get(ctx context.Context, userId int) (*ent.Acadmey, error) {
-	return u.academyRepo.Get(ctx, userId)
+	academy, err := u.academyRepo.Get(ctx, userId)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, ex.NewNotFoundError("존재하지 않는 유저입니다.")
+		}
+	}
+	return academy, nil
+}
+
+func (u *academyUseCase) Update(ctx context.Context, a *transport.AcademyUpdateRequestBody, userId int) error {
+	err := u.academyRepo.Update(ctx, &ent.Acadmey{
+		Name:          a.Name,
+		CallNumber:    a.CallNumber,
+		AddressRoad:   a.AddressRoad,
+		AddressSigun:  a.AddressSigun,
+		AddressGu:     a.AddressGu,
+		AddressDong:   a.AddressDong,
+		AddressDetail: a.AddressDetail,
+		AddressX:      a.AddressX,
+		AddressY:      a.AddressY,
+	}, userId)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/acadmey"
 	"onthemat/pkg/ent/user"
@@ -13,6 +14,7 @@ type AcademyRepository interface {
 	Create(ctx context.Context, academy *ent.Acadmey, userId int) error
 	Update(ctx context.Context, academy *ent.Acadmey, userId int) error
 	Get(ctx context.Context, userId int) (*ent.Acadmey, error)
+	List(ctx context.Context, pageNo, pageSize int) ([]*ent.Acadmey, error)
 }
 
 type academyRepository struct {
@@ -49,22 +51,55 @@ func (repo *academyRepository) Create(ctx context.Context, academy *ent.Acadmey,
 }
 
 func (repo *academyRepository) Update(ctx context.Context, academy *ent.Acadmey, userId int) error {
-	return repo.db.Acadmey.UpdateOneID(userId).
+	return repo.db.Debug().Acadmey.Update().
 		SetName(academy.Name).
 		SetCallNumber(academy.CallNumber).
 		SetAddressRoad(academy.AddressRoad).
 		SetAddressSigun(academy.AddressSigun).
 		SetAddressGu(academy.AddressGu).
 		SetAddressDong(academy.AddressDong).
+		SetAddressDong(academy.AddressDetail).
 		SetAddressX(academy.AddressX).
 		SetAddressY(academy.AddressY).
+		Where(acadmey.IDEQ(userId)).
 		Exec(ctx)
 }
 
 func (repo *academyRepository) Get(ctx context.Context, userId int) (*ent.Acadmey, error) {
 	return repo.db.Acadmey.
 		Query().
+		Select(
+			acadmey.FieldID,
+			acadmey.FieldCallNumber,
+			acadmey.FieldName,
+			acadmey.FieldAddressSigun,
+			acadmey.FieldAddressGu,
+			acadmey.FieldAddressDong,
+			acadmey.FieldAddressRoad,
+			acadmey.FieldAddressDetail,
+			acadmey.FieldAddressX,
+			acadmey.FieldAddressY,
+		).
 		Where(acadmey.ID(userId)).
-		WithUser().
 		Only(ctx)
+}
+
+func (repo *academyRepository) List(ctx context.Context, pageNo, pageSize int) ([]*ent.Acadmey, error) {
+	pagination := utils.NewPagination(pageNo, pageSize)
+
+	return repo.db.Acadmey.
+		Query().
+		Select(
+			acadmey.FieldID,
+			acadmey.FieldCallNumber,
+			acadmey.FieldName,
+			acadmey.FieldAddressSigun,
+			acadmey.FieldAddressGu,
+			acadmey.FieldAddressDong,
+			acadmey.FieldAddressRoad,
+			acadmey.FieldAddressDetail,
+		).
+		Limit(pagination.GetLimit()).
+		Offset(pagination.GetOffset()).
+		All(ctx)
 }
