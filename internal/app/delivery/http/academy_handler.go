@@ -27,8 +27,8 @@ func NewAcademyHandler(
 	}
 
 	g := router.Group("/academy")
-	g.Post("", middleware.Auth, handler.Create)
-	g.Put("", middleware.Auth, handler.Update)
+	g.Post("", middleware.Auth, middleware.OnlyAcademy, handler.Create)
+	g.Put("", middleware.Auth, middleware.OnlyAcademy, handler.Update)
 	g.Get("/list", handler.List)
 	g.Get("/:id", handler.Detail)
 }

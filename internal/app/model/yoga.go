@@ -29,7 +29,7 @@ func (Yoga) Fields() []ent.Field {
 			Optional().
 			Comment("요가에 대한 설명"),
 
-		field.Bool("is_offical").
+		field.Bool("isOffical").
 			Comment("관리자가 등록했는지 여부"),
 	}
 }

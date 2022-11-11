@@ -15,7 +15,7 @@ type Teacher struct {
 
 func (Teacher) Annotations() []schema.Annotation {
 	return []schema.Annotation{
-		entsql.Annotation{Table: "teacher"},
+		entsql.Annotation{Table: "teachers"},
 	}
 }
 
@@ -28,9 +28,18 @@ func (Teacher) Fields() []ent.Field {
 			NotEmpty().
 			Comment("선생님 이름"),
 
+		field.Int("age").
+			Comment("나이"),
+
 		field.Bool("isProfileOpen").
 			Default(false).
-			Comment(""),
+			Comment("프로필 오픈 여부"),
+	}
+}
+
+func (Teacher) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		DefaultTimeMixin{},
 	}
 }
 
@@ -41,5 +50,15 @@ func (Teacher) Edges() []ent.Edge {
 
 		edge.From("recruitment_instead", RecruitmentInstead.Type).
 			Ref("applicant"),
+
+		// 다루는 요가
+		edge.To("teacherYoga", UserYoga.Type).
+			StorageKey(edge.Column("user_id")),
+
+		// 자격증
+		edge.To("certification", TeacherCertification.Type),
+
+		// 근무 경험
+		edge.To("workExperience", TeacherWorkExperience.Type),
 	}
 }

@@ -30,7 +30,7 @@ func (User) Fields() []ent.Field {
 			Optional().
 			Comment("이메일"),
 
-		field.Bool("is_email_verified").
+		field.Bool("isEmailVerified").
 			Default(false).
 			Comment("이메일 인증 여부"),
 
@@ -39,17 +39,17 @@ func (User) Fields() []ent.Field {
 			Sensitive().
 			Comment("패스워드"),
 
-		field.String("temp_password").
+		field.String("tempPassword").
 			Optional().
 			Sensitive().
 			Comment("임시 비밀번호"),
 
-		field.String("social_name").
+		field.String("socialName").
 			Optional().
 			Nillable().
 			Comment("소셜 로그인을 제공한 업체 이름"),
 
-		field.String("social_key").
+		field.String("socialKey").
 			Optional().
 			Nillable().
 			Unique().
@@ -70,7 +70,7 @@ func (User) Fields() []ent.Field {
 			Values("teacher", "academy").
 			Comment("유저 타입"),
 
-		field.String("phone_num").
+		field.String("phoneNum").
 			SchemaType(map[string]string{
 				dialect.Postgres: "varchar(11)",
 			}).
@@ -79,12 +79,12 @@ func (User) Fields() []ent.Field {
 			Nillable().
 			Comment("휴대폰 번호"),
 
-		field.Time("term_agree_at").
+		field.Time("termAgreeAt").
 			Optional().
 			Nillable().
 			Comment("약관 동의 일시"),
 
-		field.Time("last_login_at").
+		field.Time("lastLoginAt").
 			Default(time.Now()).
 			Comment("마지막 로그인 일시"),
 	}
@@ -98,7 +98,7 @@ func (User) Mixin() []ent.Mixin {
 
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("Academy", Acadmey.Type).
+		edge.To("Academy", Academy.Type).
 			StorageKey(edge.Column("id")).
 			Annotations(entsql.Annotation{
 				OnDelete: entsql.Cascade,

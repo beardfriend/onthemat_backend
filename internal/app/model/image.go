@@ -26,7 +26,7 @@ func (Image) Fields() []ent.Field {
 		field.Int("size").
 			Comment("이미지 크기"),
 
-		field.String("content_type").
+		field.String("contentType").
 			Comment("이미지 콘텐츠 타입"),
 
 		field.String("name").

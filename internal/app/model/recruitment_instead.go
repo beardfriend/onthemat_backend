@@ -20,19 +20,19 @@ func (RecruitmentInstead) Annotations() []schema.Annotation {
 
 func (RecruitmentInstead) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("yoga_sort").
+		field.String("yogaSort").
 			Comment("요가 종류"),
 
-		field.String("min_career").
+		field.String("minCareer").
 			Comment("최소 경력"),
 
 		field.String("pay").
 			Comment("급여"),
 
-		field.Time("start_date_time").
+		field.Time("startDateTime").
 			Comment("수업 시작 일시"),
 
-		field.Time("end_date_time").
+		field.Time("endDateTime").
 			Comment("수업 종료 일시"),
 	}
 }

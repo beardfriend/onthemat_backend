@@ -14,13 +14,13 @@ type Recruitment struct {
 
 func (Recruitment) Annotations() []schema.Annotation {
 	return []schema.Annotation{
-		entsql.Annotation{Table: "recruitment"},
+		entsql.Annotation{Table: "recruitments"},
 	}
 }
 
 func (Recruitment) Fields() []ent.Field {
 	return []ent.Field{
-		field.Bool("is_finish").
+		field.Bool("isFinish").
 			Default(false).
 			Comment("채용 종료 여부"),
 	}
@@ -30,7 +30,7 @@ func (Recruitment) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("instead", RecruitmentInstead.Type),
 
-		edge.From("writer", Acadmey.Type).
+		edge.From("writer", Academy.Type).
 			Ref("recruitment").
 			Unique(),
 	}

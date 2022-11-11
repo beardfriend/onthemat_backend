@@ -9,17 +9,17 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-type Acadmey struct {
+type Academy struct {
 	ent.Schema
 }
 
-func (Acadmey) Annotations() []schema.Annotation {
+func (Academy) Annotations() []schema.Annotation {
 	return []schema.Annotation{
-		entsql.Annotation{Table: "academis"},
+		entsql.Annotation{Table: "academies"},
 	}
 }
 
-func (Acadmey) Fields() []ent.Field {
+func (Academy) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name").SchemaType(map[string]string{
 			dialect.Postgres: "varchar(30)",
@@ -28,56 +28,60 @@ func (Acadmey) Fields() []ent.Field {
 			NotEmpty().
 			Comment("학원 이름"),
 
-		field.String("business_code").SchemaType(map[string]string{
+		field.String("businessCode").SchemaType(map[string]string{
 			dialect.Postgres: "varchar(30)",
 		}).
 			MaxLen(15).
 			NotEmpty().
 			Comment("사업자 번호"),
 
-		field.String("call_number").
+		field.String("callNumber").
 			NotEmpty().
 			Comment("학원 연락처"),
 
-		field.String("address_road").
+		field.String("addressRoad").
 			NotEmpty().
 			Comment("전체 주소"),
 
-		field.String("address_sigun").
+		field.String("addressSigun").
 			NotEmpty().
 			Comment("시 or 군"),
 
-		field.String("address_gu").
+		field.String("addressGu").
 			NotEmpty().
 			Comment("구"),
 
-		field.String("address_dong").
+		field.String("addressDong").
 			NotEmpty().
 			Comment("동"),
 
-		field.String("address_detail").
+		field.String("addressDetail").
 			Optional().
 			Comment("상세주소"),
 
-		field.String("address_x").
+		field.String("addressX").
 			NotEmpty().
 			Comment("x좌표"),
 
-		field.String("address_y").
+		field.String("addressY").
 			NotEmpty().
 			Comment("y좌표"),
 	}
 }
 
-func (Acadmey) Mixin() []ent.Mixin {
+func (Academy) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		DefaultTimeMixin{},
 	}
 }
 
-func (Acadmey) Edges() []ent.Edge {
+func (Academy) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("recruitment", Recruitment.Type),
+
+		// 다루는 요가
+		edge.To("academyYoga", UserYoga.Type).
+			StorageKey(edge.Column("user_id")),
 
 		edge.From("user", User.Type).
 			Ref("Academy").Unique().Required(),

@@ -15,9 +15,9 @@ import (
 
 type AcademyUsecase interface {
 	Create(ctx context.Context, academy *transport.AcademyCreateRequestBody, userId int) error
-	Get(ctx context.Context, userId int) (*ent.Acadmey, error)
+	Get(ctx context.Context, userId int) (*ent.Academy, error)
 	Update(ctx context.Context, a *transport.AcademyUpdateRequestBody, userId int) error
-	List(ctx context.Context, a *transport.AcademyListQueries) ([]*ent.Acadmey, *utils.PagenationInfo, error)
+	List(ctx context.Context, a *transport.AcademyListQueries) ([]*ent.Academy, *utils.PagenationInfo, error)
 }
 
 type academyUseCase struct {
@@ -52,7 +52,7 @@ func (u *academyUseCase) Create(ctx context.Context, academy *transport.AcademyC
 		return ex.NewConflictError("이미 존재하는 유저입니다.")
 	}
 
-	return u.academyRepo.Create(ctx, &ent.Acadmey{
+	return u.academyRepo.Create(ctx, &ent.Academy{
 		Name:          academy.Name,
 		BusinessCode:  academy.BusinessCode,
 		CallNumber:    academy.CallNumber,
@@ -66,7 +66,7 @@ func (u *academyUseCase) Create(ctx context.Context, academy *transport.AcademyC
 	}, userId)
 }
 
-func (u *academyUseCase) Get(ctx context.Context, userId int) (*ent.Acadmey, error) {
+func (u *academyUseCase) Get(ctx context.Context, userId int) (*ent.Academy, error) {
 	academy, err := u.academyRepo.Get(ctx, userId)
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -77,7 +77,7 @@ func (u *academyUseCase) Get(ctx context.Context, userId int) (*ent.Acadmey, err
 }
 
 func (u *academyUseCase) Update(ctx context.Context, a *transport.AcademyUpdateRequestBody, userId int) error {
-	err := u.academyRepo.Update(ctx, &ent.Acadmey{
+	err := u.academyRepo.Update(ctx, &ent.Academy{
 		Name:          a.Name,
 		CallNumber:    a.CallNumber,
 		AddressRoad:   a.AddressRoad,
@@ -94,7 +94,7 @@ func (u *academyUseCase) Update(ctx context.Context, a *transport.AcademyUpdateR
 	return nil
 }
 
-func (u *academyUseCase) List(ctx context.Context, a *transport.AcademyListQueries) ([]*ent.Acadmey, *utils.PagenationInfo, error) {
+func (u *academyUseCase) List(ctx context.Context, a *transport.AcademyListQueries) ([]*ent.Academy, *utils.PagenationInfo, error) {
 	if a.OrderCol != nil {
 		*a.OrderCol = strings.ToUpper(*a.OrderCol)
 	}

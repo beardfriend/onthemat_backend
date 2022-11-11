@@ -16,10 +16,10 @@ type DefaultTimeMixin struct {
 
 func (DefaultTimeMixin) Fields() []ent.Field {
 	return []ent.Field{
-		field.Time("created_at").
+		field.Time("createdAt").
 			Immutable().
 			Default(time.Now),
-		field.Time("updated_at").
+		field.Time("updatedAt").
 			Default(time.Now).
 			UpdateDefault(time.Now),
 	}
@@ -33,13 +33,13 @@ type TimeWithRemovedAtMixin struct {
 
 func (TimeWithRemovedAtMixin) Fields() []ent.Field {
 	return []ent.Field{
-		field.Time("created_at").
+		field.Time("createdAt").
 			Immutable().
 			Default(time.Now),
-		field.Time("updated_at").
+		field.Time("updatedAt").
 			Default(time.Now).
 			UpdateDefault(time.Now),
-		field.Time("removed_at").
+		field.Time("removedAt").
 			Optional(),
 	}
 }

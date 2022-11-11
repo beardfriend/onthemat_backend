@@ -99,7 +99,7 @@ type AcademyListResponse struct {
 	UpdatedAt     time.Time `json:"updatedAt"`
 }
 
-func NewAcademyListResponse(model []*ent.Acadmey) []*AcademyListResponse {
+func NewAcademyListResponse(model []*ent.Academy) []*AcademyListResponse {
 	response := make([]*AcademyListResponse, 0)
 	for _, v := range model {
 		resp := new(AcademyListResponse)
@@ -110,7 +110,7 @@ func NewAcademyListResponse(model []*ent.Acadmey) []*AcademyListResponse {
 	return response
 }
 
-func NewAcademyDetailResponse(model *ent.Acadmey) *AcademyDetailRepsonse {
+func NewAcademyDetailResponse(model *ent.Academy) *AcademyDetailRepsonse {
 	resp := new(AcademyDetailRepsonse)
 	copier.Copy(&resp, model)
 	return resp
