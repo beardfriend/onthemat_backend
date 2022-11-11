@@ -29,6 +29,7 @@ func NewAcademyHandler(
 	g := router.Group("/academy")
 	g.Post("", middleware.Auth, handler.Create)
 	g.Put("", middleware.Auth, handler.Update)
+	g.Get("/list", handler.List)
 	g.Get("/:id", handler.Detail)
 }
 
@@ -101,5 +102,33 @@ func (h *academyHandler) Update(c *fiber.Ctx) error {
 	return c.Status(http.StatusCreated).JSON(ex.Response{
 		Code:    http.StatusCreated,
 		Message: "",
+	})
+}
+
+func (h *academyHandler) List(c *fiber.Ctx) error {
+	ctx := c.Context()
+
+	reqQueries := transport.NewAcademyListQueries()
+
+	if err := c.QueryParser(reqQueries); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewBadRequestError("쿼리스트링을 확인해주세요."))
+	}
+
+	if err := validatorx.ValidateStruct(reqQueries); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
+	}
+
+	academies, pagination, err := h.academyUsecase.List(ctx, reqQueries)
+	if err != nil {
+		return utils.NewError(c, err)
+	}
+
+	response := transport.NewAcademyListResponse(academies)
+
+	return c.Status(http.StatusOK).JSON(ex.ResponseWithPagination{
+		Code:       http.StatusOK,
+		Message:    "",
+		Result:     response,
+		Pagination: pagination,
 	})
 }

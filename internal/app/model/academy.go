@@ -69,6 +69,12 @@ func (Acadmey) Fields() []ent.Field {
 	}
 }
 
+func (Acadmey) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		DefaultTimeMixin{},
+	}
+}
+
 func (Acadmey) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("recruitment", Recruitment.Type),

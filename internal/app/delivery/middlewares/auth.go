@@ -34,6 +34,31 @@ func (m *MiddleWare) Auth(c *fiber.Ctx) error {
 	}
 
 	ctx.SetUserValue("login_type", claim.LoginType)
+	ctx.SetUserValue("user_type", claim.UserType)
 	ctx.SetUserValue("user_id", claim.UserId)
+	return c.Next()
+}
+
+func (m *MiddleWare) OnlyAcademy(c *fiber.Ctx) error {
+	userType := c.Context().UserValue("user_type").(string)
+
+	if userType != "academy" {
+		return c.
+			Status(http.StatusUnauthorized).
+			JSON(ex.NewUnauthorizedError("사업자 회원만 접근할 수 있습니다."))
+	}
+
+	return c.Next()
+}
+
+func (m *MiddleWare) OnlyTeacher(c *fiber.Ctx) error {
+	userType := c.Context().UserValue("user_type").(string)
+
+	if userType != "teacher" {
+		return c.
+			Status(http.StatusUnauthorized).
+			JSON(ex.NewUnauthorizedError("선생님 회원만 접근할 수 있습니다."))
+	}
+
 	return c.Next()
 }

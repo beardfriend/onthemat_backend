@@ -2,11 +2,14 @@ package usecase
 
 import (
 	"context"
+	"strings"
 
+	"onthemat/internal/app/common"
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/repository"
 	"onthemat/internal/app/service"
 	"onthemat/internal/app/transport"
+	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
 )
 
@@ -14,6 +17,7 @@ type AcademyUsecase interface {
 	Create(ctx context.Context, academy *transport.AcademyCreateRequestBody, userId int) error
 	Get(ctx context.Context, userId int) (*ent.Acadmey, error)
 	Update(ctx context.Context, a *transport.AcademyUpdateRequestBody, userId int) error
+	List(ctx context.Context, a *transport.AcademyListQueries) ([]*ent.Acadmey, *utils.PagenationInfo, error)
 }
 
 type academyUseCase struct {
@@ -88,4 +92,32 @@ func (u *academyUseCase) Update(ctx context.Context, a *transport.AcademyUpdateR
 		return err
 	}
 	return nil
+}
+
+func (u *academyUseCase) List(ctx context.Context, a *transport.AcademyListQueries) ([]*ent.Acadmey, *utils.PagenationInfo, error) {
+	if a.OrderCol != nil {
+		*a.OrderCol = strings.ToUpper(*a.OrderCol)
+	}
+
+	pagination := utils.NewPagination(a.PageNo, a.PageSize)
+
+	total, err := u.academyRepo.Total(ctx, &common.TotalParams{SearchKey: a.SearchKey, SearchValue: a.SearchValue})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pagination.SetTotal(total)
+	academis, err := u.academyRepo.List(ctx, &common.ListParams{
+		PageNo:      a.PageNo,
+		PageSize:    a.PageSize,
+		OrderCol:    a.OrderCol,
+		OrderType:   a.OrderType,
+		SearchKey:   a.SearchKey,
+		SearchValue: a.SearchValue,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return academis, pagination.GetInfo(len(academis)), nil
 }

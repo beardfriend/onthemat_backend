@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"onthemat/pkg/ent"
+	"onthemat/pkg/ent/migrate"
 
 	_ "github.com/lib/pq"
 )
@@ -14,9 +15,11 @@ func NewPostgresDB() *ent.Client {
 	if err != nil {
 		log.Fatalf("failed opening connection to postgres: %v", err)
 	}
-
 	// Run the auto migration tool.
-	if err := client.Schema.Create(context.Background()); err != nil {
+	if err := client.Schema.Create(context.Background(),
+		migrate.WithDropIndex(true),
+		migrate.WithDropColumn(true),
+	); err != nil {
 		log.Fatalf("failed creating schema resources: %v", err)
 	}
 	return client

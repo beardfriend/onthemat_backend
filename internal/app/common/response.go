@@ -10,3 +10,10 @@ type ResponseWithData struct {
 	Message string      `json:"message"`
 	Result  interface{} `json:"result"`
 }
+
+type ResponseWithPagination struct {
+	Code       int         `json:"code"`
+	Message    string      `json:"message"`
+	Result     interface{} `json:"result"`
+	Pagination interface{} `json:"pagination"`
+}

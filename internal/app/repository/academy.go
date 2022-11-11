@@ -3,9 +3,11 @@ package repository
 import (
 	"context"
 
+	"onthemat/internal/app/common"
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/acadmey"
+	"onthemat/pkg/ent/predicate"
 	"onthemat/pkg/ent/user"
 	"onthemat/pkg/entx"
 )
@@ -14,7 +16,8 @@ type AcademyRepository interface {
 	Create(ctx context.Context, academy *ent.Acadmey, userId int) error
 	Update(ctx context.Context, academy *ent.Acadmey, userId int) error
 	Get(ctx context.Context, userId int) (*ent.Acadmey, error)
-	List(ctx context.Context, pageNo, pageSize int) ([]*ent.Acadmey, error)
+	List(ctx context.Context, p *common.ListParams) ([]*ent.Acadmey, error)
+	Total(ctx context.Context, p *common.TotalParams) (int, error)
 }
 
 type academyRepository struct {
@@ -84,10 +87,16 @@ func (repo *academyRepository) Get(ctx context.Context, userId int) (*ent.Acadme
 		Only(ctx)
 }
 
-func (repo *academyRepository) List(ctx context.Context, pageNo, pageSize int) ([]*ent.Acadmey, error) {
-	pagination := utils.NewPagination(pageNo, pageSize)
+func (repo *academyRepository) Total(ctx context.Context, p *common.TotalParams) (int, error) {
+	clause := repo.db.Debug().Acadmey.Query()
+	clause = repo.conditionQuery(ctx, p, clause)
+	return clause.Count(ctx)
+}
 
-	return repo.db.Acadmey.
+func (repo *academyRepository) List(ctx context.Context, p *common.ListParams) ([]*ent.Acadmey, error) {
+	pagination := utils.NewPagination(p.PageNo, p.PageSize)
+
+	clause := repo.db.Debug().Acadmey.
 		Query().
 		Select(
 			acadmey.FieldID,
@@ -98,8 +107,46 @@ func (repo *academyRepository) List(ctx context.Context, pageNo, pageSize int) (
 			acadmey.FieldAddressDong,
 			acadmey.FieldAddressRoad,
 			acadmey.FieldAddressDetail,
+			acadmey.FieldCreatedAt,
+			acadmey.FieldUpdatedAt,
 		).
 		Limit(pagination.GetLimit()).
-		Offset(pagination.GetOffset()).
-		All(ctx)
+		Offset(pagination.GetOffset())
+
+	useableOrderCol := map[string]string{
+		"ID":        acadmey.FieldID,
+		"CREATEDAT": acadmey.FieldCreatedAt,
+	}
+
+	if p.OrderCol != nil && p.OrderType != nil {
+		orderCol := useableOrderCol[*p.OrderCol]
+
+		if *p.OrderType == "ASC" {
+			clause.Order(ent.Asc(orderCol))
+		} else {
+			clause.Order(ent.Desc(orderCol))
+		}
+	} else {
+		clause.Order(ent.Desc(acadmey.FieldID))
+	}
+
+	clause = repo.conditionQuery(ctx, &common.TotalParams{
+		SearchKey:   p.SearchKey,
+		SearchValue: p.SearchValue,
+	}, clause)
+
+	return clause.All(ctx)
+}
+
+func (repo *academyRepository) conditionQuery(ctx context.Context, p *common.TotalParams, clause *ent.AcadmeyQuery) *ent.AcadmeyQuery {
+	useableSearchCol := map[string]func(v string) predicate.Acadmey{
+		"NAME": acadmey.NameContains,
+		"GU":   acadmey.AddressGuContains,
+	}
+
+	if p.SearchKey != nil && p.SearchValue != nil {
+		whereFunc := useableSearchCol[*p.SearchKey]
+		clause.Where(whereFunc(*p.SearchValue))
+	}
+	return clause
 }
