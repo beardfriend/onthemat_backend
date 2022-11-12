@@ -1,5 +1,5 @@
 generate:
-	go run -mod=mod entgo.io/ent/cmd/ent generate --target ./pkg/ent ./internal/app/model --feature sql/modifier --feature sql/versioned-migration
+	go run -mod=mod entgo.io/ent/cmd/ent generate --target ./pkg/ent ./internal/app/model --feature sql/modifier --feature sql/execquery --feature sql/versioned-migration
 
 run:
 	go run ./cmd/app/main.go

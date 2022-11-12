@@ -26,6 +26,9 @@ func NewPostgresDB() *ent.Client {
 	return client
 }
 
+func NewTestPostgresDB() {
+}
+
 func ClosePostgres(client *ent.Client) error {
 	return client.Close()
 }

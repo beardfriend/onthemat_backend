@@ -160,9 +160,9 @@ func (a *authService) GetNaverRedirectUrl() string {
 
 func (a *authService) SendEmailResetPassword(user *ent.User) error {
 	subject := "임시 비밀번호 발급안내" + "!\n"
-	body := "임시비밀번호는 " + user.TempPassword + " 입니다."
+	body := "임시비밀번호는 " + *user.TempPassword + " 입니다."
 	msg := []byte(subject + "\n" + body)
-	return a.email.Send([]string{user.Email}, msg)
+	return a.email.Send([]string{*user.Email}, msg)
 }
 
 func (a *authService) SendEmailVerifiedUser(email string, authKey string) error {

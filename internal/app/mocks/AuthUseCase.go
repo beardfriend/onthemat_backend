@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	fasthttp "github.com/valyala/fasthttp"
 
@@ -17,11 +19,11 @@ type AuthUseCase struct {
 }
 
 // CheckDuplicatedEmail provides a mock function with given fields: ctx, email
-func (_m *AuthUseCase) CheckDuplicatedEmail(ctx *fasthttp.RequestCtx, email string) error {
+func (_m *AuthUseCase) CheckDuplicatedEmail(ctx context.Context, email string) error {
 	ret := _m.Called(ctx, email)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*fasthttp.RequestCtx, string) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
 		r0 = rf(ctx, email)
 	} else {
 		r0 = ret.Error(0)

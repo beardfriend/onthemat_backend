@@ -13,12 +13,21 @@ func TestCreate(t *testing.T) {
 	db := infrastructor.NewPostgresDB()
 	userRepo := NewUserRepository(db)
 	academyRepo := NewAcademyRepository(db)
+
+	var s struct {
+		Email    string
+		Password string
+		Nickname string
+	}
+	s.Email = "eamil"
+	s.Password = "password"
+	s.Nickname = "nick"
 	newUser, err := userRepo.Create(context, &ent.User{
-		Email:       "asd@naver.com",
-		Password:    "asdsdads",
+		Email:       &s.Email,
+		Password:    &s.Password,
 		SocialKey:   nil,
 		PhoneNum:    nil,
-		Nickname:    nil,
+		Nickname:    &s.Nickname,
 		TermAgreeAt: nil,
 	})
 	if err != nil {

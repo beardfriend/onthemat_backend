@@ -18,6 +18,7 @@ require (
 	github.com/jinzhu/copier v0.3.5
 	github.com/joho/godotenv v1.4.0
 	github.com/lib/pq v1.10.7
+	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/stretchr/testify v1.8.0
 )

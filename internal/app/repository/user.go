@@ -36,9 +36,9 @@ func (repo *userRepository) Get(ctx context.Context, id int) (*ent.User, error) 
 
 func (repo *userRepository) Create(ctx context.Context, user *ent.User) (*ent.User, error) {
 	u, err := repo.db.User.Create().
-		SetNickname(*user.Nickname).
-		SetNillableEmail(&user.Email).
-		SetNillablePassword(&user.Password).
+		SetNillableNickname(user.Nickname).
+		SetNillableEmail(user.Email).
+		SetNillablePassword(user.Password).
 		SetNillableSocialKey(user.SocialKey).
 		SetNillableSocialName(user.SocialName).
 		SetNillableTermAgreeAt(user.TermAgreeAt).
@@ -52,7 +52,7 @@ func (repo *userRepository) Create(ctx context.Context, user *ent.User) (*ent.Us
 
 func (repo *userRepository) Update(ctx context.Context, user *ent.User) (*ent.User, error) {
 	u, err := repo.db.User.UpdateOneID(user.ID).
-		SetNillableEmail(&user.Email).
+		SetNillableEmail(user.Email).
 		SetNillableTermAgreeAt(user.TermAgreeAt).
 		SetNillableType(user.Type).
 		SetNillablePhoneNum(user.PhoneNum).
@@ -66,8 +66,8 @@ func (repo *userRepository) Update(ctx context.Context, user *ent.User) (*ent.Us
 
 func (repo *userRepository) UpdateTempPassword(ctx context.Context, u *ent.User) error {
 	return repo.db.User.Update().
-		SetTempPassword(u.TempPassword).Where(
-		user.EmailEQ(u.Email),
+		SetNillableTempPassword(u.TempPassword).Where(
+		user.EmailEQ(*u.Email),
 	).Exec(ctx)
 }
 
@@ -102,8 +102,8 @@ func (repo *userRepository) GetByEmailPassword(ctx context.Context, u *ent.User)
 	return repo.db.User.
 		Query().
 		Where(
-			user.Or(user.PasswordEQ(u.Password), user.TempPasswordEQ(u.Password)),
-			user.EmailEQ(u.Email),
+			user.Or(user.PasswordEQ(*u.Password), user.TempPasswordEQ(*u.Password)),
+			user.EmailEQ(*u.Email),
 		).Only(ctx)
 }
 

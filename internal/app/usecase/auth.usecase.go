@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 
 	"onthemat/internal/app/common"
 	"onthemat/internal/app/config"
+
 	"onthemat/internal/app/repository"
 	"onthemat/internal/app/service"
 	"onthemat/internal/app/service/token"
@@ -29,7 +31,7 @@ type AuthUseCase interface {
 	GoogleRedirectUrl(ctx *fasthttp.RequestCtx) string
 
 	SendEmailResetPassword(ctx *fasthttp.RequestCtx, email string) error
-	CheckDuplicatedEmail(ctx *fasthttp.RequestCtx, email string) error
+	CheckDuplicatedEmail(ctx context.Context, email string) error
 	VerifiedEmail(ctx *fasthttp.RequestCtx, email string, authKey string) error
 	Refresh(ctx *fasthttp.RequestCtx, authorizationHeader []byte) (*RefreshResult, error)
 }
@@ -82,8 +84,8 @@ func (a *authUseCase) Login(ctx *fasthttp.RequestCtx, body *transport.LoginBody)
 	hashPassword := fmt.Sprintf("%x", sha.Sum(nil))
 
 	user, err := a.userRepo.GetByEmailPassword(ctx, &ent.User{
-		Email:    body.Email,
-		Password: hashPassword,
+		Email:    &body.Email,
+		Password: &hashPassword,
 	})
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -153,7 +155,7 @@ func (a *authUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName, code str
 
 		googleId := strconv.FormatUint(uint64(googleInfo.Sub), 10)
 		user.SocialKey = &googleId
-		user.Email = googleInfo.Email
+		user.Email = &googleInfo.Email
 	} else if socialName == "naver" {
 		naverInfo, err := a.authSvc.GetNaverInfo(code)
 		if err != nil {
@@ -161,7 +163,7 @@ func (a *authUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName, code str
 		}
 
 		user.SocialKey = &naverInfo.Id
-		user.Email = naverInfo.Email
+		user.Email = &naverInfo.Email
 	}
 
 	user.SocialName = &socialName
@@ -217,7 +219,7 @@ func (a *authUseCase) SocialSignUp(ctx *fasthttp.RequestCtx, body *transport.Soc
 	termAgreeAt := time.Now()
 	_, err := a.userRepo.Update(ctx, &ent.User{
 		ID:          body.UserID,
-		Email:       body.Email,
+		Email:       &body.Email,
 		Nickname:    &body.NickName,
 		TermAgreeAt: &termAgreeAt,
 		Type:        nil,
@@ -243,8 +245,8 @@ func (a *authUseCase) SignUp(ctx *fasthttp.RequestCtx, body *transport.SignUpBod
 	hashPassword := fmt.Sprintf("%x", sha.Sum(nil))
 
 	_, err = a.userRepo.Create(ctx, &ent.User{
-		Email:       body.Email,
-		Password:    hashPassword,
+		Email:       &body.Email,
+		Password:    &hashPassword,
 		Nickname:    &body.NickName,
 		TermAgreeAt: &termAgreeAt,
 	})
@@ -263,7 +265,7 @@ func (a *authUseCase) SignUp(ctx *fasthttp.RequestCtx, body *transport.SignUpBod
 	return err
 }
 
-func (a *authUseCase) CheckDuplicatedEmail(ctx *fasthttp.RequestCtx, email string) error {
+func (a *authUseCase) CheckDuplicatedEmail(ctx context.Context, email string) error {
 	isExist, err := a.userRepo.FindByEmail(ctx, email)
 	if err != nil {
 		return err
@@ -319,8 +321,8 @@ func (a *authUseCase) SendEmailResetPassword(ctx *fasthttp.RequestCtx, email str
 	hashPassword := fmt.Sprintf("%x", sha.Sum(nil))
 
 	u := &ent.User{
-		Email:        email,
-		TempPassword: hashPassword,
+		Email:        &email,
+		TempPassword: &hashPassword,
 	}
 	if err := a.userRepo.UpdateTempPassword(ctx, u); err != nil {
 		return err

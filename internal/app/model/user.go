@@ -28,6 +28,7 @@ func (User) Fields() []ent.Field {
 				dialect.Postgres: "varchar(100)",
 			}).MaxLen(100).
 			Optional().
+			Nillable().
 			Comment("이메일"),
 
 		field.Bool("isEmailVerified").
@@ -36,11 +37,13 @@ func (User) Fields() []ent.Field {
 
 		field.String("password").
 			Optional().
+			Nillable().
 			Sensitive().
 			Comment("패스워드"),
 
 		field.String("tempPassword").
 			Optional().
+			Nillable().
 			Sensitive().
 			Comment("임시 비밀번호"),
 
