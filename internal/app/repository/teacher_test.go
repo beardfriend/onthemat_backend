@@ -36,6 +36,6 @@ func TestTeacherList(t *testing.T) {
 	for _, v := range querytwo {
 		gu = append(gu, &v)
 	}
-	arr, _ := teacher.List(context.Background(), yogaSorts, nil)
+	arr, _ := teacher.List(context.Background(), yogaSorts, gu)
 	fmt.Println(arr)
 }

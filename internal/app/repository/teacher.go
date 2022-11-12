@@ -82,13 +82,16 @@ func (repo *teacherRepository) conditionQuery(yogaSorts []*string, areas []*stri
 		})
 	}
 	if areas != nil {
-		a := make([]string, len(areas))
+		a := make([]driver.Value, len(areas))
 		for i, v := range areas {
 			a[i] = *v
 		}
-		clause = clause.Where(
-			teacher.HasWorkAreaWith(teacherworkarea.GuIn(a...)),
-		)
+		clause = clause.Where(func(s *sql.Selector) {
+			t := sql.Table(teacherworkarea.Table)
+			s.Join(t).On(s.C(teacher.FieldID), t.C(teacherworkarea.FieldTeacherID))
+			s.Where(sql.InValues(t.C(teacherworkarea.FieldGu), a...))
+		})
+
 	}
 
 	return clause
