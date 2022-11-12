@@ -25,7 +25,7 @@ type AcademyUpdateParam struct {
 type AcademyListQueries struct {
 	PageNo      int     `query:"pageNo"`
 	PageSize    int     `query:"pageSize"`
-	SearchKey   *string `query:"searchKey" validate:"alpha,oneof=name gu NAME GU"`
+	SearchKey   *string `query:"searchKey" validate:"omitempty,oneof=name gu NAME GU"`
 	SearchValue *string `query:"searchValue"`
 	OrderType   *string `query:"orderType"`
 	OrderCol    *string `query:"orderCol" `

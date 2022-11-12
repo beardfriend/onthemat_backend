@@ -12,3 +12,6 @@ docker_postgres_dev:
 
 apidoc:
 	apidoc -c apidocs.json -i internal/app/delivery/http -o apidocs
+
+mockery:
+	mockery --output ./internal/app/mocks --recursive --all --dir ./internal/app && sh ./scripts/mock.sh
