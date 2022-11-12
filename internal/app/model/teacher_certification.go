@@ -4,6 +4,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -19,10 +20,14 @@ func (TeacherCertification) Annotations() []schema.Annotation {
 
 func (TeacherCertification) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("teacher_id").
+			Optional().
+			Comment("foreignKey"),
+
 		field.String("agencyName").
 			Comment("자격증 기관명"),
 
-		field.String("imageRrl").
+		field.String("imageUrl").
 			Comment("자격증 사진"),
 
 		field.Time("classStartAt").
@@ -39,5 +44,14 @@ func (TeacherCertification) Fields() []ent.Field {
 func (TeacherCertification) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		DefaultTimeMixin{},
+	}
+}
+
+func (TeacherCertification) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.From("Teacher", Teacher.Type).
+			Ref("certification").
+			Unique().
+			Field("teacher_id"),
 	}
 }

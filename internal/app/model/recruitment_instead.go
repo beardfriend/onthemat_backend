@@ -39,6 +39,10 @@ func (RecruitmentInstead) Fields() []ent.Field {
 
 func (RecruitmentInstead) Edges() []ent.Edge {
 	return []ent.Edge{
+		edge.From("recuritment", Recruitment.Type).
+			Ref("instead").
+			Unique(),
+
 		edge.To("applicant", Teacher.Type),
 	}
 }

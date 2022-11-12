@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"onthemat/internal/app/infrastructor"
@@ -25,7 +24,7 @@ func TestCreate(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err := academyRepo.Create(context, &ent.Acadmey{
+	if err := academyRepo.Create(context, &ent.Academy{
 		Name:          "name",
 		BusinessCode:  "123",
 		CallNumber:    "01043226633",
@@ -40,23 +39,11 @@ func TestCreate(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = academyRepo.Update(context, &ent.Acadmey{
+	err = academyRepo.Update(context, &ent.Academy{
 		AddressX: "asd",
 		AddressY: "",
 	}, newUser.ID)
 	if err != nil {
 		t.Error(err)
 	}
-}
-
-func TestList(t *testing.T) {
-	context := context.Background()
-	db := infrastructor.NewPostgresDB()
-	academyRepo := NewAcademyRepository(db)
-	l, err := academyRepo.List(context, 1, 10)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	fmt.Println(l)
 }
