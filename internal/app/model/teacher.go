@@ -51,14 +51,13 @@ func (Teacher) Edges() []ent.Edge {
 		edge.From("recruitment_instead", RecruitmentInstead.Type).
 			Ref("applicant"),
 
-		// 다루는 요가
-		edge.To("teacherYoga", UserYoga.Type).
-			StorageKey(edge.Column("user_id")),
-
 		// 자격증
 		edge.To("certification", TeacherCertification.Type),
 
 		// 근무 경험
 		edge.To("workExperience", TeacherWorkExperience.Type),
+
+		// 근무지
+		edge.To("workArea", TeacherWorkArea.Type),
 	}
 }

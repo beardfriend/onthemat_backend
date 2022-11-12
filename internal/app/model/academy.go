@@ -59,11 +59,11 @@ func (Academy) Fields() []ent.Field {
 			Optional().
 			Comment("상세주소"),
 
-		field.String("addressX").
+		field.String("address_x").
 			NotEmpty().
 			Comment("x좌표"),
 
-		field.String("addressY").
+		field.String("address_y").
 			NotEmpty().
 			Comment("y좌표"),
 	}
@@ -78,10 +78,6 @@ func (Academy) Mixin() []ent.Mixin {
 func (Academy) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("recruitment", Recruitment.Type),
-
-		// 다루는 요가
-		edge.To("academyYoga", UserYoga.Type).
-			StorageKey(edge.Column("user_id")),
 
 		edge.From("user", User.Type).
 			Ref("Academy").Unique().Required(),

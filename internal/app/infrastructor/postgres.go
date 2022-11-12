@@ -19,6 +19,7 @@ func NewPostgresDB() *ent.Client {
 	if err := client.Schema.Create(context.Background(),
 		migrate.WithDropIndex(true),
 		migrate.WithDropColumn(true),
+		migrate.WithForeignKeys(true),
 	); err != nil {
 		log.Fatalf("failed creating schema resources: %v", err)
 	}

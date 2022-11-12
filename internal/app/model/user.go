@@ -104,6 +104,10 @@ func (User) Edges() []ent.Edge {
 				OnDelete: entsql.Cascade,
 			}),
 
+		// 다루는 요가
+		edge.To("userYoga", UserYoga.Type).
+			StorageKey(edge.Column("user_id")),
+
 		edge.To("Teacher", Teacher.Type).
 			StorageKey(edge.Column("id")).
 			Annotations(entsql.Annotation{

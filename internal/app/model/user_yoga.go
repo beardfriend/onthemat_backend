@@ -5,6 +5,7 @@ import (
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
 type UserYoga struct {
@@ -32,4 +33,12 @@ func (UserYoga) Fields() []ent.Field {
 
 func (UserYoga) Edges() []ent.Edge {
 	return []ent.Edge{}
+}
+
+func (UserYoga) Indexes() []ent.Index {
+	return []ent.Index{
+		// unique index.
+		index.Fields("user_id", "name").
+			Unique(),
+	}
 }
