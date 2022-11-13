@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"onthemat/internal/app/repository"
+	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/enttest"
 
@@ -13,94 +15,61 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUserCreate(t *testing.T) {
+func TestUserRepository(t *testing.T) {
+	// init
+	c := utils.RepoTestInit(t)
+	time.Sleep(1 * time.Second)
 	ctx := context.Background()
-	tests := []struct {
-		name   string
-		before func(*testing.T, *ent.Client)
-		expect func(*testing.T, repository.UserRepository)
-		after  func(*ent.Client)
-	}{
-		{
-			name: "create",
+	url := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable", c.PostgreSQL.Host, c.PostgreSQL.Port, c.PostgreSQL.User, c.PostgreSQL.Database, c.PostgreSQL.Password)
+	client := enttest.Open(t, "postgres", url)
+	defer client.Close()
+	userRepo := repository.NewUserRepository(client)
 
-			expect: func(t *testing.T, userRepo repository.UserRepository) {
+	tests := []utils.Tests{
+		// Create
+		{
+			Name: "userRepository/Create",
+			Before: func(t *testing.T) {
+			},
+			Expect: func(t *testing.T) {
+				t.Run("ID만 있는 경우", func(t *testing.T) {
+					u, err := userRepo.Create(ctx, &ent.User{})
+					assert.NoError(t, err)
+					assert.Empty(t, u.Email)
+					assert.Empty(t, u.Nickname)
+					assert.Empty(t, u.Password)
+					assert.Empty(t, u.PhoneNum)
+					assert.Empty(t, u.RemovedAt)
+					assert.Empty(t, u.SocialKey)
+					assert.Empty(t, u.SocialName)
+					assert.Equal(t, u.ID, 1)
+				})
+			},
+			After: func(t *testing.T) {
+				utils.RepoTestRemoveTable(ctx, client)
+			},
+		},
+		// Get
+		{
+			Name: "userRepository/Get",
+			Before: func(t *testing.T) {
 				_, err := userRepo.Create(ctx, &ent.User{})
 				assert.NoError(t, err)
 			},
-			after: func(c *ent.Client) {
-				c.ExecContext(ctx, `
-				DO $$ DECLARE
-				r RECORD;
-				BEGIN
-				FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()) LOOP
-					EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
-				END LOOP;
-			END $$;
-				`)
+			Expect: func(t *testing.T) {
+			},
+			After: func(t *testing.T) {
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cli := enttest.Open(t, "postgres", "host=localhost port=5432 user=postgres dbname=test password=password sslmode=disable")
-			defer cli.Close()
-			userRepo := repository.NewUserRepository(cli)
-
-			tt.expect(t, userRepo)
-			tt.after(cli)
+		t.Run(tt.Name, func(t *testing.T) {
+			tt.Before(t)
+			tt.Expect(t)
+			tt.After(t)
 		})
 	}
-}
 
-func TestRepo_FindByEmail(t *testing.T) {
-	ctx := context.Background()
-	client, err := ent.Open("sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
-	assert.NoError(t, err)
-	defer client.Close()
-	err = client.Schema.Create(context.Background())
-	assert.NoError(t, err)
-
-	userRepo := repository.NewUserRepository(client)
-	nick := "asd"
-	user, err := userRepo.Create(ctx, &ent.User{
-		Nickname: &nick,
-	})
-	assert.NoError(t, err)
-
-	fmt.Println(user.Nickname)
-}
-
-func TestRepo_FindByEmailPg(t *testing.T) {
-	ctx := context.Background()
-	client, err := ent.Open("postgres", "host=localhost port=5432 user=postgres dbname=test password=password sslmode=disable")
-	assert.NoError(t, err)
-	// Run the auto migration tool.
-	err = client.Schema.Create(context.Background())
-	assert.NoError(t, err)
-
-	userRepo := repository.NewUserRepository(client)
-
-	nick := "asd"
-	user, err := userRepo.Create(ctx, &ent.User{
-		Nickname: &nick,
-	})
-	assert.NoError(t, err)
-
-	fmt.Println(user.Nickname)
-}
-
-func TestRepo_Get(t *testing.T) {
-	ctx := context.Background()
-	client, err := ent.Open("postgres", "host=localhost port=5432 user=postgres dbname=test password=password sslmode=disable")
-	assert.NoError(t, err)
-	// Run the auto migration tool.
-	err = client.Schema.Create(context.Background())
-	assert.NoError(t, err)
-
-	userRepo := repository.NewUserRepository(client)
-	u, err := userRepo.Get(ctx, 2)
-
-	fmt.Println(u)
+	utils.RepoTestClose(t)
 }

@@ -12,15 +12,17 @@ import (
 type envFile string
 
 type Config struct {
-	Secret  Secret  `mapstructure:"Secret"`
-	MariaDB MariaDB `mapstructure:"MariaDB"`
-	Redis   Redis   `mapstructure:"Redis"`
-	JWT     JWT     `mapstructure:"Jwt"`
-	Oauth   Oauth   `mapstructure:"Oauth"`
-	Email   Email   `mapstructure:"Email"`
-	APIKey  APIKey  `mapstructure:"ApiKey"`
-	AWS     AWS     `mapstructure:"Aws"`
-	AWSS3   AWSS3   `mapstructure:"AwsS3"`
+	Secret     Secret     `mapstructure:"Secret"`
+	MariaDB    MariaDB    `mapstructure:"MariaDB"`
+	Redis      Redis      `mapstructure:"Redis"`
+	JWT        JWT        `mapstructure:"Jwt"`
+	Oauth      Oauth      `mapstructure:"Oauth"`
+	Email      Email      `mapstructure:"Email"`
+	APIKey     APIKey     `mapstructure:"ApiKey"`
+	AWS        AWS        `mapstructure:"Aws"`
+	AWSS3      AWSS3      `mapstructure:"AwsS3"`
+	PostgreSQL PostgreSQL `mapstructure:"PostgreSQL"`
+	Onthemat   Onthemat   `mapstructure:"Onthemat"`
 }
 
 type MariaDB struct {
@@ -29,6 +31,14 @@ type MariaDB struct {
 	Port     int    `env:"MARIADB_PORT" envDefault:"3306"`
 	Database string `env:"MARIADB_DATABASE"`
 	Password string `env:"MARIADB_PASSWORD"`
+}
+
+type PostgreSQL struct {
+	Host     string `env:"POSTGRES_HOST"`
+	User     string `env:"POSTGRES_USER"`
+	Port     int    `env:"POSTGRES_PORT" envDefault:"5432"`
+	Database string `env:"POSTGRES_DATABASE"`
+	Password string `env:"POSTGRES_PASSWORD"`
 }
 
 type Redis struct {
@@ -76,6 +86,11 @@ type AWSS3 struct {
 	BucketName string `env:"AWS_S3_BUCKET"`
 }
 
+type Onthemat struct {
+	PWD  string `env:"ONETHEMAT_PWD"`
+	HOST string `env:"ONETHEMAT_HOST"`
+}
+
 const (
 	DEV  envFile = ".env.dev" // default
 	PROD envFile = ".env.prod"
@@ -99,6 +114,7 @@ func (c *Config) Load(filePath string) error {
 	data := make(map[string]interface{})
 	data["Redis"] = &Redis{}
 	data["MariaDB"] = &MariaDB{}
+	data["PostgreSQL"] = &PostgreSQL{}
 	data["Jwt"] = &JWT{}
 	data["Oauth"] = &Oauth{}
 	data["Email"] = &Email{}
@@ -106,6 +122,7 @@ func (c *Config) Load(filePath string) error {
 	data["Aws"] = &AWS{}
 	data["AwsS3"] = &AWSS3{}
 	data["Secret"] = &Secret{}
+	data["Onthemat"] = &Onthemat{}
 
 	for _, v := range data {
 		if err := env.Parse(v, op); err != nil {
