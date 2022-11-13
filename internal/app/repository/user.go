@@ -10,9 +10,9 @@ import (
 type UserRepository interface {
 	Create(ctx context.Context, user *ent.User) (*ent.User, error)
 	Update(ctx context.Context, user *ent.User) (*ent.User, error)
+	// UpdatePassword()
 	UpdateTempPassword(ctx context.Context, u *ent.User) error
 	UpdateEmailVerifeid(ctx context.Context, userId int) error
-	UpdateEmailVerifiedByEmail(ctx context.Context, email string) error
 	GetBySocialKey(ctx context.Context, u *ent.User) (*ent.User, error)
 	GetByEmail(ctx context.Context, email string) (*ent.User, error)
 	GetByEmailPassword(ctx context.Context, u *ent.User) (*ent.User, error)
@@ -53,10 +53,8 @@ func (repo *userRepository) Create(ctx context.Context, user *ent.User) (*ent.Us
 func (repo *userRepository) Update(ctx context.Context, user *ent.User) (*ent.User, error) {
 	u, err := repo.db.User.UpdateOneID(user.ID).
 		SetNillableEmail(user.Email).
-		SetNillableTermAgreeAt(user.TermAgreeAt).
-		SetNillableType(user.Type).
+		SetNillableNickname(user.Nickname).
 		SetNillablePhoneNum(user.PhoneNum).
-		SetNillableIsEmailVerified(&user.IsEmailVerified).
 		Save(ctx)
 	if err != nil {
 		return nil, err
@@ -74,13 +72,6 @@ func (repo *userRepository) UpdateTempPassword(ctx context.Context, u *ent.User)
 func (repo *userRepository) UpdateEmailVerifeid(ctx context.Context, userId int) error {
 	return repo.db.User.UpdateOneID(userId).
 		SetIsEmailVerified(true).Exec(ctx)
-}
-
-func (repo *userRepository) UpdateEmailVerifiedByEmail(ctx context.Context, email string) error {
-	return repo.db.User.Update().
-		SetIsEmailVerified(true).Where(
-		user.EmailEQ(email),
-	).Exec(ctx)
 }
 
 func (repo *userRepository) GetBySocialKey(ctx context.Context, u *ent.User) (*ent.User, error) {

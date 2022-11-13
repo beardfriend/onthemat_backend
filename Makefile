@@ -8,11 +8,10 @@ swag:
 	swag init -g ./cmd/app/main.go
 	
 docker_postgres_dev:
-	docker run -p 5432:5432 --name postgres -e POSTGRES_PASSWORD=password -e POSTGRES_USERNAME=postgres -e TZ=Asia/Seoul -v ~/data/pgdata:/var/lib/postgresql/data -d postgres:latest
+	docker-compose -f ./docker-compose.dev.yml --env-file ./configs/.env.dev up -d
 
 docker_postgres_test:
-	docker-compose -f docker-compose.test.yml --env-file ./configs/.env.test up -d
-
+	docker-compose -f ./docker-compose.test.yml --env-file ./configs/.env.test up -d
 apidoc:
 	apidoc -c apidocs.json -i internal/app/delivery/http -o apidocs
 

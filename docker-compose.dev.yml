@@ -2,9 +2,9 @@
 version: '3.1'
 
 services:
-  onethemat_test:
+  onethemat_dev:
     image: postgres:latest
-    container_name: psql_repo_test
+    container_name: onthemat_psql_dev
     restart: always
     environment:
       POSTGRES_DB: ${POSTGRES_DATABASE}
@@ -12,6 +12,7 @@ services:
       TZ: Asia/Seoul
       POSTGRES_INITDB_ARGS: '--encoding=UTF-8 --lc-collate=C --lc-ctype=C'
     volumes:
+      - /var/db/docker/postgres/onthemat/dev/data:/data/db
       - ./scripts/initPostgres.sql:/docker-entrypoint-initdb.d/initPostgres.sql
     expose: 
       - '${POSTGRES_PORT}'

@@ -9,31 +9,30 @@ import (
 
 	"onthemat/internal/app/common"
 	"onthemat/internal/app/config"
-
 	"onthemat/internal/app/repository"
 	"onthemat/internal/app/service"
 	"onthemat/internal/app/service/token"
 	"onthemat/internal/app/transport"
 	"onthemat/pkg/auth/store"
 	"onthemat/pkg/ent"
+	entUser "onthemat/pkg/ent/user"
 
 	"github.com/google/uuid"
-	"github.com/valyala/fasthttp"
 )
 
 type AuthUseCase interface {
-	SignUp(ctx *fasthttp.RequestCtx, body *transport.SignUpBody) error
-	Login(ctx *fasthttp.RequestCtx, body *transport.LoginBody) (*LoginResult, error)
-	SocialSignUp(ctx *fasthttp.RequestCtx, body *transport.SocialSignUpBody) error
-	SocialLogin(ctx *fasthttp.RequestCtx, socialName, code string) (*LoginResult, error)
-	KakaoRedirectUrl(ctx *fasthttp.RequestCtx) string
-	NaverRedirectUrl(ctx *fasthttp.RequestCtx) string
-	GoogleRedirectUrl(ctx *fasthttp.RequestCtx) string
+	SignUp(ctx context.Context, body *transport.SignUpBody) error
+	Login(ctx context.Context, body *transport.LoginBody) (*LoginResult, error)
+	SocialSignUp(ctx context.Context, body *transport.SocialSignUpBody) error
+	SocialLogin(ctx context.Context, socialName, code string) (*LoginResult, error)
+	KakaoRedirectUrl(ctx context.Context) string
+	NaverRedirectUrl(ctx context.Context) string
+	GoogleRedirectUrl(ctx context.Context) string
 
-	SendEmailResetPassword(ctx *fasthttp.RequestCtx, email string) error
+	SendEmailResetPassword(ctx context.Context, email string) error
 	CheckDuplicatedEmail(ctx context.Context, email string) error
-	VerifiedEmail(ctx *fasthttp.RequestCtx, email string, authKey string) error
-	Refresh(ctx *fasthttp.RequestCtx, authorizationHeader []byte) (*RefreshResult, error)
+	VerifiedEmail(ctx context.Context, email string, authKey string) error
+	Refresh(ctx context.Context, authorizationHeader []byte) (*RefreshResult, error)
 }
 
 type authUseCase struct {
@@ -60,11 +59,11 @@ func NewAuthUseCase(
 	}
 }
 
-func (a *authUseCase) KakaoRedirectUrl(ctx *fasthttp.RequestCtx) string {
+func (a *authUseCase) KakaoRedirectUrl(ctx context.Context) string {
 	return a.authSvc.GetKakaoRedirectUrl()
 }
 
-func (a *authUseCase) NaverRedirectUrl(ctx *fasthttp.RequestCtx) string {
+func (a *authUseCase) NaverRedirectUrl(ctx context.Context) string {
 	return a.authSvc.GetNaverRedirectUrl()
 }
 
@@ -75,7 +74,7 @@ type LoginResult struct {
 	RefreshTokenExpiredAt time.Time `json:"refreshTokenExpiredAt"`
 }
 
-func (a *authUseCase) Login(ctx *fasthttp.RequestCtx, body *transport.LoginBody) (*LoginResult, error) {
+func (a *authUseCase) Login(ctx context.Context, body *transport.LoginBody) (*LoginResult, error) {
 	defer ctx.Done()
 
 	sha := sha256.New()
@@ -89,7 +88,7 @@ func (a *authUseCase) Login(ctx *fasthttp.RequestCtx, body *transport.LoginBody)
 	})
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return nil, common.NewBadRequestError("이메일 혹은 비밀번호를 다시 확인해주세요.")
+			return nil, common.NewNotFoundError("이메일 혹은 비밀번호를 다시 확인해주세요.")
 		}
 		return nil, err
 	}
@@ -128,7 +127,7 @@ func (a *authUseCase) Login(ctx *fasthttp.RequestCtx, body *transport.LoginBody)
 	}, nil
 }
 
-func (a *authUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName, code string) (*LoginResult, error) {
+func (a *authUseCase) SocialLogin(ctx context.Context, socialName, code string) (*LoginResult, error) {
 	user := new(ent.User)
 	// TODO: 일반 에러로 빼기.
 	if socialName != "kakao" && socialName != "google" && socialName != "naver" {
@@ -145,6 +144,7 @@ func (a *authUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName, code str
 		kakaoId := strconv.FormatUint(uint64(kakaoInfo.Id), 10)
 
 		user.SocialKey = &kakaoId
+		*user.SocialName = entUser.SocialNameKakao
 
 	} else if socialName == "google" {
 
@@ -156,6 +156,8 @@ func (a *authUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName, code str
 		googleId := strconv.FormatUint(uint64(googleInfo.Sub), 10)
 		user.SocialKey = &googleId
 		user.Email = &googleInfo.Email
+		*user.SocialName = entUser.SocialNameGoogle
+
 	} else if socialName == "naver" {
 		naverInfo, err := a.authSvc.GetNaverInfo(code)
 		if err != nil {
@@ -164,9 +166,9 @@ func (a *authUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName, code str
 
 		user.SocialKey = &naverInfo.Id
 		user.Email = &naverInfo.Email
-	}
+		*user.SocialName = entUser.SocialNameNaver
 
-	user.SocialName = &socialName
+	}
 
 	checkedUser, err := a.userRepo.GetBySocialKey(ctx, user)
 	if err != nil && !ent.IsNotFound(err) {
@@ -175,6 +177,7 @@ func (a *authUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName, code str
 
 	// 유저가 없으면 회원 정보 생성
 	if checkedUser == nil {
+		*user.TermAgreeAt = time.Now()
 		user, err = a.userRepo.Create(ctx, user)
 		if err != nil {
 			return nil, err
@@ -211,11 +214,11 @@ func (a *authUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName, code str
 	}, nil
 }
 
-func (a *authUseCase) GoogleRedirectUrl(ctx *fasthttp.RequestCtx) string {
+func (a *authUseCase) GoogleRedirectUrl(ctx context.Context) string {
 	return a.authSvc.GetGoogleRedirectUrl()
 }
 
-func (a *authUseCase) SocialSignUp(ctx *fasthttp.RequestCtx, body *transport.SocialSignUpBody) error {
+func (a *authUseCase) SocialSignUp(ctx context.Context, body *transport.SocialSignUpBody) error {
 	termAgreeAt := time.Now()
 	_, err := a.userRepo.Update(ctx, &ent.User{
 		ID:          body.UserID,
@@ -227,7 +230,7 @@ func (a *authUseCase) SocialSignUp(ctx *fasthttp.RequestCtx, body *transport.Soc
 	return err
 }
 
-func (a *authUseCase) SignUp(ctx *fasthttp.RequestCtx, body *transport.SignUpBody) error {
+func (a *authUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) error {
 	isExist, err := a.userRepo.FindByEmail(ctx, body.Email)
 	if err != nil {
 		return err
@@ -278,7 +281,7 @@ func (a *authUseCase) CheckDuplicatedEmail(ctx context.Context, email string) er
 	return nil
 }
 
-func (a *authUseCase) VerifiedEmail(ctx *fasthttp.RequestCtx, email string, authKey string) error {
+func (a *authUseCase) VerifiedEmail(ctx context.Context, email string, authKey string) error {
 	key := a.store.Get(ctx, email)
 
 	if key != authKey {
@@ -305,7 +308,7 @@ func (a *authUseCase) VerifiedEmail(ctx *fasthttp.RequestCtx, email string, auth
 	return nil
 }
 
-func (a *authUseCase) SendEmailResetPassword(ctx *fasthttp.RequestCtx, email string) error {
+func (a *authUseCase) SendEmailResetPassword(ctx context.Context, email string) error {
 	isExist, err := a.userRepo.FindByEmail(ctx, email)
 	if err != nil {
 		return err
@@ -340,7 +343,7 @@ type RefreshResult struct {
 	AccessTokenExpiredAt time.Time `json:"accessTokenExpiredAt"`
 }
 
-func (a *authUseCase) Refresh(ctx *fasthttp.RequestCtx, authorizationHeader []byte) (*RefreshResult, error) {
+func (a *authUseCase) Refresh(ctx context.Context, authorizationHeader []byte) (*RefreshResult, error) {
 	refreshToken, err := a.authSvc.ExtractTokenFromHeader(string(authorizationHeader))
 	if err != nil {
 		return nil, common.NewBadRequestError("헤더를 확인해주세요.")
@@ -371,8 +374,8 @@ func (a *authUseCase) Refresh(ctx *fasthttp.RequestCtx, authorizationHeader []by
 		userType = string(*u.Type)
 	}
 
-	loginType := ""
-	if u.SocialName != nil || u.SocialName != &loginType {
+	loginType := "normal"
+	if u.SocialName != nil {
 		loginType = "social"
 	}
 
