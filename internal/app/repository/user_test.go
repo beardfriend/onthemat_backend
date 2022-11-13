@@ -15,6 +15,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestClose(t *testing.T) {
+	utils.RepoTestClose(t)
+}
+
 func TestUserRepository(t *testing.T) {
 	// init
 	c := utils.RepoTestInit(t)
@@ -72,5 +76,5 @@ func TestUserRepository(t *testing.T) {
 		})
 	}
 
-	utils.RepoTestClose(t)
+	// utils.RepoTestClose(t)
 }

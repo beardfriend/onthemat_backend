@@ -9,6 +9,8 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DATABASE}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./scripts/initPostgres.sql:/docker-entrypoint-initdb.d/initPostgres.sql
     expose: 
       - '${POSTGRES_PORT}'
     ports:

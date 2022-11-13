@@ -68,6 +68,9 @@ func (User) Fields() []ent.Field {
 			Comment("닉네임"),
 
 		field.Enum("type").
+			SchemaType(map[string]string{
+				dialect.Postgres: "userType",
+			}).
 			Optional().
 			Nillable().
 			Values("teacher", "academy").
