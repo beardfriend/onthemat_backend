@@ -46,7 +46,7 @@ TODO :
 │         │
 │         ├── common
 │         │
-│         ├── infrastructor
+│         ├── infrastructure
 │         │
 │         ├── model
 │         │

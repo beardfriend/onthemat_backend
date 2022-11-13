@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"onthemat/internal/app/infrastructor"
+	"onthemat/internal/app/infrastructure"
 	"onthemat/pkg/ent"
 )
 
 func TestCreate(t *testing.T) {
 	context := context.Background()
-	db := infrastructor.NewPostgresDB()
+	db := infrastructure.NewPostgresDB()
 	userRepo := NewUserRepository(db)
 	academyRepo := NewAcademyRepository(db)
 

@@ -1,8 +1,9 @@
-package infrastructor
+package infrastructure
 
 import (
 	"context"
 	"log"
+
 	"onthemat/pkg/ent"
 
 	_ "github.com/go-sql-driver/mysql"

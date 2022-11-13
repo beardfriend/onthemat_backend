@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"onthemat/internal/app/infrastructor"
+	"onthemat/internal/app/infrastructure"
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/useryoga"
 )
 
 func TestCreateMany(t *testing.T) {
 	context := context.Background()
-	db := infrastructor.NewPostgresDB()
+	db := infrastructure.NewPostgresDB()
 	repo := NewUserYogaRepository(db)
 
 	var yoga []*ent.UserYoga

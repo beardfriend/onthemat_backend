@@ -6,7 +6,7 @@ import (
 	"onthemat/internal/app/config"
 	"onthemat/internal/app/delivery/http"
 	"onthemat/internal/app/delivery/middlewares"
-	"onthemat/internal/app/infrastructor"
+	"onthemat/internal/app/infrastructure"
 	"onthemat/internal/app/repository"
 	"onthemat/internal/app/service"
 	"onthemat/internal/app/service/token"
@@ -55,8 +55,8 @@ func main() {
 	businessManM := openapi.NewBusinessMan(c)
 
 	// db
-	db := infrastructor.NewPostgresDB()
-	redisCli := infrastructor.NewRedis(c)
+	db := infrastructure.NewPostgresDB()
+	redisCli := infrastructure.NewRedis(c)
 
 	// repo
 	userRepo := repository.NewUserRepository(db)
@@ -78,7 +78,7 @@ func main() {
 	middleWare := middlewares.NewMiddelwWare(authSvc, tokenModule)
 
 	defer func() {
-		infrastructor.ClosePostgres(db)
+		infrastructure.ClosePostgres(db)
 	}()
 	// app
 	app := fiber.New()

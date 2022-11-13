@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"onthemat/internal/app/infrastructor"
+	"onthemat/internal/app/infrastructure"
 	"onthemat/internal/app/model"
 	"onthemat/pkg/ent"
 )
 
 func TestCRUD(t *testing.T) {
 	ctx := context.Background()
-	db := infrastructor.NewPostgresDB()
+	db := infrastructure.NewPostgresDB()
 	wexpModule := NewTeacherWorkExperience(db)
 	des := "dd"
 

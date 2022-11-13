@@ -1,7 +1,7 @@
 package main
 
-import "onthemat/internal/app/infrastructor"
+import "onthemat/internal/app/infrastructure"
 
 func main() {
-	infrastructor.GeneratePostgresMigraion()
+	infrastructure.GeneratePostgresMigraion()
 }

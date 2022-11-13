@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"testing"
 
-	"onthemat/internal/app/infrastructor"
+	"onthemat/internal/app/infrastructure"
 	"onthemat/pkg/ent"
 )
 
 func TestTeacherCreate(t *testing.T) {
-	db := infrastructor.NewPostgresDB()
+	db := infrastructure.NewPostgresDB()
 	teacher := NewTeacherRepository(db)
 	if err := teacher.Create(context.Background(), &ent.Teacher{
 		Name: "name",
@@ -21,7 +21,7 @@ func TestTeacherCreate(t *testing.T) {
 }
 
 func TestTeacherList(t *testing.T) {
-	db := infrastructor.NewPostgresDB()
+	db := infrastructure.NewPostgresDB()
 	teacher := NewTeacherRepository(db)
 
 	query := []string{"하타", "인"}
