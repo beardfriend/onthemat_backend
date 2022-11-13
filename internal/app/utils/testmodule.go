@@ -64,3 +64,16 @@ func RepoTestRemoveTable(ctx context.Context, c *ent.Client) error {
 	`)
 	return err
 }
+
+func RepoTestTruncateTable(ctx context.Context, c *ent.Client) error {
+	_, err := c.ExecContext(ctx, `
+	DO $$ DECLARE
+	r RECORD;
+	BEGIN
+	FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()) LOOP
+	EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' RESTART IDENTITY ' || ' CASCADE;';
+	END LOOP;
+	END $$;
+	`)
+	return err
+}

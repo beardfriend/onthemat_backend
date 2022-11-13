@@ -46,7 +46,7 @@ func TestUserRepository(t *testing.T) {
 				})
 			},
 			After: func(t *testing.T) {
-				utils.RepoTestRemoveTable(ctx, client)
+				utils.RepoTestTruncateTable(ctx, client)
 			},
 		},
 		// Get
@@ -59,6 +59,7 @@ func TestUserRepository(t *testing.T) {
 			Expect: func(t *testing.T) {
 			},
 			After: func(t *testing.T) {
+				utils.RepoTestTruncateTable(ctx, client)
 			},
 		},
 	}
