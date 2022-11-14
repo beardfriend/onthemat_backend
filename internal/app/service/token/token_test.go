@@ -16,5 +16,5 @@ func TestLogic(t *testing.T) {
 	cl := &TokenClaim{}
 	tokenModule.ParseToken(to, cl)
 	assert.Equal(t, cl.Uuid, "uuid")
-	assert.Equal(t, cl.UserId, uint(1))
+	assert.Equal(t, cl.UserId, 1)
 }

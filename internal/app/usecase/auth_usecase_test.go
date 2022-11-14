@@ -103,7 +103,7 @@ func TestAuthUC_SocialLogin(t *testing.T) {
 	redirectCode := "examplecode"
 	sociaKey := "123123123"
 
-	t.Run("KaKao Success", func(t *testing.T) {
+	t.Run("KaKao Login  Success", func(t *testing.T) {
 		keyInt, _ := strconv.Atoi(sociaKey)
 		mockAuthService.On("GetKakaoInfo", mock.AnythingOfType("string")).
 			Return(&kakao.GetUserInfoSuccessBody{
@@ -130,9 +130,50 @@ func TestAuthUC_SocialLogin(t *testing.T) {
 			Once()
 
 		mockTokenService.On("GetExpiredAt", mock.AnythingOfType("int")).
+			Return(time.Now()).Once()
+		authUC := usecase.NewAuthUseCase(mockTokenService, mockUserRepo, mockAuthService, mockStore, c)
+		l, err := authUC.SocialLogin(context.TODO(), "kakao", redirectCode)
+		fmt.Println(l)
+		assert.NoError(t, err, nil)
+	})
+
+	t.Run("KaKao SignUp Success ", func(t *testing.T) {
+		keyInt, _ := strconv.Atoi(sociaKey)
+		mockAuthService.On("GetKakaoInfo", mock.AnythingOfType("string")).
+			Return(&kakao.GetUserInfoSuccessBody{
+				Id: uint(keyInt),
+			}, nil).
+			Once()
+
+		mockUserRepo.On("GetBySocialKey", mock.Anything, mock.Anything).
+			Return(nil, nil).
+			Once()
+
+		mockUserRepo.On("Create", mock.Anything, mock.AnythingOfType("*ent.User")).
+			Return(&ent.User{
+				ID:          1,
+				TermAgreeAt: time.Now(),
+				SocialName:  &model.KakaoSocialType,
+				SocialKey:   &sociaKey,
+			}, nil).
+			Once()
+
+		mockTokenService.On("GenerateToken", mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int")).
+			Return("refreshToken", nil).
+			Once()
+
+		mockStore.On("Set", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("time.Duration")).Return(nil).Once()
+
+		mockTokenService.On("GenerateToken", mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int")).
+			Return("AccessToken", nil).
+			Once()
+
+		mockTokenService.On("GetExpiredAt", mock.AnythingOfType("int")).
 			Return(time.Now()).
 			Once()
 
+		mockTokenService.On("GetExpiredAt", mock.AnythingOfType("int")).
+			Return(time.Now()).Once()
 		authUC := usecase.NewAuthUseCase(mockTokenService, mockUserRepo, mockAuthService, mockStore, c)
 		l, err := authUC.SocialLogin(context.TODO(), "kakao", redirectCode)
 		fmt.Println(l)

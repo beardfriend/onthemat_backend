@@ -16,7 +16,7 @@ type customClaim struct {
 var customClm = customClaim{
 	Name: "세훈",
 	RegisteredClaims: jwtLib.RegisteredClaims{
-		ExpiresAt: jwtLib.NewNumericDate(time.Now().Add(2 * time.Second)),
+		ExpiresAt: jwtLib.NewNumericDate(time.Now().Add(50 * time.Second)),
 	},
 }
 
