@@ -8,7 +8,6 @@ import (
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/academy"
 	"onthemat/pkg/ent/predicate"
-	"onthemat/pkg/ent/user"
 	"onthemat/pkg/entx"
 )
 
@@ -45,7 +44,7 @@ func (repo *academyRepository) Create(ctx context.Context, academy *ent.Academy,
 			return err
 		}
 
-		if err := repo.db.User.UpdateOneID(userId).SetType(user.TypeAcademy).Exec(ctx); err != nil {
+		if err := repo.db.User.UpdateOneID(userId).SetType(1).Exec(ctx); err != nil {
 			return err
 		}
 

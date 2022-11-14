@@ -44,8 +44,17 @@ func RepoTestClose(t *testing.T) {
 	}
 
 	cmd := exec.Command("docker", "rm", "-f", "psql_repo_test")
+
 	cmd.Dir = c.Onthemat.PWD
 	err := cmd.Run()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	cmd2 := exec.Command("docker", "volume", "prune", "-f")
+	cmd2.Dir = c.Onthemat.PWD
+	err = cmd2.Run()
+
 	if err != nil {
 		t.Error(err)
 		return

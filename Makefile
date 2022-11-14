@@ -12,9 +12,12 @@ docker_postgres_dev:
 
 docker_postgres_test:
 	docker-compose -f ./docker-compose.test.yml --env-file ./configs/.env.test up -d
+
 apidoc:
 	apidoc -c apidocs.json -i internal/app/delivery/http -o apidocs
 
 mockery:
 	mockery --output ./internal/app/mocks --recursive --all --dir ./internal/app && sh ./scripts/mock.sh
 
+migration:
+	go run -mod=mod ./cmd/migration/main.go .

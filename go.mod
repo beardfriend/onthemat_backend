@@ -3,8 +3,8 @@ module onthemat
 go 1.19
 
 require (
-	ariga.io/atlas v0.7.2-0.20220927111110-867ee0cca56a
-	entgo.io/ent v0.11.3
+	ariga.io/atlas v0.8.2
+	entgo.io/ent v0.11.4
 	github.com/aws/aws-sdk-go v1.44.131
 	github.com/aws/aws-sdk-go-v2/config v1.17.10
 	github.com/aws/aws-sdk-go-v2/credentials v1.12.23
@@ -18,7 +18,6 @@ require (
 	github.com/jinzhu/copier v0.3.5
 	github.com/joho/godotenv v1.4.0
 	github.com/lib/pq v1.10.7
-	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/stretchr/testify v1.8.0
 )

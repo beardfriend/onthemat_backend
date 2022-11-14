@@ -15,17 +15,47 @@ type UserYogaRepository struct {
 }
 
 // CreateMany provides a mock function with given fields: ctx, value, userId
-func (_m *UserYogaRepository) CreateMany(ctx context.Context, value []*ent.UserYoga, userId int) error {
+func (_m *UserYogaRepository) CreateMany(ctx context.Context, value []*ent.UserYoga, userId int) ([]*ent.UserYoga, error) {
 	ret := _m.Called(ctx, value, userId)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []*ent.UserYoga, int) error); ok {
+	var r0 []*ent.UserYoga
+	if rf, ok := ret.Get(0).(func(context.Context, []*ent.UserYoga, int) []*ent.UserYoga); ok {
 		r0 = rf(ctx, value, userId)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*ent.UserYoga)
+		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, []*ent.UserYoga, int) error); ok {
+		r1 = rf(ctx, value, userId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DeleteMany provides a mock function with given fields: ctx, Ids
+func (_m *UserYogaRepository) DeleteMany(ctx context.Context, Ids []int) (int, error) {
+	ret := _m.Called(ctx, Ids)
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func(context.Context, []int) int); ok {
+		r0 = rf(ctx, Ids)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, []int) error); ok {
+		r1 = rf(ctx, Ids)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 type mockConstructorTestingTNewUserYogaRepository interface {

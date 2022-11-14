@@ -55,7 +55,7 @@ func main() {
 	businessManM := openapi.NewBusinessMan(c)
 
 	// db
-	db := infrastructure.NewPostgresDB()
+	db := infrastructure.NewPostgresDB(c)
 	redisCli := infrastructure.NewRedis(c)
 
 	// repo

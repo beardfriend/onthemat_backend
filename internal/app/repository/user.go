@@ -11,6 +11,7 @@ type UserRepository interface {
 	Create(ctx context.Context, user *ent.User) (*ent.User, error)
 	Update(ctx context.Context, user *ent.User) (*ent.User, error)
 	// UpdatePassword()
+
 	UpdateTempPassword(ctx context.Context, u *ent.User) error
 	UpdateEmailVerifeid(ctx context.Context, userId int) error
 	GetBySocialKey(ctx context.Context, u *ent.User) (*ent.User, error)
@@ -41,7 +42,7 @@ func (repo *userRepository) Create(ctx context.Context, user *ent.User) (*ent.Us
 		SetNillablePassword(user.Password).
 		SetNillableSocialKey(user.SocialKey).
 		SetNillableSocialName(user.SocialName).
-		SetNillableTermAgreeAt(user.TermAgreeAt).
+		SetTermAgreeAt(user.TermAgreeAt).
 		SetNillablePhoneNum(user.PhoneNum).
 		Save(ctx)
 	if err != nil {
@@ -78,8 +79,10 @@ func (repo *userRepository) GetBySocialKey(ctx context.Context, u *ent.User) (*e
 	return repo.db.User.
 		Query().
 		Where(
+			user.SocialNameEQ(*u.SocialName),
 			user.SocialKeyEQ(*u.SocialKey),
-			user.SocialNameEQ(*u.SocialName)).Only(ctx)
+		).
+		Only(ctx)
 }
 
 func (repo *userRepository) GetByEmail(ctx context.Context, email string) (*ent.User, error) {

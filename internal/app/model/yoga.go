@@ -20,17 +20,17 @@ func (Yoga) Annotations() []schema.Annotation {
 func (Yoga) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("category").
-			Comment("메인으로 묶이는 카테고리 ex) 아쉬탕가"),
+			Comment("큰 범주의 요가 이름 (한글)"),
 
-		field.String("name").
-			Comment("요가 이름"),
+		field.String("name_kor").
+			Comment("요가 이름 한국어"),
+
+		field.String("name_eng").
+			Comment("요가 이름 영어"),
 
 		field.Text("description").
 			Optional().
 			Comment("요가에 대한 설명"),
-
-		field.Bool("isOffical").
-			Comment("관리자가 등록했는지 여부"),
 	}
 }
 

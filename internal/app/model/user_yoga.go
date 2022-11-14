@@ -25,8 +25,8 @@ func (UserYoga) Fields() []ent.Field {
 		field.String("name").
 			Comment("이름"),
 
-		field.Enum("userType").
-			Values("teacher", "academy").
+		field.Int8("userType").
+			GoType(UserType(0)).
 			Comment("유저 종류"),
 	}
 }

@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql/driver"
 
+	"onthemat/internal/app/model"
 	"onthemat/pkg/ent"
 
 	"onthemat/pkg/ent/teacher"
 	"onthemat/pkg/ent/teacherworkarea"
-	"onthemat/pkg/ent/user"
 	"onthemat/pkg/ent/useryoga"
 	"onthemat/pkg/entx"
 
@@ -40,7 +40,7 @@ func (repo *teacherRepository) Create(ctx context.Context, t *ent.Teacher, userI
 			return err
 		}
 
-		if err := repo.db.User.UpdateOneID(userId).SetType(user.TypeTeacher).Exec(ctx); err != nil {
+		if err := repo.db.User.UpdateOneID(userId).SetType(model.AcademyType).Exec(ctx); err != nil {
 			return err
 		}
 

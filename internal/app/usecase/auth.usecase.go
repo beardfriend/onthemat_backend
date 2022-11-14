@@ -9,13 +9,13 @@ import (
 
 	"onthemat/internal/app/common"
 	"onthemat/internal/app/config"
+	"onthemat/internal/app/model"
 	"onthemat/internal/app/repository"
 	"onthemat/internal/app/service"
 	"onthemat/internal/app/service/token"
 	"onthemat/internal/app/transport"
 	"onthemat/pkg/auth/store"
 	"onthemat/pkg/ent"
-	entUser "onthemat/pkg/ent/user"
 
 	"github.com/google/uuid"
 )
@@ -100,7 +100,7 @@ func (a *authUseCase) Login(ctx context.Context, body *transport.LoginBody) (*Lo
 	userType := ""
 
 	if user.Type != nil {
-		userType = string(*user.Type)
+		userType = *user.Type.ToString()
 	}
 
 	// 토큰 발행
@@ -144,7 +144,8 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName, code string) 
 		kakaoId := strconv.FormatUint(uint64(kakaoInfo.Id), 10)
 
 		user.SocialKey = &kakaoId
-		*user.SocialName = entUser.SocialNameKakao
+
+		user.SocialName = &model.KakaoSocialType
 
 	} else if socialName == "google" {
 
@@ -156,7 +157,7 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName, code string) 
 		googleId := strconv.FormatUint(uint64(googleInfo.Sub), 10)
 		user.SocialKey = &googleId
 		user.Email = &googleInfo.Email
-		*user.SocialName = entUser.SocialNameGoogle
+		user.SocialName = &model.GoogleSocialType
 
 	} else if socialName == "naver" {
 		naverInfo, err := a.authSvc.GetNaverInfo(code)
@@ -166,7 +167,7 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName, code string) 
 
 		user.SocialKey = &naverInfo.Id
 		user.Email = &naverInfo.Email
-		*user.SocialName = entUser.SocialNameNaver
+		user.SocialName = &model.NaverSocialType
 
 	}
 
@@ -177,7 +178,7 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName, code string) 
 
 	// 유저가 없으면 회원 정보 생성
 	if checkedUser == nil {
-		*user.TermAgreeAt = time.Now()
+		user.TermAgreeAt = time.Now()
 		user, err = a.userRepo.Create(ctx, user)
 		if err != nil {
 			return nil, err
@@ -185,9 +186,10 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName, code string) 
 	}
 
 	userType := ""
-
-	if user.Type != nil {
-		userType = string(*user.Type)
+	if user.Type == &model.AcademyType {
+		userType = "academy"
+	} else if user.Type == &model.TeacherType {
+		userType = "teacher"
 	}
 
 	// 토큰 발행
@@ -219,12 +221,11 @@ func (a *authUseCase) GoogleRedirectUrl(ctx context.Context) string {
 }
 
 func (a *authUseCase) SocialSignUp(ctx context.Context, body *transport.SocialSignUpBody) error {
-	termAgreeAt := time.Now()
 	_, err := a.userRepo.Update(ctx, &ent.User{
 		ID:          body.UserID,
 		Email:       &body.Email,
 		Nickname:    &body.NickName,
-		TermAgreeAt: &termAgreeAt,
+		TermAgreeAt: time.Now(),
 		Type:        nil,
 	})
 	return err
@@ -240,8 +241,6 @@ func (a *authUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) er
 		return common.NewConflictError("이미 존재하는 이메일입니다.")
 	}
 
-	termAgreeAt := time.Now()
-
 	sha := sha256.New()
 	sha.Write([]byte(a.config.Secret.Password))
 	sha.Write([]byte(body.Password))
@@ -251,7 +250,7 @@ func (a *authUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) er
 		Email:       &body.Email,
 		Password:    &hashPassword,
 		Nickname:    &body.NickName,
-		TermAgreeAt: &termAgreeAt,
+		TermAgreeAt: time.Now(),
 	})
 
 	if err != nil {
@@ -371,7 +370,7 @@ func (a *authUseCase) Refresh(ctx context.Context, authorizationHeader []byte) (
 
 	userType := ""
 	if u.Type != nil {
-		userType = string(*u.Type)
+		userType = *u.Type.ToString()
 	}
 
 	loginType := "normal"

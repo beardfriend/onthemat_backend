@@ -4,11 +4,9 @@ package mocks
 
 import (
 	context "context"
+	transport "onthemat/internal/app/transport"
 
 	mock "github.com/stretchr/testify/mock"
-	fasthttp "github.com/valyala/fasthttp"
-
-	transport "onthemat/internal/app/transport"
 
 	usecase "onthemat/internal/app/usecase"
 )
@@ -33,11 +31,11 @@ func (_m *AuthUseCase) CheckDuplicatedEmail(ctx context.Context, email string) e
 }
 
 // GoogleRedirectUrl provides a mock function with given fields: ctx
-func (_m *AuthUseCase) GoogleRedirectUrl(ctx *fasthttp.RequestCtx) string {
+func (_m *AuthUseCase) GoogleRedirectUrl(ctx context.Context) string {
 	ret := _m.Called(ctx)
 
 	var r0 string
-	if rf, ok := ret.Get(0).(func(*fasthttp.RequestCtx) string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
 		r0 = rf(ctx)
 	} else {
 		r0 = ret.Get(0).(string)
@@ -47,11 +45,11 @@ func (_m *AuthUseCase) GoogleRedirectUrl(ctx *fasthttp.RequestCtx) string {
 }
 
 // KakaoRedirectUrl provides a mock function with given fields: ctx
-func (_m *AuthUseCase) KakaoRedirectUrl(ctx *fasthttp.RequestCtx) string {
+func (_m *AuthUseCase) KakaoRedirectUrl(ctx context.Context) string {
 	ret := _m.Called(ctx)
 
 	var r0 string
-	if rf, ok := ret.Get(0).(func(*fasthttp.RequestCtx) string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
 		r0 = rf(ctx)
 	} else {
 		r0 = ret.Get(0).(string)
@@ -61,11 +59,11 @@ func (_m *AuthUseCase) KakaoRedirectUrl(ctx *fasthttp.RequestCtx) string {
 }
 
 // Login provides a mock function with given fields: ctx, body
-func (_m *AuthUseCase) Login(ctx *fasthttp.RequestCtx, body *transport.LoginBody) (*usecase.LoginResult, error) {
+func (_m *AuthUseCase) Login(ctx context.Context, body *transport.LoginBody) (*usecase.LoginResult, error) {
 	ret := _m.Called(ctx, body)
 
 	var r0 *usecase.LoginResult
-	if rf, ok := ret.Get(0).(func(*fasthttp.RequestCtx, *transport.LoginBody) *usecase.LoginResult); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *transport.LoginBody) *usecase.LoginResult); ok {
 		r0 = rf(ctx, body)
 	} else {
 		if ret.Get(0) != nil {
@@ -74,7 +72,7 @@ func (_m *AuthUseCase) Login(ctx *fasthttp.RequestCtx, body *transport.LoginBody
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*fasthttp.RequestCtx, *transport.LoginBody) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *transport.LoginBody) error); ok {
 		r1 = rf(ctx, body)
 	} else {
 		r1 = ret.Error(1)
@@ -84,11 +82,11 @@ func (_m *AuthUseCase) Login(ctx *fasthttp.RequestCtx, body *transport.LoginBody
 }
 
 // NaverRedirectUrl provides a mock function with given fields: ctx
-func (_m *AuthUseCase) NaverRedirectUrl(ctx *fasthttp.RequestCtx) string {
+func (_m *AuthUseCase) NaverRedirectUrl(ctx context.Context) string {
 	ret := _m.Called(ctx)
 
 	var r0 string
-	if rf, ok := ret.Get(0).(func(*fasthttp.RequestCtx) string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
 		r0 = rf(ctx)
 	} else {
 		r0 = ret.Get(0).(string)
@@ -98,11 +96,11 @@ func (_m *AuthUseCase) NaverRedirectUrl(ctx *fasthttp.RequestCtx) string {
 }
 
 // Refresh provides a mock function with given fields: ctx, authorizationHeader
-func (_m *AuthUseCase) Refresh(ctx *fasthttp.RequestCtx, authorizationHeader []byte) (*usecase.RefreshResult, error) {
+func (_m *AuthUseCase) Refresh(ctx context.Context, authorizationHeader []byte) (*usecase.RefreshResult, error) {
 	ret := _m.Called(ctx, authorizationHeader)
 
 	var r0 *usecase.RefreshResult
-	if rf, ok := ret.Get(0).(func(*fasthttp.RequestCtx, []byte) *usecase.RefreshResult); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []byte) *usecase.RefreshResult); ok {
 		r0 = rf(ctx, authorizationHeader)
 	} else {
 		if ret.Get(0) != nil {
@@ -111,7 +109,7 @@ func (_m *AuthUseCase) Refresh(ctx *fasthttp.RequestCtx, authorizationHeader []b
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*fasthttp.RequestCtx, []byte) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, []byte) error); ok {
 		r1 = rf(ctx, authorizationHeader)
 	} else {
 		r1 = ret.Error(1)
@@ -121,11 +119,11 @@ func (_m *AuthUseCase) Refresh(ctx *fasthttp.RequestCtx, authorizationHeader []b
 }
 
 // SendEmailResetPassword provides a mock function with given fields: ctx, email
-func (_m *AuthUseCase) SendEmailResetPassword(ctx *fasthttp.RequestCtx, email string) error {
+func (_m *AuthUseCase) SendEmailResetPassword(ctx context.Context, email string) error {
 	ret := _m.Called(ctx, email)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*fasthttp.RequestCtx, string) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
 		r0 = rf(ctx, email)
 	} else {
 		r0 = ret.Error(0)
@@ -135,11 +133,11 @@ func (_m *AuthUseCase) SendEmailResetPassword(ctx *fasthttp.RequestCtx, email st
 }
 
 // SignUp provides a mock function with given fields: ctx, body
-func (_m *AuthUseCase) SignUp(ctx *fasthttp.RequestCtx, body *transport.SignUpBody) error {
+func (_m *AuthUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) error {
 	ret := _m.Called(ctx, body)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*fasthttp.RequestCtx, *transport.SignUpBody) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *transport.SignUpBody) error); ok {
 		r0 = rf(ctx, body)
 	} else {
 		r0 = ret.Error(0)
@@ -149,11 +147,11 @@ func (_m *AuthUseCase) SignUp(ctx *fasthttp.RequestCtx, body *transport.SignUpBo
 }
 
 // SocialLogin provides a mock function with given fields: ctx, socialName, code
-func (_m *AuthUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName string, code string) (*usecase.LoginResult, error) {
+func (_m *AuthUseCase) SocialLogin(ctx context.Context, socialName string, code string) (*usecase.LoginResult, error) {
 	ret := _m.Called(ctx, socialName, code)
 
 	var r0 *usecase.LoginResult
-	if rf, ok := ret.Get(0).(func(*fasthttp.RequestCtx, string, string) *usecase.LoginResult); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *usecase.LoginResult); ok {
 		r0 = rf(ctx, socialName, code)
 	} else {
 		if ret.Get(0) != nil {
@@ -162,7 +160,7 @@ func (_m *AuthUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName string, 
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*fasthttp.RequestCtx, string, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
 		r1 = rf(ctx, socialName, code)
 	} else {
 		r1 = ret.Error(1)
@@ -172,11 +170,11 @@ func (_m *AuthUseCase) SocialLogin(ctx *fasthttp.RequestCtx, socialName string, 
 }
 
 // SocialSignUp provides a mock function with given fields: ctx, body
-func (_m *AuthUseCase) SocialSignUp(ctx *fasthttp.RequestCtx, body *transport.SocialSignUpBody) error {
+func (_m *AuthUseCase) SocialSignUp(ctx context.Context, body *transport.SocialSignUpBody) error {
 	ret := _m.Called(ctx, body)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*fasthttp.RequestCtx, *transport.SocialSignUpBody) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *transport.SocialSignUpBody) error); ok {
 		r0 = rf(ctx, body)
 	} else {
 		r0 = ret.Error(0)
@@ -186,11 +184,11 @@ func (_m *AuthUseCase) SocialSignUp(ctx *fasthttp.RequestCtx, body *transport.So
 }
 
 // VerifiedEmail provides a mock function with given fields: ctx, email, authKey
-func (_m *AuthUseCase) VerifiedEmail(ctx *fasthttp.RequestCtx, email string, authKey string) error {
+func (_m *AuthUseCase) VerifiedEmail(ctx context.Context, email string, authKey string) error {
 	ret := _m.Called(ctx, email, authKey)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*fasthttp.RequestCtx, string, string) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
 		r0 = rf(ctx, email, authKey)
 	} else {
 		r0 = ret.Error(0)

@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"onthemat/pkg/ent"
-	"onthemat/pkg/ent/user"
 
 	"github.com/jinzhu/copier"
 )
@@ -43,18 +42,19 @@ type VerifyEmailQueries struct {
 
 type UserMeResponse struct {
 	ID          int       `json:"id"`
-	Email       string    `json:"email"`
-	Nickname    string    `json:"nickname"`
+	Email       *string   `json:"email"`
+	Nickname    *string   `json:"nickname"`
+	SocialName  *string   `json:"social_name"`
+	SocialKey   *string   `json:"social_key"`
+	Type        *string   `json:"type"`
+	PhoneNum    *string   `json:"phone_num"`
 	CreatedAt   time.Time `json:"created_at"`
-	SocialName  string    `json:"social_name"`
-	SocialKey   string    `json:"social_key"`
-	Type        user.Type `json:"type"`
-	PhoneNum    string    `json:"phone_num"`
 	LastLoginAt time.Time `json:"last_login_at"`
 }
 
 func NewUserMeResponse(model *ent.User) *UserMeResponse {
 	resp := new(UserMeResponse)
 	copier.Copy(&resp, model)
+	resp.Type = model.Type.ToString()
 	return resp
 }

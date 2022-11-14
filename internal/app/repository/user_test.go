@@ -6,28 +6,27 @@ import (
 	"testing"
 	"time"
 
+	"onthemat/internal/app/model"
 	"onthemat/internal/app/repository"
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/enttest"
-	"onthemat/pkg/ent/user"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestClose(t *testing.T) {
-	utils.RepoTestClose(t)
-}
 
 func TestUserRepository(t *testing.T) {
 	// init
 	c := utils.RepoTestInit(t)
-	time.Sleep(1 * time.Second)
+	defer utils.RepoTestClose(t)
+	time.Sleep(3 * time.Second)
+
 	ctx := context.Background()
 	url := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable", c.PostgreSQL.Host, c.PostgreSQL.Port, c.PostgreSQL.User, c.PostgreSQL.Database, c.PostgreSQL.Password)
 	client := enttest.Open(t, "postgres", url)
 	defer client.Close()
+
 	userRepo := repository.NewUserRepository(client)
 
 	tests := []utils.Tests{
@@ -72,7 +71,7 @@ func TestUserRepository(t *testing.T) {
 						Password:    &data.Password,
 						Nickname:    &data.Nickname,
 						PhoneNum:    &data.PhoneNum,
-						TermAgreeAt: &data.TermAgree,
+						TermAgreeAt: data.TermAgree,
 					})
 
 					assert.NoError(t, err)
@@ -80,10 +79,10 @@ func TestUserRepository(t *testing.T) {
 
 				t.Run("SocialKey 중복됐을 때", func(t *testing.T) {
 					data := struct {
-						SocialName user.SocialName
+						SocialName model.SocialType
 						SocialKey  string
 					}{
-						SocialName: user.SocialNameKakao,
+						SocialName: model.KakaoSocialType,
 						SocialKey:  "asdadsads",
 					}
 
@@ -123,7 +122,7 @@ func TestUserRepository(t *testing.T) {
 					Password:    &password,
 					Nickname:    &nickname,
 					PhoneNum:    &phoneNum,
-					TermAgreeAt: &termAgreeAt,
+					TermAgreeAt: termAgreeAt,
 				})
 			},
 
@@ -165,6 +164,11 @@ func TestUserRepository(t *testing.T) {
 				u, err := userRepo.Get(ctx, 1)
 				assert.NoError(t, err)
 				assert.Equal(t, *u.Email, "asd@gmail.com")
+
+				t.Run("Not Found Error", func(t *testing.T) {
+					_, err := userRepo.Get(ctx, 2)
+					assert.Equal(t, ent.IsNotFound(err), true)
+				})
 			},
 
 			After: func(t *testing.T) {
@@ -172,7 +176,7 @@ func TestUserRepository(t *testing.T) {
 			},
 		},
 
-		// FindByEmail
+		// FindBy
 		{
 			Name: "userRepository/FindByEmail",
 
@@ -203,7 +207,7 @@ func TestUserRepository(t *testing.T) {
 			},
 		},
 
-		// GetByEmailPassword
+		// GetBy
 		{
 			Name: "userRepository/GetByEmailPassword",
 
@@ -220,6 +224,7 @@ func TestUserRepository(t *testing.T) {
 			Expect: func(t *testing.T) {
 				email := "asd@gmail.com"
 				password := "password"
+				incorrectPassword := "incorrectPassword"
 
 				t.Run("success", func(t *testing.T) {
 					u, err := userRepo.GetByEmailPassword(ctx, &ent.User{
@@ -229,6 +234,15 @@ func TestUserRepository(t *testing.T) {
 					assert.NoError(t, err)
 					assert.Equal(t, *u.Email, email)
 				})
+
+				t.Run("Not Found Error", func(t *testing.T) {
+					_, err := userRepo.GetByEmailPassword(ctx, &ent.User{
+						Email:    &email,
+						Password: &incorrectPassword,
+					})
+
+					assert.Equal(t, ent.IsNotFound(err), true)
+				})
 			},
 
 			After: func(t *testing.T) {
@@ -236,7 +250,35 @@ func TestUserRepository(t *testing.T) {
 			},
 		},
 
-		//
+		{
+			Name: "userRepository/GetBySocialKey",
+
+			Before: func(t *testing.T) {
+				socialKey := "asdad"
+				_, err := userRepo.Create(ctx, &ent.User{
+					SocialName: &model.KakaoSocialType,
+					SocialKey:  &socialKey,
+				})
+				assert.NoError(t, err)
+			},
+
+			Expect: func(t *testing.T) {
+				socialKey := "asdad"
+
+				t.Run("success", func(t *testing.T) {
+					u, err := userRepo.GetBySocialKey(ctx, &ent.User{
+						SocialName: &model.KakaoSocialType,
+						SocialKey:  &socialKey,
+					})
+					assert.NoError(t, err)
+					assert.Equal(t, *u.SocialKey, socialKey)
+				})
+			},
+
+			After: func(t *testing.T) {
+				utils.RepoTestTruncateTable(ctx, client)
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -246,6 +288,4 @@ func TestUserRepository(t *testing.T) {
 			tt.After(t)
 		})
 	}
-
-	utils.RepoTestClose(t)
 }

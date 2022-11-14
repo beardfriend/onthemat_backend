@@ -47,14 +47,11 @@ func (User) Fields() []ent.Field {
 			Sensitive().
 			Comment("임시 비밀번호"),
 
-		field.Enum("socialName").
-			SchemaType(map[string]string{
-				dialect.Postgres: "socialtype",
-			}).
+		field.Int8("socialName").
+			GoType(SocialType(0)).
 			Optional().
 			Nillable().
-			Values("kakao", "google", "naver").
-			Comment("소셜 로그인을 제공한 업체 이름"),
+			Comment("소셜 로그인을 제공한 업체 이름 1:kakao, 2:google, 3:naver"),
 
 		field.String("socialKey").
 			Optional().
@@ -71,14 +68,11 @@ func (User) Fields() []ent.Field {
 			Nillable().
 			Comment("닉네임"),
 
-		field.Enum("type").
-			SchemaType(map[string]string{
-				dialect.Postgres: "usertype",
-			}).
+		field.Int8("type").
+			GoType(UserType(0)).
 			Optional().
 			Nillable().
-			Values("teacher", "academy").
-			Comment("유저 타입"),
+			Comment("유저 타입 1:teacher 2:academy"),
 
 		field.String("phoneNum").
 			SchemaType(map[string]string{
@@ -90,8 +84,6 @@ func (User) Fields() []ent.Field {
 			Comment("휴대폰 번호"),
 
 		field.Time("termAgreeAt").
-			Optional().
-			Nillable().
 			Comment("약관 동의 일시"),
 
 		field.Time("lastLoginAt").

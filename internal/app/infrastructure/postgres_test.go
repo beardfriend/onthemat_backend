@@ -1,7 +1,13 @@
 package infrastructure
 
-import "testing"
+import (
+	"testing"
+
+	"onthemat/internal/app/config"
+)
 
 func TestPostgres(t *testing.T) {
-	NewPostgresDB()
+	c := config.NewConfig()
+	c.Load("../../../configs")
+	NewPostgresDB(c)
 }
