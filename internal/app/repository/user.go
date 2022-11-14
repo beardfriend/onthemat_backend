@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/user"
@@ -92,10 +93,22 @@ func (repo *userRepository) GetByEmail(ctx context.Context, email string) (*ent.
 }
 
 func (repo *userRepository) GetByEmailPassword(ctx context.Context, u *ent.User) (*ent.User, error) {
-	return repo.db.User.
+	if u.Password == nil || u.Email == nil {
+		return nil, errors.New("포인터 에러")
+	}
+
+	return repo.db.Debug().User.
 		Query().
 		Where(
-			user.Or(user.PasswordEQ(*u.Password), user.TempPasswordEQ(*u.Password)),
+			user.
+				Or(
+					user.PasswordEQ(*u.Password),
+					user.
+						And(
+							user.TempPasswordNotNil(),
+							user.TempPasswordEQ(*u.Password),
+						),
+				),
 			user.EmailEQ(*u.Email),
 		).Only(ctx)
 }

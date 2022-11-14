@@ -1,6 +1,7 @@
 package service
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,7 +26,7 @@ type AuthService interface {
 	GetKakaoInfo(code string) (*kakao.GetUserInfoSuccessBody, error)
 	GetGoogleInfo(code string) (*google.GetUserInfo, error)
 	GetNaverInfo(code string) (*naver.GetUserInfo, error)
-
+	HashPassword(password string, secret string) string
 	GenerateRandomString() string
 	GenerateRandomPassword() string
 	SendEmailResetPassword(user *ent.User) error
@@ -207,4 +208,11 @@ func (a *authService) GenerateRandomPassword() string {
 		b.WriteRune(chars[rand.Intn(len(chars))])
 	}
 	return b.String()
+}
+
+func (a *authService) HashPassword(password string, secret string) string {
+	sha := sha256.New()
+	sha.Write([]byte(secret))
+	sha.Write([]byte(password))
+	return fmt.Sprintf("%x", sha.Sum(nil))
 }

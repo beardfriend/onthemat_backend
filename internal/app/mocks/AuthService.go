@@ -178,6 +178,20 @@ func (_m *AuthService) GetNaverRedirectUrl() string {
 	return r0
 }
 
+// HashPassword provides a mock function with given fields: password, secret
+func (_m *AuthService) HashPassword(password string, secret string) string {
+	ret := _m.Called(password, secret)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(string, string) string); ok {
+		r0 = rf(password, secret)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
 // SendEmailResetPassword provides a mock function with given fields: user
 func (_m *AuthService) SendEmailResetPassword(user *ent.User) error {
 	ret := _m.Called(user)

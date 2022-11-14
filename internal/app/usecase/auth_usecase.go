@@ -2,9 +2,7 @@ package usecase
 
 import (
 	"context"
-	"crypto/sha256"
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -77,11 +75,7 @@ type LoginResult struct {
 
 func (a *authUseCase) Login(ctx context.Context, body *transport.LoginBody) (*LoginResult, error) {
 	defer ctx.Done()
-
-	sha := sha256.New()
-	sha.Write([]byte(a.config.Secret.Password))
-	sha.Write([]byte(body.Password))
-	hashPassword := fmt.Sprintf("%x", sha.Sum(nil))
+	hashPassword := a.authSvc.HashPassword(body.Password, a.config.Secret.Password)
 
 	user, err := a.userRepo.GetByEmailPassword(ctx, &ent.User{
 		Email:    &body.Email,
@@ -99,8 +93,7 @@ func (a *authUseCase) Login(ctx context.Context, body *transport.LoginBody) (*Lo
 	}
 
 	userType := ""
-
-	if user.Type != nil {
+	if user.Type == &model.AcademyType || user.Type == &model.TeacherType {
 		userType = *user.Type.ToString()
 	}
 
@@ -247,10 +240,7 @@ func (a *authUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) er
 		return common.NewConflictError("이미 존재하는 이메일입니다.")
 	}
 
-	sha := sha256.New()
-	sha.Write([]byte(a.config.Secret.Password))
-	sha.Write([]byte(body.Password))
-	hashPassword := fmt.Sprintf("%x", sha.Sum(nil))
+	hashPassword := a.authSvc.HashPassword(body.Password, a.config.Secret.Password)
 
 	_, err = a.userRepo.Create(ctx, &ent.User{
 		Email:       &body.Email,
@@ -263,6 +253,7 @@ func (a *authUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) er
 		return err
 	}
 
+	// 이메일 인증을 위한 키 store에 저장.
 	key := a.authSvc.GenerateRandomString()
 	if err := a.store.Set(ctx, body.Email, key, time.Duration(time.Hour*24)); err != nil {
 		return err
@@ -323,10 +314,7 @@ func (a *authUseCase) SendEmailResetPassword(ctx context.Context, email string) 
 		return common.NewBadRequestError("존재하지 않는 이메일입니다.")
 	}
 
-	sha := sha256.New()
-	sha.Write([]byte(a.config.Secret.Password))
-	sha.Write([]byte(a.authSvc.GenerateRandomPassword()))
-	hashPassword := fmt.Sprintf("%x", sha.Sum(nil))
+	hashPassword := a.authSvc.HashPassword(a.authSvc.GenerateRandomPassword(), a.config.Secret.Password)
 
 	u := &ent.User{
 		Email:        &email,

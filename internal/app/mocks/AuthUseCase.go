@@ -4,9 +4,11 @@ package mocks
 
 import (
 	context "context"
-	transport "onthemat/internal/app/transport"
+	model "onthemat/internal/app/model"
 
 	mock "github.com/stretchr/testify/mock"
+
+	transport "onthemat/internal/app/transport"
 
 	usecase "onthemat/internal/app/usecase"
 )
@@ -147,11 +149,11 @@ func (_m *AuthUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) e
 }
 
 // SocialLogin provides a mock function with given fields: ctx, socialName, code
-func (_m *AuthUseCase) SocialLogin(ctx context.Context, socialName string, code string) (*usecase.LoginResult, error) {
+func (_m *AuthUseCase) SocialLogin(ctx context.Context, socialName model.SocialType, code string) (*usecase.LoginResult, error) {
 	ret := _m.Called(ctx, socialName, code)
 
 	var r0 *usecase.LoginResult
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *usecase.LoginResult); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, model.SocialType, string) *usecase.LoginResult); ok {
 		r0 = rf(ctx, socialName, code)
 	} else {
 		if ret.Get(0) != nil {
@@ -160,7 +162,7 @@ func (_m *AuthUseCase) SocialLogin(ctx context.Context, socialName string, code 
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, model.SocialType, string) error); ok {
 		r1 = rf(ctx, socialName, code)
 	} else {
 		r1 = ret.Error(1)

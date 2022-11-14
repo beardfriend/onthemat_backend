@@ -289,3 +289,117 @@ func TestUserRepository(t *testing.T) {
 		})
 	}
 }
+
+func TestGetByEmaillPassword(t *testing.T) {
+	c := utils.RepoTestInit(t)
+	defer utils.RepoTestClose(t)
+	time.Sleep(3 * time.Second)
+
+	ctx := context.Background()
+	url := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable", c.PostgreSQL.Host, c.PostgreSQL.Port, c.PostgreSQL.User, c.PostgreSQL.Database, c.PostgreSQL.Password)
+	client := enttest.Open(t, "postgres", url)
+	defer client.Close()
+
+	userRepo := repository.NewUserRepository(client)
+
+	tt := utils.Tests{
+		Name: "userRepository/GetByEmailPassword",
+		Before: func(t *testing.T) {
+			data := struct {
+				Email        string
+				Password     string
+				TempPassword string
+				Nickname     string
+				PhoneNum     string
+				TermAgree    time.Time
+			}{
+				Email:        "asd@naver.com",
+				Password:     "password",
+				Nickname:     "nickname",
+				TempPassword: "temppassword",
+				PhoneNum:     "01043226633",
+				TermAgree:    time.Now(),
+			}
+
+			// 일반 유저
+			_, err := userRepo.Create(ctx, &ent.User{
+				Email:       &data.Email,
+				Password:    &data.Password,
+				Nickname:    &data.Nickname,
+				PhoneNum:    &data.PhoneNum,
+				TermAgreeAt: data.TermAgree,
+			})
+			assert.NoError(t, err)
+
+			email := "email@gmail.com"
+			// 임시비밀번호 있는 유저
+			user, err := userRepo.Create(ctx, &ent.User{
+				Email:       &email,
+				Password:    &data.Password,
+				Nickname:    &data.Nickname,
+				PhoneNum:    &data.PhoneNum,
+				TermAgreeAt: data.TermAgree,
+			})
+			assert.NoError(t, err)
+
+			user.TempPassword = &data.TempPassword
+			err = userRepo.UpdateTempPassword(ctx, user)
+			assert.NoError(t, err)
+		},
+		Expect: func(t *testing.T) {
+			data := struct {
+				Email        string
+				Password     string
+				TempPassword string
+				Nickname     string
+				PhoneNum     string
+				TermAgree    time.Time
+			}{
+				Email:        "asd@naver.com",
+				Password:     "password",
+				Nickname:     "nickname",
+				PhoneNum:     "01043226633",
+				TempPassword: "temppassword",
+				TermAgree:    time.Now(),
+			}
+
+			email := "email@gmail.com"
+			// 임시비밀번호 있는 유저
+
+			t.Run("이메일 패스워드로 조회", func(t *testing.T) {
+				u, err := userRepo.GetByEmailPassword(ctx, &ent.User{
+					Email:    &data.Email,
+					Password: &data.Password,
+				})
+				assert.Equal(t, u.Email, &data.Email)
+				assert.NoError(t, err)
+			})
+			// password에 nil을 넣으면 포인터 에러가 난다.
+			emptystring := ""
+			t.Run("임시비밀번호 아무것도 없을 때", func(t *testing.T) {
+				_, err := userRepo.GetByEmailPassword(ctx, &ent.User{
+					Email:    &data.Email,
+					Password: &emptystring,
+				})
+				assert.Equal(t, ent.IsNotFound(err), true)
+				assert.Error(t, err)
+			})
+			t.Run("임시비밀번호 로 조회", func(t *testing.T) {
+				u, err := userRepo.GetByEmailPassword(ctx, &ent.User{
+					Email:    &email,
+					Password: &data.TempPassword,
+				})
+				assert.Equal(t, u.Email, &email)
+				assert.NoError(t, err)
+			})
+		},
+
+		After: func(t *testing.T) {},
+	}
+
+	t.Run(tt.Name, func(t *testing.T) {
+		tt.Before(t)
+		tt.Expect(t)
+		tt.After(t)
+	})
+}
