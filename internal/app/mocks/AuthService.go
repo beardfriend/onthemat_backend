@@ -192,13 +192,13 @@ func (_m *AuthService) SendEmailResetPassword(user *ent.User) error {
 	return r0
 }
 
-// SendEmailVerifiedUser provides a mock function with given fields: email, authKey
-func (_m *AuthService) SendEmailVerifiedUser(email string, authKey string) error {
-	ret := _m.Called(email, authKey)
+// SendEmailVerifiedUser provides a mock function with given fields: email, authKey, onthematHost
+func (_m *AuthService) SendEmailVerifiedUser(email string, authKey string, onthematHost string) error {
+	ret := _m.Called(email, authKey, onthematHost)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string) error); ok {
-		r0 = rf(email, authKey)
+	if rf, ok := ret.Get(0).(func(string, string, string) error); ok {
+		r0 = rf(email, authKey, onthematHost)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	ex "onthemat/internal/app/common"
+	"onthemat/internal/app/model"
 	"onthemat/internal/app/transport"
 
 	"onthemat/internal/app/usecase"
@@ -110,7 +111,7 @@ func (h *authHandler) KakaoCallBackToken(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	code := c.Query("code")
-	data, err := h.AuthUseCase.SocialLogin(ctx, "kakao", code)
+	data, err := h.AuthUseCase.SocialLogin(ctx, model.KakaoSocialType, code)
 	if err != nil {
 		code, json := ex.ParseHttpError(err)
 		return c.Status(code).JSON(json)
@@ -181,7 +182,7 @@ func (h *authHandler) GoogleCallBackToken(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	code := c.Query("code")
-	data, err := h.AuthUseCase.SocialLogin(ctx, "google", code)
+	data, err := h.AuthUseCase.SocialLogin(ctx, model.GoogleSocialType, code)
 	if err != nil {
 		code, json := ex.ParseHttpError(err)
 		return c.Status(code).JSON(json)
@@ -252,7 +253,7 @@ func (h *authHandler) NaverCallBackToken(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	code := c.Query("code")
-	data, err := h.AuthUseCase.SocialLogin(ctx, "naver", code)
+	data, err := h.AuthUseCase.SocialLogin(ctx, model.NaverSocialType, code)
 	if err != nil {
 		code, json := ex.ParseHttpError(err)
 		return c.Status(code).JSON(json)

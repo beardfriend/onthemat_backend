@@ -15,6 +15,7 @@ type GetTokenSuccessBody struct {
 }
 
 type GetUserInfo struct {
-	Email string `json:"email"`
-	Sub   uint   `json:"sub"`
+	Email    string `json:"email"`
+	Sub      string `json:"sub"`
+	Nickname string `json:"nickName"`
 }

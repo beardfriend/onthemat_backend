@@ -15,5 +15,12 @@ type GetTokenSuccessBody struct {
 }
 
 type GetUserInfoSuccessBody struct {
-	Id uint `json:"id"`
+	Id           uint `json:"id"`
+	KakaoAccount struct {
+		Email *string `json:"email"`
+
+		Profile struct {
+			NickName string `json:"nickname"`
+		} `json:"profile"`
+	} `json:"kakao_account"`
 }

@@ -2,7 +2,6 @@ package usecase_test
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -11,8 +10,10 @@ import (
 	"onthemat/internal/app/config"
 	"onthemat/internal/app/mocks"
 	"onthemat/internal/app/model"
+	"onthemat/internal/app/service/token"
 	"onthemat/internal/app/transport"
 	"onthemat/internal/app/usecase"
+	"onthemat/pkg/auth/jwt"
 	"onthemat/pkg/ent"
 	"onthemat/pkg/kakao"
 	pkgMock "onthemat/pkg/mocks"
@@ -25,6 +26,7 @@ func TestAuthUC_CheckDuplicateEmail(t *testing.T) {
 	c := config.NewConfig()
 
 	mockTokenService := new(mocks.TokenService)
+
 	mockUserRepo := new(mocks.UserRepository)
 	mockAuthService := new(mocks.AuthService)
 	mockStore := new(pkgMock.Store)
@@ -99,84 +101,148 @@ func TestAuthUC_SocialLogin(t *testing.T) {
 	mockUserRepo := new(mocks.UserRepository)
 	mockAuthService := new(mocks.AuthService)
 	mockStore := new(pkgMock.Store)
+	jwt := jwt.NewJwt().WithSignKey("signKey").Init()
+
+	tokenSvc := token.NewToken(jwt)
 
 	redirectCode := "examplecode"
 	sociaKey := "123123123"
+	email := "asd@naver.com"
+	nickname := "nickname"
 
-	t.Run("KaKao Login  Success", func(t *testing.T) {
-		keyInt, _ := strconv.Atoi(sociaKey)
-		mockAuthService.On("GetKakaoInfo", mock.AnythingOfType("string")).
-			Return(&kakao.GetUserInfoSuccessBody{
-				Id: uint(keyInt),
-			}, nil).
-			Once()
+	t.Run("성공", func(t *testing.T) {
+		t.Run("카카오 로그인 (최초 접근)", func(t *testing.T) {
+			keyInt, _ := strconv.Atoi(sociaKey)
+			mockAuthService.On("GetKakaoInfo", mock.AnythingOfType("string")).
+				Return(&kakao.GetUserInfoSuccessBody{
+					Id: uint(keyInt),
+					KakaoAccount: struct {
+						Email   *string "json:\"email\""
+						Profile struct {
+							NickName string "json:\"nickname\""
+						} "json:\"profile\""
+					}{
+						Email: &email,
+						Profile: struct {
+							NickName string "json:\"nickname\""
+						}{
+							NickName: nickname,
+						},
+					},
+				}, nil).
+				Once()
 
-		mockUserRepo.On("GetBySocialKey", mock.Anything, mock.Anything).
-			Return(&ent.User{ID: 1, SocialKey: &sociaKey, SocialName: &model.KakaoSocialType}, nil).
-			Once()
+			mockUserRepo.On("GetBySocialKey", mock.Anything, mock.Anything).
+				Return(nil, nil).
+				Once()
 
-		mockTokenService.On("GenerateToken", mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int")).
-			Return("refreshToken", nil).
-			Once()
+			mockUserRepo.On("Create", mock.Anything, mock.AnythingOfType("*ent.User")).
+				Return(&ent.User{
+					ID:          1,
+					TermAgreeAt: time.Now(),
+					SocialName:  &model.KakaoSocialType,
+					SocialKey:   &sociaKey,
+					Email:       &email,
+					Nickname:    &nickname,
+				}, nil).
+				Once()
 
-		mockStore.On("Set", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("time.Duration")).Return(nil).Once()
+			mockTokenService.On("GenerateToken", mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int")).
+				Return("refreshToken", nil).
+				Once()
 
-		mockTokenService.On("GenerateToken", mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int")).
-			Return("AccessToken", nil).
-			Once()
+			mockStore.On("Set", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("time.Duration")).Return(nil).Once()
 
-		mockTokenService.On("GetExpiredAt", mock.AnythingOfType("int")).
-			Return(time.Now()).
-			Once()
+			mockTokenService.On("GenerateToken", mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int")).
+				Return("AccessToken", nil).
+				Once()
 
-		mockTokenService.On("GetExpiredAt", mock.AnythingOfType("int")).
-			Return(time.Now()).Once()
-		authUC := usecase.NewAuthUseCase(mockTokenService, mockUserRepo, mockAuthService, mockStore, c)
-		l, err := authUC.SocialLogin(context.TODO(), "kakao", redirectCode)
-		fmt.Println(l)
-		assert.NoError(t, err, nil)
-	})
+			mockTokenService.On("GetExpiredAt", mock.AnythingOfType("int")).
+				Return(time.Now()).
+				Once()
 
-	t.Run("KaKao SignUp Success ", func(t *testing.T) {
-		keyInt, _ := strconv.Atoi(sociaKey)
-		mockAuthService.On("GetKakaoInfo", mock.AnythingOfType("string")).
-			Return(&kakao.GetUserInfoSuccessBody{
-				Id: uint(keyInt),
-			}, nil).
-			Once()
+			mockTokenService.On("GetExpiredAt", mock.AnythingOfType("int")).
+				Return(time.Now()).Once()
 
-		mockUserRepo.On("GetBySocialKey", mock.Anything, mock.Anything).
-			Return(nil, nil).
-			Once()
+			// 검증
+			authUC := usecase.NewAuthUseCase(mockTokenService, mockUserRepo, mockAuthService, mockStore, c)
+			l, err := authUC.SocialLogin(context.TODO(), model.KakaoSocialType, redirectCode)
 
-		mockUserRepo.On("Create", mock.Anything, mock.AnythingOfType("*ent.User")).
-			Return(&ent.User{
-				ID:          1,
-				TermAgreeAt: time.Now(),
-				SocialName:  &model.KakaoSocialType,
-				SocialKey:   &sociaKey,
-			}, nil).
-			Once()
+			assert.Equal(t, l.AccessToken, "AccessToken")
+			assert.NoError(t, err, nil)
+		})
 
-		mockTokenService.On("GenerateToken", mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int")).
-			Return("refreshToken", nil).
-			Once()
+		t.Run("카카오 로그인 이미 가입한 유저", func(t *testing.T) {
+			keyInt, _ := strconv.Atoi(sociaKey)
+			mockAuthService.On("GetKakaoInfo", mock.AnythingOfType("string")).
+				Return(&kakao.GetUserInfoSuccessBody{
+					Id: uint(keyInt),
+				}, nil).
+				Once()
 
-		mockStore.On("Set", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("time.Duration")).Return(nil).Once()
+			mockUserRepo.On("GetBySocialKey", mock.Anything, mock.Anything).
+				Return(&ent.User{ID: 1, SocialKey: &sociaKey, SocialName: &model.KakaoSocialType}, nil).
+				Once()
 
-		mockTokenService.On("GenerateToken", mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int")).
-			Return("AccessToken", nil).
-			Once()
+			mockTokenService.On("GenerateToken", mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int")).
+				Return("refreshToken", nil).
+				Once()
 
-		mockTokenService.On("GetExpiredAt", mock.AnythingOfType("int")).
-			Return(time.Now()).
-			Once()
+			mockStore.On("Set", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("time.Duration")).Return(nil).Once()
 
-		mockTokenService.On("GetExpiredAt", mock.AnythingOfType("int")).
-			Return(time.Now()).Once()
-		authUC := usecase.NewAuthUseCase(mockTokenService, mockUserRepo, mockAuthService, mockStore, c)
-		l, err := authUC.SocialLogin(context.TODO(), "kakao", redirectCode)
-		fmt.Println(l)
-		assert.NoError(t, err, nil)
+			mockTokenService.On("GenerateToken", mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int")).
+				Return("AccessToken", nil).
+				Once()
+
+			mockTokenService.On("GetExpiredAt", mock.AnythingOfType("int")).
+				Return(time.Now()).
+				Once()
+
+			mockTokenService.On("GetExpiredAt", mock.AnythingOfType("int")).
+				Return(time.Now()).Once()
+			authUC := usecase.NewAuthUseCase(tokenSvc, mockUserRepo, mockAuthService, mockStore, c)
+			l, err := authUC.SocialLogin(context.TODO(), model.KakaoSocialType, redirectCode)
+
+			claim := &token.TokenClaim{}
+			tokenSvc.ParseToken(l.AccessToken, claim)
+			assert.Equal(t, claim.LoginType, "kakao")
+			assert.Equal(t, claim.UserType, "")
+			assert.NoError(t, err, nil)
+		})
+
+		t.Run("카카오 로그인 학원선생님 인증을 마친 유저", func(t *testing.T) {
+			keyInt, _ := strconv.Atoi(sociaKey)
+			mockAuthService.On("GetKakaoInfo", mock.AnythingOfType("string")).
+				Return(&kakao.GetUserInfoSuccessBody{
+					Id: uint(keyInt),
+				}, nil).
+				Once()
+
+			mockUserRepo.On("GetBySocialKey", mock.Anything, mock.Anything).
+				Return(&ent.User{
+					ID:         1,
+					SocialKey:  &sociaKey,
+					SocialName: &model.KakaoSocialType,
+					Email:      &email,
+					Nickname:   &nickname,
+					Type:       &model.AcademyType,
+				}, nil).
+				Once()
+
+			mockTokenService.On("GenerateToken", mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int")).
+				Return("refreshToken", nil).
+				Once()
+
+			mockStore.On("Set", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("time.Duration")).Return(nil).Once()
+
+			authUC := usecase.NewAuthUseCase(tokenSvc, mockUserRepo, mockAuthService, mockStore, c)
+			l, err := authUC.SocialLogin(context.TODO(), model.KakaoSocialType, redirectCode)
+
+			claim := &token.TokenClaim{}
+			tokenSvc.ParseToken(l.AccessToken, claim)
+			assert.Equal(t, claim.LoginType, "kakao")
+			assert.Equal(t, claim.UserType, "academy")
+			assert.NoError(t, err, nil)
+		})
 	})
 }

@@ -25,7 +25,7 @@ type AuthUseCase interface {
 	SignUp(ctx context.Context, body *transport.SignUpBody) error
 	Login(ctx context.Context, body *transport.LoginBody) (*LoginResult, error)
 	SocialSignUp(ctx context.Context, body *transport.SocialSignUpBody) error
-	SocialLogin(ctx context.Context, socialName, code string) (*LoginResult, error)
+	SocialLogin(ctx context.Context, socialName model.SocialType, code string) (*LoginResult, error)
 	KakaoRedirectUrl(ctx context.Context) string
 	NaverRedirectUrl(ctx context.Context) string
 	GoogleRedirectUrl(ctx context.Context) string
@@ -128,13 +128,16 @@ func (a *authUseCase) Login(ctx context.Context, body *transport.LoginBody) (*Lo
 	}, nil
 }
 
-func (a *authUseCase) SocialLogin(ctx context.Context, socialName, code string) (*LoginResult, error) {
+func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialType, code string) (*LoginResult, error) {
 	user := new(ent.User)
-	if socialName != "kakao" && socialName != "google" && socialName != "naver" {
-		return nil, errors.New("올바르지 않은 소셜 이름입니다. usecase를 다시 장착해주세요")
+	socialNameString := socialName.ToString()
+
+	if socialNameString != &model.GoogleString && socialNameString != &model.KakaoString && socialNameString != &model.NaverString {
+		return nil, errors.New("입력 값을 확인해주세요")
 	}
 
-	if socialName == "kakao" {
+	// 카카오 로그인
+	if socialNameString == &model.KakaoString {
 
 		kakaoInfo, err := a.authSvc.GetKakaoInfo(code)
 		if err != nil {
@@ -144,33 +147,39 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName, code string) 
 		kakaoId := strconv.FormatUint(uint64(kakaoInfo.Id), 10)
 
 		user.SocialKey = &kakaoId
-
+		user.Email = kakaoInfo.KakaoAccount.Email
+		user.Nickname = &kakaoInfo.KakaoAccount.Profile.NickName
 		user.SocialName = &model.KakaoSocialType
 
-	} else if socialName == "google" {
+		// 구글 로그인
+	} else if socialNameString == &model.GoogleString {
 
 		googleInfo, err := a.authSvc.GetGoogleInfo(code)
 		if err != nil {
 			return nil, err
 		}
 
-		googleId := strconv.FormatUint(uint64(googleInfo.Sub), 10)
+		googleId := googleInfo.Sub
 		user.SocialKey = &googleId
 		user.Email = &googleInfo.Email
+		user.Nickname = &googleInfo.Nickname
 		user.SocialName = &model.GoogleSocialType
 
-	} else if socialName == "naver" {
+		// 네이버 로그인
+	} else if socialNameString == &model.NaverString {
+
 		naverInfo, err := a.authSvc.GetNaverInfo(code)
 		if err != nil {
 			return nil, err
 		}
-
+		user.Nickname = &naverInfo.NickName
 		user.SocialKey = &naverInfo.Id
 		user.Email = &naverInfo.Email
 		user.SocialName = &model.NaverSocialType
 
 	}
 
+	// 이미 존재하는 회원인지 확인.
 	checkedUser, err := a.userRepo.GetBySocialKey(ctx, user)
 	if err != nil && !ent.IsNotFound(err) {
 		return nil, err
@@ -179,22 +188,20 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName, code string) 
 	// 유저가 없으면 회원 정보 생성
 	if checkedUser == nil {
 		user.TermAgreeAt = time.Now()
-		user, err = a.userRepo.Create(ctx, user)
+		checkedUser, err = a.userRepo.Create(ctx, user)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	userType := ""
-	if user.Type == &model.AcademyType {
-		userType = "academy"
-	} else if user.Type == &model.TeacherType {
-		userType = "teacher"
+	if checkedUser.Type == &model.AcademyType || checkedUser.Type == &model.TeacherType {
+		userType = *checkedUser.Type.ToString()
 	}
 
 	// 토큰 발행
 	uid := uuid.New().String()
-	refresh, err := a.tokenSvc.GenerateToken(uid, user.ID, socialName, userType, a.config.JWT.RefreshTokenExpired)
+	refresh, err := a.tokenSvc.GenerateToken(uid, user.ID, *socialNameString, userType, a.config.JWT.RefreshTokenExpired)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +210,7 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName, code string) 
 		return nil, err
 	}
 
-	access, err := a.tokenSvc.GenerateToken(uid, user.ID, socialName, userType, a.config.JWT.AccessTokenExpired)
+	access, err := a.tokenSvc.GenerateToken(uid, user.ID, *socialNameString, userType, a.config.JWT.AccessTokenExpired)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +231,6 @@ func (a *authUseCase) SocialSignUp(ctx context.Context, body *transport.SocialSi
 	_, err := a.userRepo.Update(ctx, &ent.User{
 		ID:          body.UserID,
 		Email:       &body.Email,
-		Nickname:    &body.NickName,
 		TermAgreeAt: time.Now(),
 		Type:        nil,
 	})
@@ -262,7 +268,7 @@ func (a *authUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) er
 		return err
 	}
 
-	go a.authSvc.SendEmailVerifiedUser(body.Email, key)
+	go a.authSvc.SendEmailVerifiedUser(body.Email, key, a.config.Onthemat.HOST)
 
 	return err
 }

@@ -13,6 +13,8 @@ type GetTokenSuccessBody struct {
 }
 
 type GetUserInfo struct {
-	Id    string `json:"id"`
-	Email string `json:"email"`
+	Id       string `json:"id"`
+	Email    string `json:"email"`
+	NickName string `json:"nickname"`
+	Name     string `json:"name"`
 }

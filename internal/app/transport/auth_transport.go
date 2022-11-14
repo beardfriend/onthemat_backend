@@ -23,10 +23,9 @@ type LoginBody struct {
 }
 
 type SocialSignUpBody struct {
-	UserID    int    `json:"userId"`
-	Email     string `json:"email"`
-	TermAgree bool   `json:"termAgree"`
-	NickName  string `json:"nickname"`
+	UserID   int    `json:"userId"`
+	PhoneNum string `json:"phone_num"`
+	Email    string `json:"email"`
 }
 
 type CheckDuplicatedEmailQueries struct {

@@ -54,7 +54,6 @@ func (repo *userRepository) Create(ctx context.Context, user *ent.User) (*ent.Us
 func (repo *userRepository) Update(ctx context.Context, user *ent.User) (*ent.User, error) {
 	u, err := repo.db.User.UpdateOneID(user.ID).
 		SetNillableEmail(user.Email).
-		SetNillableNickname(user.Nickname).
 		SetNillablePhoneNum(user.PhoneNum).
 		Save(ctx)
 	if err != nil {

@@ -30,8 +30,9 @@ func (g *Google) Authorize() string {
 	var scope []string
 
 	scope = append(scope, "email")
+	scope = append(scope, "profile")
 
-	scopeString := strings.Join(scope, ", ")
+	scopeString := strings.Join(scope, " ")
 	redirectUrl := fmt.Sprintf("%s/o/oauth2/v2/auth?scope=%s&response_type=code&redirect_uri=%s&client_id=%s",
 		g.authUrl,
 		scopeString,

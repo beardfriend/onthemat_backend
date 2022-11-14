@@ -29,7 +29,7 @@ type AuthService interface {
 	GenerateRandomString() string
 	GenerateRandomPassword() string
 	SendEmailResetPassword(user *ent.User) error
-	SendEmailVerifiedUser(email string, authKey string) error
+	SendEmailVerifiedUser(email string, authKey string, onthematHost string) error
 }
 
 type authService struct {
@@ -104,8 +104,9 @@ func (a *authService) GetGoogleInfo(code string) (*google.GetUserInfo, error) {
 	jwt.ParseWithClaims(tokenRespBody.IdToken, &googleUserInfo, nil)
 
 	infoRespBody := &google.GetUserInfo{
-		Email: googleUserInfo["email"].(string),
-		Sub:   googleUserInfo["sub"].(uint),
+		Email:    googleUserInfo["email"].(string),
+		Sub:      googleUserInfo["sub"].(string),
+		Nickname: googleUserInfo["name"].(string),
 	}
 
 	return infoRespBody, nil
@@ -165,8 +166,8 @@ func (a *authService) SendEmailResetPassword(user *ent.User) error {
 	return a.email.Send([]string{*user.Email}, msg)
 }
 
-func (a *authService) SendEmailVerifiedUser(email string, authKey string) error {
-	href := fmt.Sprintf("http://localhost:3000/api/v1/auth/verify-email?key=%s&email=%s", authKey, email)
+func (a *authService) SendEmailVerifiedUser(email string, authKey string, onthematHost string) error {
+	href := fmt.Sprintf("%s/api/v1/auth/verify-email?key=%s&email=%s", onthematHost, authKey, email)
 	subject := "Subject: Test email from Go!\n"
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 	body := fmt.Sprintf(`

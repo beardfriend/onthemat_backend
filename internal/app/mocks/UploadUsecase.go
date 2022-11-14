@@ -3,10 +3,10 @@
 package mocks
 
 import (
-	mock "github.com/stretchr/testify/mock"
-	fasthttp "github.com/valyala/fasthttp"
-
+	context "context"
 	multipart "mime/multipart"
+
+	mock "github.com/stretchr/testify/mock"
 
 	transport "onthemat/internal/app/transport"
 )
@@ -17,11 +17,11 @@ type UploadUsecase struct {
 }
 
 // Upload provides a mock function with given fields: ctx, file, params, userId
-func (_m *UploadUsecase) Upload(ctx *fasthttp.RequestCtx, file *multipart.FileHeader, params *transport.UploadParams, userId int) error {
+func (_m *UploadUsecase) Upload(ctx context.Context, file *multipart.FileHeader, params *transport.UploadParams, userId int) error {
 	ret := _m.Called(ctx, file, params, userId)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*fasthttp.RequestCtx, *multipart.FileHeader, *transport.UploadParams, int) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *multipart.FileHeader, *transport.UploadParams, int) error); ok {
 		r0 = rf(ctx, file, params, userId)
 	} else {
 		r0 = ret.Error(0)

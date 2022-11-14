@@ -3,9 +3,8 @@
 package mocks
 
 import (
+	context "context"
 	ent "onthemat/pkg/ent"
-
-	fasthttp "github.com/valyala/fasthttp"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -16,11 +15,11 @@ type UserUseCase struct {
 }
 
 // GetMe provides a mock function with given fields: ctx, id
-func (_m *UserUseCase) GetMe(ctx *fasthttp.RequestCtx, id int) (*ent.User, error) {
+func (_m *UserUseCase) GetMe(ctx context.Context, id int) (*ent.User, error) {
 	ret := _m.Called(ctx, id)
 
 	var r0 *ent.User
-	if rf, ok := ret.Get(0).(func(*fasthttp.RequestCtx, int) *ent.User); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int) *ent.User); ok {
 		r0 = rf(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
@@ -29,7 +28,7 @@ func (_m *UserUseCase) GetMe(ctx *fasthttp.RequestCtx, id int) (*ent.User, error
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*fasthttp.RequestCtx, int) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
 		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Error(1)
