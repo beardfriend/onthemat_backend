@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"mime/multipart"
@@ -15,12 +16,10 @@ import (
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/image"
 	"onthemat/pkg/validatorx"
-
-	"github.com/valyala/fasthttp"
 )
 
 type UploadUsecase interface {
-	Upload(ctx *fasthttp.RequestCtx, file *multipart.FileHeader, params *transport.UploadParams, userId int) error
+	Upload(ctx context.Context, file *multipart.FileHeader, params *transport.UploadParams, userId int) error
 }
 
 type uploadUseCase struct {
@@ -35,7 +34,7 @@ func NewUploadUsecase(imageRepo repository.ImageRepository, s3 *aws.S3) UploadUs
 	}
 }
 
-func (u *uploadUseCase) Upload(ctx *fasthttp.RequestCtx, file *multipart.FileHeader, params *transport.UploadParams, userId int) error {
+func (u *uploadUseCase) Upload(ctx context.Context, file *multipart.FileHeader, params *transport.UploadParams, userId int) error {
 	fileExt := filepath.Ext(file.Filename)
 
 	isUsable, _ := validatorx.ImageExtensionValidator(fileExt)

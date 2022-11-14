@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -129,9 +130,8 @@ func (a *authUseCase) Login(ctx context.Context, body *transport.LoginBody) (*Lo
 
 func (a *authUseCase) SocialLogin(ctx context.Context, socialName, code string) (*LoginResult, error) {
 	user := new(ent.User)
-	// TODO: 일반 에러로 빼기.
 	if socialName != "kakao" && socialName != "google" && socialName != "naver" {
-		return nil, common.NewBadRequestError("올바르지 않은 소셜 이름입니다.")
+		return nil, errors.New("올바르지 않은 소셜 이름입니다. usecase를 다시 장착해주세요")
 	}
 
 	if socialName == "kakao" {

@@ -1,14 +1,14 @@
 package usecase
 
 import (
+	"context"
+
 	"onthemat/internal/app/repository"
 	"onthemat/pkg/ent"
-
-	"github.com/valyala/fasthttp"
 )
 
 type UserUseCase interface {
-	GetMe(ctx *fasthttp.RequestCtx, id int) (*ent.User, error)
+	GetMe(ctx context.Context, id int) (*ent.User, error)
 }
 
 type userUseCase struct {
@@ -21,6 +21,6 @@ func NewUserUseCase(userRepo repository.UserRepository) UserUseCase {
 	}
 }
 
-func (u *userUseCase) GetMe(ctx *fasthttp.RequestCtx, id int) (*ent.User, error) {
+func (u *userUseCase) GetMe(ctx context.Context, id int) (*ent.User, error) {
 	return u.userRepo.Get(ctx, id)
 }
