@@ -62,7 +62,7 @@ func (ts *UserYogaRepositoryTestSuite) TearDownTest() {
 
 func (ts *UserYogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 	if suiteName == "UserYogaRepositoryTestSuite" {
-		if testName == "TestCreateRepo" {
+		if testName == "TestCreate" {
 
 			teacherType := model.TeacherType
 			u, err := ts.userRepo.Create(ts.ctx, &ent.User{
@@ -75,8 +75,7 @@ func (ts *UserYogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 	}
 }
 
-// TEST -----------------------------------
-func (ts *UserYogaRepositoryTestSuite) TestCreateRepo() {
+func (ts *UserYogaRepositoryTestSuite) TestCreate() {
 	ts.Run("성공적인 생성", func() {
 		var yoga []*ent.UserYoga
 		// 1개

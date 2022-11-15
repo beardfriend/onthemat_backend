@@ -54,7 +54,7 @@ func (repo *userRepository) Create(ctx context.Context, user *ent.User) (*ent.Us
 
 func (repo *userRepository) Update(ctx context.Context, user *ent.User) (*ent.User, error) {
 	u, err := repo.db.User.UpdateOneID(user.ID).
-		SetNillableEmail(user.Email).
+		SetNillableNickname(user.Nickname).
 		SetNillablePhoneNum(user.PhoneNum).
 		Save(ctx)
 	if err != nil {
@@ -97,7 +97,7 @@ func (repo *userRepository) GetByEmailPassword(ctx context.Context, u *ent.User)
 		return nil, errors.New("포인터 에러")
 	}
 
-	return repo.db.Debug().User.
+	return repo.db.User.
 		Query().
 		Where(
 			user.

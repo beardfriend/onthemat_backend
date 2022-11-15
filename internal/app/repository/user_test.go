@@ -1,405 +1,333 @@
-package repository_test
+package repository
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
+	"onthemat/internal/app/config"
+	"onthemat/internal/app/infrastructure"
 	"onthemat/internal/app/model"
-	"onthemat/internal/app/repository"
+
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
-	"onthemat/pkg/ent/enttest"
 
 	_ "github.com/lib/pq"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestUserRepository(t *testing.T) {
-	// init
-	c := utils.RepoTestInit(t)
-	defer utils.RepoTestClose(t)
-	time.Sleep(3 * time.Second)
+func TestUserRepoTestSuite(t *testing.T) {
+	suite.Run(t, new(UserRepositoryTestSuite))
+}
 
-	ctx := context.Background()
-	url := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable", c.PostgreSQL.Host, c.PostgreSQL.Port, c.PostgreSQL.User, c.PostgreSQL.Database, c.PostgreSQL.Password)
-	client := enttest.Open(t, "postgres", url)
-	defer client.Close()
-
-	userRepo := repository.NewUserRepository(client)
-
-	tests := []utils.Tests{
-		// Create
-		{
-			Name: "userRepository/Create",
-
-			Before: func(t *testing.T) {
-			},
-
-			Expect: func(t *testing.T) {
-				t.Run("ID만 있는 경우", func(t *testing.T) {
-					u, err := userRepo.Create(ctx, &ent.User{})
-					assert.NoError(t, err)
-					assert.Empty(t, u.Email)
-					assert.Empty(t, u.Nickname)
-					assert.Empty(t, u.Password)
-					assert.Empty(t, u.PhoneNum)
-					assert.Empty(t, u.RemovedAt)
-					assert.Empty(t, u.SocialKey)
-					assert.Empty(t, u.SocialName)
-					assert.Equal(t, u.ID, 1)
-				})
-
-				t.Run("적당한 데이터", func(t *testing.T) {
-					data := struct {
-						Email     string
-						Password  string
-						Nickname  string
-						PhoneNum  string
-						TermAgree time.Time
-					}{
-						Email:     "asd@naver.com",
-						Password:  "password",
-						Nickname:  "nickname",
-						PhoneNum:  "01043226633",
-						TermAgree: time.Now(),
-					}
-
-					_, err := userRepo.Create(ctx, &ent.User{
-						Email:       &data.Email,
-						Password:    &data.Password,
-						Nickname:    &data.Nickname,
-						PhoneNum:    &data.PhoneNum,
-						TermAgreeAt: data.TermAgree,
-					})
-
-					assert.NoError(t, err)
-				})
-
-				t.Run("SocialKey 중복됐을 때", func(t *testing.T) {
-					data := struct {
-						SocialName model.SocialType
-						SocialKey  string
-					}{
-						SocialName: model.KakaoSocialType,
-						SocialKey:  "asdadsads",
-					}
-
-					_, err := userRepo.Create(ctx, &ent.User{
-						SocialName: &data.SocialName,
-						SocialKey:  &data.SocialKey,
-					})
-
-					assert.NoError(t, err)
-
-					// duplicated key
-					_, err = userRepo.Create(ctx, &ent.User{
-						SocialName: &data.SocialName,
-						SocialKey:  &data.SocialKey,
-					})
-
-					assert.Equal(t, ent.IsConstraintError(err), true)
-				})
-			},
-
-			After: func(t *testing.T) {
-				utils.RepoTestTruncateTable(ctx, client)
-			},
-		},
-		// Update
-		{
-			Name: "userRepository/Update",
-
-			Before: func(t *testing.T) {
-				email := "asd@naver.com"
-				password := "password"
-				nickname := "nick"
-				phoneNum := "01043226633"
-				termAgreeAt := time.Now()
-				userRepo.Create(ctx, &ent.User{
-					Email:       &email,
-					Password:    &password,
-					Nickname:    &nickname,
-					PhoneNum:    &phoneNum,
-					TermAgreeAt: termAgreeAt,
-				})
-			},
-
-			Expect: func(t *testing.T) {
-				email := "das@naver.com"
-				nickname := "kick"
-				phoneNum := "01064135418"
-				uu, err := userRepo.Update(ctx, &ent.User{
-					ID:       1,
-					Email:    &email,
-					Nickname: &nickname,
-					PhoneNum: &phoneNum,
-				})
-
-				assert.NoError(t, err)
-				assert.Equal(t, *uu.Email, email)
-				assert.Equal(t, *uu.Nickname, nickname)
-				assert.Equal(t, *uu.PhoneNum, phoneNum)
-			},
-
-			After: func(t *testing.T) {
-				utils.RepoTestTruncateTable(ctx, client)
-			},
-		},
-
-		// Get
-		{
-			Name: "userRepository/Get",
-
-			Before: func(t *testing.T) {
-				email := "asd@gmail.com"
-				_, err := userRepo.Create(ctx, &ent.User{
-					Email: &email,
-				})
-				assert.NoError(t, err)
-			},
-
-			Expect: func(t *testing.T) {
-				u, err := userRepo.Get(ctx, 1)
-				assert.NoError(t, err)
-				assert.Equal(t, *u.Email, "asd@gmail.com")
-
-				t.Run("Not Found Error", func(t *testing.T) {
-					_, err := userRepo.Get(ctx, 2)
-					assert.Equal(t, ent.IsNotFound(err), true)
-				})
-			},
-
-			After: func(t *testing.T) {
-				utils.RepoTestTruncateTable(ctx, client)
-			},
-		},
-
-		// FindBy
-		{
-			Name: "userRepository/FindByEmail",
-
-			Before: func(t *testing.T) {
-				email := "asd@gmail.com"
-				_, err := userRepo.Create(ctx, &ent.User{
-					Email: &email,
-				})
-				assert.NoError(t, err)
-			},
-
-			Expect: func(t *testing.T) {
-				t.Run("success", func(t *testing.T) {
-					isExist, err := userRepo.FindByEmail(ctx, "asd@gmail.com")
-					assert.NoError(t, err)
-					assert.Equal(t, isExist, true)
-				})
-
-				t.Run("no", func(t *testing.T) {
-					isExist, err := userRepo.FindByEmail(ctx, "noasd@gmail.com")
-					assert.NoError(t, err)
-					assert.Equal(t, isExist, false)
-				})
-			},
-
-			After: func(t *testing.T) {
-				utils.RepoTestTruncateTable(ctx, client)
-			},
-		},
-
-		// GetBy
-		{
-			Name: "userRepository/GetByEmailPassword",
-
-			Before: func(t *testing.T) {
-				email := "asd@gmail.com"
-				password := "password"
-				_, err := userRepo.Create(ctx, &ent.User{
-					Email:    &email,
-					Password: &password,
-				})
-				assert.NoError(t, err)
-			},
-
-			Expect: func(t *testing.T) {
-				email := "asd@gmail.com"
-				password := "password"
-				incorrectPassword := "incorrectPassword"
-
-				t.Run("success", func(t *testing.T) {
-					u, err := userRepo.GetByEmailPassword(ctx, &ent.User{
-						Email:    &email,
-						Password: &password,
-					})
-					assert.NoError(t, err)
-					assert.Equal(t, *u.Email, email)
-				})
-
-				t.Run("Not Found Error", func(t *testing.T) {
-					_, err := userRepo.GetByEmailPassword(ctx, &ent.User{
-						Email:    &email,
-						Password: &incorrectPassword,
-					})
-
-					assert.Equal(t, ent.IsNotFound(err), true)
-				})
-			},
-
-			After: func(t *testing.T) {
-				utils.RepoTestTruncateTable(ctx, client)
-			},
-		},
-
-		{
-			Name: "userRepository/GetBySocialKey",
-
-			Before: func(t *testing.T) {
-				socialKey := "asdad"
-				_, err := userRepo.Create(ctx, &ent.User{
-					SocialName: &model.KakaoSocialType,
-					SocialKey:  &socialKey,
-				})
-				assert.NoError(t, err)
-			},
-
-			Expect: func(t *testing.T) {
-				socialKey := "asdad"
-
-				t.Run("success", func(t *testing.T) {
-					u, err := userRepo.GetBySocialKey(ctx, &ent.User{
-						SocialName: &model.KakaoSocialType,
-						SocialKey:  &socialKey,
-					})
-					assert.NoError(t, err)
-					assert.Equal(t, *u.SocialKey, socialKey)
-				})
-			},
-
-			After: func(t *testing.T) {
-				utils.RepoTestTruncateTable(ctx, client)
-			},
-		},
+type UserRepositoryTestSuite struct {
+	suite.Suite
+	config   *config.Config
+	client   *ent.Client
+	userRepo UserRepository
+	ctx      context.Context
+	// Data
+	testUpdateData struct {
+		id          int
+		email       string
+		password    string
+		nickname    string
+		phoneNum    string
+		termAgreeAt time.Time
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.Name, func(t *testing.T) {
-			tt.Before(t)
-			tt.Expect(t)
-			tt.After(t)
-		})
+	testGetData struct {
+		id    int
+		email string
+	}
+
+	testFindByEmailData struct {
+		id    int
+		email string
+	}
+
+	testGetByEmailPassword [3]struct {
+		id           int
+		email        string
+		password     string
+		tempPassword string
+		nickname     string
+	}
+
+	// Flag For BeforeRun
+	createSocialKey bool
+}
+
+// ------------------- Running Before Test Start Once   -------------------
+
+func (ts *UserRepositoryTestSuite) SetupSuite() {
+	t := ts.T()
+	ts.ctx = context.Background()
+
+	// 도커 디비 삭제 후 생성
+	utils.RepoTestClose(t)
+	time.Sleep(1 * time.Second)
+	ts.config = utils.RepoTestInit(t)
+	time.Sleep(3 * time.Second)
+	// 포스트그레스 연결
+	ts.client = infrastructure.NewPostgresDB(ts.config)
+
+	// 모듈 연결
+	ts.userRepo = NewUserRepository(ts.client)
+}
+
+// ------------------- Running After Every Test Finish  -------------------
+
+func (ts *UserRepositoryTestSuite) TearDownSuite() {
+	// 도커 내리기
+	ts.client.Close()
+	utils.RepoTestClose(nil)
+}
+
+// ------------------- Running After Each Test Finish  -------------------
+
+func (ts *UserRepositoryTestSuite) TearDownTest() {
+	// 테이블 Truncate
+	utils.RepoTestTruncateTable(context.Background(), ts.client)
+}
+
+// ------------------- SetUp Data Before Each Test Start-------------------
+
+func (ts *UserRepositoryTestSuite) BeforeTest(suiteName, testName string) {
+	if suiteName == "UserRepositoryTestSuite" {
+
+		if testName == "TestUpdate" {
+
+			ts.testUpdateData.email = "asd@naver.com"
+			ts.testUpdateData.password = "password"
+			ts.testUpdateData.nickname = "nick"
+			ts.testUpdateData.phoneNum = "01043226633"
+			ts.testUpdateData.termAgreeAt = time.Now()
+
+			u, err := ts.userRepo.Create(ts.ctx, &ent.User{
+				Email:       &ts.testUpdateData.email,
+				Password:    &ts.testUpdateData.password,
+				Nickname:    &ts.testUpdateData.nickname,
+				PhoneNum:    &ts.testUpdateData.phoneNum,
+				TermAgreeAt: ts.testUpdateData.termAgreeAt,
+			})
+			ts.NoError(err)
+			ts.testUpdateData.id = u.ID
+		}
+
+		if testName == "TestGet" {
+			ts.testGetData.email = "asd@gmail.com"
+			user, err := ts.userRepo.Create(ts.ctx, &ent.User{
+				Email: &ts.testGetData.email,
+			})
+			ts.NoError(err)
+			ts.testGetData.id = user.ID
+		}
+
+		if testName == "TestFindByEmail" {
+
+			ts.testFindByEmailData.email = "asd@gmail.com"
+			user, err := ts.userRepo.Create(ts.ctx, &ent.User{
+				Email: &ts.testFindByEmailData.email,
+			})
+			ts.NoError(err)
+
+			ts.testFindByEmailData.id = user.ID
+		}
+
+		if testName == "TestGetByEmaillPassword" {
+			// 첫 번째 유저
+
+			ts.testGetByEmailPassword[0].email = "asd@gmail.com"
+			ts.testGetByEmailPassword[0].password = "password"
+			user1, err := ts.userRepo.Create(ts.ctx, &ent.User{
+				Email:    &ts.testGetByEmailPassword[0].email,
+				Password: &ts.testGetByEmailPassword[0].password,
+			})
+			ts.NoError(err)
+			ts.testGetByEmailPassword[0].id = user1.ID
+
+			// 임시비밀번호 유저
+
+			ts.testGetByEmailPassword[1].email = "asd2@gmail.com"
+			ts.testGetByEmailPassword[1].password = "password"
+			ts.testGetByEmailPassword[1].tempPassword = "tempPassword"
+			ts.testGetByEmailPassword[1].nickname = "nickname"
+			user2, err := ts.userRepo.Create(ts.ctx, &ent.User{
+				Email:    &ts.testGetByEmailPassword[1].email,
+				Password: &ts.testGetByEmailPassword[1].password,
+				Nickname: &ts.testGetByEmailPassword[1].nickname,
+			})
+			ts.NoError(err)
+
+			err = ts.userRepo.UpdateTempPassword(ts.ctx, &ent.User{
+				Email:        &ts.testGetByEmailPassword[1].email,
+				TempPassword: &ts.testGetByEmailPassword[1].tempPassword,
+			})
+			ts.NoError(err)
+			ts.testGetByEmailPassword[1].id = user2.ID
+		}
 	}
 }
 
-func TestGetByEmaillPassword(t *testing.T) {
-	c := utils.RepoTestInit(t)
-	defer utils.RepoTestClose(t)
-	time.Sleep(3 * time.Second)
+// ------------------- Test Case  -------------------
 
-	ctx := context.Background()
-	url := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable", c.PostgreSQL.Host, c.PostgreSQL.Port, c.PostgreSQL.User, c.PostgreSQL.Database, c.PostgreSQL.Password)
-	client := enttest.Open(t, "postgres", url)
-	defer client.Close()
+func (ts *UserRepositoryTestSuite) TestCreate() {
+	ts.Run("ID만 존재하는 경우", func() {
+		u, err := ts.userRepo.Create(ts.ctx, &ent.User{})
+		ts.NoError(err)
+		ts.Empty(u.Email)
+		ts.Empty(u.Nickname)
+		ts.Empty(u.Password)
+		ts.Empty(u.PhoneNum)
+		ts.Empty(u.RemovedAt)
+		ts.Empty(u.SocialKey)
+		ts.Empty(u.SocialName)
+		ts.Equal(u.ID, 1)
+	})
 
-	userRepo := repository.NewUserRepository(client)
+	ts.Run("일반 회원가입 시 들어오는 정보들", func() {
+		email := "asd@naver.com"
+		password := "password"
+		nickname := "nickname"
+		phoneNum := "01043226633"
+		TermAgree := time.Now()
 
-	tt := utils.Tests{
-		Name: "userRepository/GetByEmailPassword",
-		Before: func(t *testing.T) {
-			data := struct {
-				Email        string
-				Password     string
-				TempPassword string
-				Nickname     string
-				PhoneNum     string
-				TermAgree    time.Time
-			}{
-				Email:        "asd@naver.com",
-				Password:     "password",
-				Nickname:     "nickname",
-				TempPassword: "temppassword",
-				PhoneNum:     "01043226633",
-				TermAgree:    time.Now(),
-			}
+		_, err := ts.userRepo.Create(ts.ctx, &ent.User{
+			Email:       &email,
+			Password:    &password,
+			Nickname:    &nickname,
+			PhoneNum:    &phoneNum,
+			TermAgreeAt: TermAgree,
+		})
+		ts.NoError(err)
+	})
 
-			// 일반 유저
-			_, err := userRepo.Create(ctx, &ent.User{
-				Email:       &data.Email,
-				Password:    &data.Password,
-				Nickname:    &data.Nickname,
-				PhoneNum:    &data.PhoneNum,
-				TermAgreeAt: data.TermAgree,
+	ts.Run("SocialKey 중복됐을 때", func() {
+		ts.createSocialKey = true
+		socialName := model.KakaoSocialType
+		socialKey := "asdasdasd"
+
+		_, err := ts.userRepo.Create(ts.ctx, &ent.User{
+			SocialName: &socialName,
+			SocialKey:  &socialKey,
+		})
+
+		ts.NoError(err)
+
+		// duplicated key
+		_, err = ts.userRepo.Create(ts.ctx, &ent.User{
+			SocialName: &socialName,
+			SocialKey:  &socialKey,
+		})
+
+		ts.Equal(ent.IsConstraintError(err), true)
+	})
+}
+
+func (ts *UserRepositoryTestSuite) TestUpdate() {
+	ts.Run("성공", func() {
+		nickname := "kick"
+		phoneNum := "01064135418"
+
+		user, err := ts.userRepo.Update(ts.ctx, &ent.User{
+			ID:       ts.testUpdateData.id,
+			Nickname: &nickname,
+			PhoneNum: &phoneNum,
+		})
+
+		ts.NoError(err)
+		ts.Equal(*user.Nickname, nickname)
+		ts.Equal(*user.PhoneNum, phoneNum)
+	})
+}
+
+func (ts *UserRepositoryTestSuite) TestGet() {
+	ts.Run("성공", func() {
+		user, err := ts.userRepo.Get(ts.ctx, ts.testGetData.id)
+		ts.NoError(err)
+		ts.Equal(*user.Email, ts.testGetData.email)
+	})
+
+	ts.Run("Not Found Error", func() {
+		_, err := ts.userRepo.Get(ts.ctx, 2)
+		ts.Equal(ent.IsNotFound(err), true)
+	})
+}
+
+func (ts *UserRepositoryTestSuite) TestFindByEmail() {
+	ts.Run("존재하는 이메일", func() {
+		isExist, err := ts.userRepo.FindByEmail(ts.ctx, ts.testFindByEmailData.email)
+		ts.NoError(err)
+		ts.Equal(isExist, true)
+	})
+
+	ts.Run("존재하지 않는 이메일", func() {
+		isExist, err := ts.userRepo.FindByEmail(ts.ctx, "nirvana@buddha.com")
+		ts.NoError(err)
+		ts.Equal(isExist, false)
+	})
+}
+
+func (ts *UserRepositoryTestSuite) TestGetByEmaillPassword() {
+	ts.Run("이메일 비밀번호 모두 일치할 때", func() {
+		user, err := ts.userRepo.GetByEmailPassword(ts.ctx, &ent.User{
+			Email:    &ts.testGetByEmailPassword[0].email,
+			Password: &ts.testGetByEmailPassword[0].password,
+		})
+		ts.NoError(err)
+		ts.Equal(*user.Email, ts.testGetByEmailPassword[0].email)
+	})
+
+	ts.Run("임시 비밀번호가 있는 경우", func() {
+		ts.Run("임시 비밀번호로 조회", func() {
+			user, err := ts.userRepo.GetByEmailPassword(ts.ctx, &ent.User{
+				Email:    &ts.testGetByEmailPassword[1].email,
+				Password: &ts.testGetByEmailPassword[1].tempPassword,
 			})
-			assert.NoError(t, err)
+			ts.NoError(err)
+			ts.Equal(*user.Email, ts.testGetByEmailPassword[1].email)
+		})
 
-			email := "email@gmail.com"
-			// 임시비밀번호 있는 유저
-			user, err := userRepo.Create(ctx, &ent.User{
-				Email:       &email,
-				Password:    &data.Password,
-				Nickname:    &data.Nickname,
-				PhoneNum:    &data.PhoneNum,
-				TermAgreeAt: data.TermAgree,
+		ts.Run("일반 비밀번호로 조회", func() {
+			user, err := ts.userRepo.GetByEmailPassword(ts.ctx, &ent.User{
+				Email:    &ts.testGetByEmailPassword[1].email,
+				Password: &ts.testGetByEmailPassword[1].password,
 			})
-			assert.NoError(t, err)
+			ts.NoError(err)
+			ts.Equal(*user.Email, ts.testGetByEmailPassword[1].email)
+		})
+	})
 
-			user.TempPassword = &data.TempPassword
-			err = userRepo.UpdateTempPassword(ctx, user)
-			assert.NoError(t, err)
-		},
-		Expect: func(t *testing.T) {
-			data := struct {
-				Email        string
-				Password     string
-				TempPassword string
-				Nickname     string
-				PhoneNum     string
-				TermAgree    time.Time
-			}{
-				Email:        "asd@naver.com",
-				Password:     "password",
-				Nickname:     "nickname",
-				PhoneNum:     "01043226633",
-				TempPassword: "temppassword",
-				TermAgree:    time.Now(),
-			}
+	ts.Run("이메일 혹은 비밀번호가 일치하지 않을 때", func() {
+		noEmail := "noEmail@no.com"
+		inCorrectPassword := "incorrectPassword"
 
-			email := "email@gmail.com"
-			// 임시비밀번호 있는 유저
-
-			t.Run("이메일 패스워드로 조회", func(t *testing.T) {
-				u, err := userRepo.GetByEmailPassword(ctx, &ent.User{
-					Email:    &data.Email,
-					Password: &data.Password,
-				})
-				assert.Equal(t, u.Email, &data.Email)
-				assert.NoError(t, err)
+		ts.Run("이메일 불일치", func() {
+			user, err := ts.userRepo.GetByEmailPassword(ts.ctx, &ent.User{
+				Email:    &noEmail,
+				Password: &ts.testGetByEmailPassword[0].password,
 			})
-			// password에 nil을 넣으면 포인터 에러가 난다.
-			emptystring := ""
-			t.Run("임시비밀번호 아무것도 없을 때", func(t *testing.T) {
-				_, err := userRepo.GetByEmailPassword(ctx, &ent.User{
-					Email:    &data.Email,
-					Password: &emptystring,
-				})
-				assert.Equal(t, ent.IsNotFound(err), true)
-				assert.Error(t, err)
-			})
-			t.Run("임시비밀번호 로 조회", func(t *testing.T) {
-				u, err := userRepo.GetByEmailPassword(ctx, &ent.User{
-					Email:    &email,
-					Password: &data.TempPassword,
-				})
-				assert.Equal(t, u.Email, &email)
-				assert.NoError(t, err)
-			})
-		},
+			ts.Nil(user)
+			ts.Equal(ent.IsNotFound(err), true)
+		})
 
-		After: func(t *testing.T) {},
-	}
+		ts.Run("패스워드 불일치", func() {
+			user, err := ts.userRepo.GetByEmailPassword(ts.ctx, &ent.User{
+				Email:    &ts.testGetByEmailPassword[0].email,
+				Password: &inCorrectPassword,
+			})
+			ts.Nil(user)
+			ts.Equal(ent.IsNotFound(err), true)
+		})
 
-	t.Run(tt.Name, func(t *testing.T) {
-		tt.Before(t)
-		tt.Expect(t)
-		tt.After(t)
+		ts.Run("둘 다 불일치", func() {
+			user, err := ts.userRepo.GetByEmailPassword(ts.ctx, &ent.User{
+				Email:    &noEmail,
+				Password: &inCorrectPassword,
+			})
+			ts.Nil(user)
+			ts.Equal(ent.IsNotFound(err), true)
+		})
 	})
 }
