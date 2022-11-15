@@ -2,118 +2,116 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
+	"onthemat/internal/app/config"
+	"onthemat/internal/app/infrastructure"
 	"onthemat/internal/app/model"
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
-	"onthemat/pkg/ent/enttest"
 
 	_ "github.com/lib/pq"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestUserYogaRepository(t *testing.T) {
-	c := utils.RepoTestInit(t)
-	defer utils.RepoTestClose(t)
+func TestUserYogaRepoTestSuite(t *testing.T) {
+	suite.Run(t, new(UserYogaRepositoryTestSuite))
+}
+
+type UserYogaRepositoryTestSuite struct {
+	suite.Suite
+	config       *config.Config
+	client       *ent.Client
+	userYogaRepo UserYogaRepository
+	userRepo     UserRepository
+	ctx          context.Context
+	// Data
+	exisitUserNo int
+}
+
+// 모든 테스트 시작 전 1회
+func (ts *UserYogaRepositoryTestSuite) SetupSuite() {
+	t := ts.T()
+	ts.ctx = context.Background()
+
+	// 도커 디비 삭제 후 생성
+	utils.RepoTestClose(t)
+	time.Sleep(1 * time.Second)
+	ts.config = utils.RepoTestInit(t)
 	time.Sleep(3 * time.Second)
-	ctx := context.Background()
-	url := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable", c.PostgreSQL.Host, c.PostgreSQL.Port, c.PostgreSQL.User, c.PostgreSQL.Database, c.PostgreSQL.Password)
-	client := enttest.Open(t, "postgres", url)
-	defer client.Close()
+	// 포스트그레스 연결
+	ts.client = infrastructure.NewPostgresDB(ts.config)
 
-	repo := NewUserYogaRepository(client)
-	userRepo := NewUserRepository(client)
+	// 모듈 연결
+	ts.userYogaRepo = NewUserYogaRepository(ts.client)
+	ts.userRepo = NewUserRepository(ts.client)
+}
 
-	tests := []utils.Tests{
-		{
-			Name: "userYogaRepository/createMany",
+// 모든 테스트 종료 후 1회
+func (ts *UserYogaRepositoryTestSuite) TearDownSuite() {
+	ts.client.Close()
+	utils.RepoTestClose(nil)
+}
 
-			Before: func(t *testing.T) {
-				teacherType := model.TeacherType
-				userRepo.Create(ctx, &ent.User{
-					Type: &teacherType,
-				})
-			},
+// 각 테스트 종료 후 N회
+func (ts *UserYogaRepositoryTestSuite) TearDownTest() {
+	// 모든 데이터 지우기
+	utils.RepoTestTruncateTable(context.Background(), ts.client)
+}
 
-			Expect: func(t *testing.T) {
-				t.Run("유저 아이디가 정상적으로 존재하는 경우", func(t *testing.T) {
-					var yoga []*ent.UserYoga
-					// 1개
-					teacherType := model.TeacherType
-					yoga = append(yoga, &ent.UserYoga{
-						Name:     "하타",
-						UserType: teacherType,
-					})
-					// 2개
-					yoga = append(yoga, &ent.UserYoga{
-						Name:     "인",
-						UserType: teacherType,
-					})
-					us, err := repo.CreateMany(ctx, yoga, 1)
-					assert.Equal(t, len(us), 2)
-					assert.NoError(t, err)
-				})
+func (ts *UserYogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
+	if suiteName == "UserYogaRepositoryTestSuite" {
+		if testName == "TestCreateRepo" {
 
-				t.Run("유저 아이디가 없는 경우", func(t *testing.T) {
-					var yoga []*ent.UserYoga
-					// 1개
-					yoga = append(yoga, &ent.UserYoga{
-						Name:     "하타",
-						UserType: model.TeacherType,
-					})
+			teacherType := model.TeacherType
+			u, err := ts.userRepo.Create(ts.ctx, &ent.User{
+				Type: &teacherType,
+			})
+			ts.NoError(err)
+			ts.exisitUserNo = u.ID
 
-					_, err := repo.CreateMany(ctx, yoga, 2)
-					assert.Equal(t, ent.IsConstraintError(err), true)
-				})
-
-				t.Run("빈 데이터만 입력했을 때", func(t *testing.T) {
-					// 빈 배열을 넣어도 생성이 안되고 에러가 나지 않음.
-					var yoga []*ent.UserYoga
-					u, err := repo.CreateMany(ctx, yoga, 1)
-					assert.Equal(t, len(u), 0)
-					assert.NoError(t, err)
-				})
-			},
-
-			After: func(t *testing.T) {
-				utils.RepoTestTruncateTable(ctx, client)
-			},
-		},
-
-		{
-			Name: "userYogaRepository/UpdateMany",
-
-			Before: func(t *testing.T) {
-				teacherType := model.TeacherType
-				userRepo.Create(ctx, &ent.User{
-					Type: &teacherType,
-				})
-			},
-
-			Expect: func(t *testing.T) {
-				t.Run("업데이트할 내역이 없는 경우", func(t *testing.T) {
-				})
-
-				t.Run("업데이트할 내역이 존재하는 경우", func(t *testing.T) {
-				})
-
-				t.Run("모든 값  삭제 요청이 들어온 경우.", func(t *testing.T) {
-				})
-			},
-
-			After: func(t *testing.T) {
-				utils.RepoTestTruncateTable(ctx, client)
-			},
-		},
+		}
 	}
-	for _, tt := range tests {
-		t.Run(tt.Name, func(t *testing.T) {
-			tt.Before(t)
-			tt.Expect(t)
-			tt.After(t)
+}
+
+// TEST -----------------------------------
+func (ts *UserYogaRepositoryTestSuite) TestCreateRepo() {
+	ts.Run("성공적인 생성", func() {
+		var yoga []*ent.UserYoga
+		// 1개
+		teacherType := model.TeacherType
+		yoga = append(yoga, &ent.UserYoga{
+			Name:     "하타",
+			UserType: teacherType,
 		})
-	}
+		// 2개
+		yoga = append(yoga, &ent.UserYoga{
+			Name:     "인",
+			UserType: teacherType,
+		})
+		us, err := ts.userYogaRepo.CreateMany(ts.ctx, yoga, ts.exisitUserNo)
+		ts.Equal(len(us), 2)
+		ts.NoError(err)
+	})
+
+	ts.Run("존재하지 않는 유저 아이디로 생성하려는 경우", func() {
+		var yoga []*ent.UserYoga
+		// 1개
+		yoga = append(yoga, &ent.UserYoga{
+			Name:     "하타",
+			UserType: model.TeacherType,
+		})
+
+		_, err := ts.userYogaRepo.CreateMany(ts.ctx, yoga, 100)
+		ts.Equal(ent.IsConstraintError(err), true)
+	})
+
+	ts.Run("빈 데이터만 입력했을 때", func() {
+		// 빈 배열을 넣어도 생성이 안되고 에러가 나지 않음.
+		var yoga []*ent.UserYoga
+		u, err := ts.userYogaRepo.CreateMany(ts.ctx, yoga, ts.exisitUserNo)
+		ts.Equal(len(u), 0)
+		ts.NoError(err)
+	})
 }
