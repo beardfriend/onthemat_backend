@@ -2,21 +2,18 @@ package utils
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"os"
 	"os/exec"
 	"testing"
 
+	"onthemat/internal/app/common"
 	"onthemat/internal/app/config"
 	"onthemat/pkg/ent"
 )
 
-type Tests struct {
-	Name   string
-	Before func(*testing.T)
-	Expect func(*testing.T)
-	After  func(*testing.T)
-}
-
+// ------------------- For Repository -------------------
 func RepoTestInit(t *testing.T) *config.Config {
 	os.Setenv("GO_ENV", "TEST")
 	c := config.NewConfig()
@@ -85,4 +82,25 @@ func RepoTestTruncateTable(ctx context.Context, c *ent.Client) error {
 	END $$;
 	`)
 	return err
+}
+
+// ------------------- For Hanlder -------------------
+type TestResponse[T any] struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Result  T      `json:"result"`
+}
+
+func MakeRespWithDataForTest[T any](body io.ReadCloser) TestResponse[T] {
+	bodyBytes, _ := io.ReadAll(body)
+	var result TestResponse[T]
+	json.Unmarshal(bodyBytes, &result)
+	return result
+}
+
+func MakeErrorForTests(body io.ReadCloser) common.HttpError {
+	bodyBytes, _ := io.ReadAll(body)
+	var result common.HttpError
+	json.Unmarshal(bodyBytes, &result)
+	return result
 }
