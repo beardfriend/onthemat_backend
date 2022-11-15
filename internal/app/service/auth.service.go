@@ -160,6 +160,7 @@ func (a *authService) GetNaverRedirectUrl() string {
 	return a.naver.Authorize()
 }
 
+// TODO : 스택에 쌓아서 전송 실패할 경우 재전송
 func (a *authService) SendEmailResetPassword(user *ent.User) error {
 	subject := "임시 비밀번호 발급안내" + "!\n"
 	body := "임시비밀번호는 " + *user.TempPassword + " 입니다."
@@ -167,6 +168,7 @@ func (a *authService) SendEmailResetPassword(user *ent.User) error {
 	return a.email.Send([]string{*user.Email}, msg)
 }
 
+// TODO : 스택에 쌓아서 전송 실패할 경우 재전송
 func (a *authService) SendEmailVerifiedUser(email string, authKey string, onthematHost string) error {
 	href := fmt.Sprintf("%s/api/v1/auth/verify-email?key=%s&email=%s", onthematHost, authKey, email)
 	subject := "Subject: Test email from Go!\n"

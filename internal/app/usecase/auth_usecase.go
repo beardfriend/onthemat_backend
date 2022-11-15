@@ -28,9 +28,14 @@ type AuthUseCase interface {
 	NaverRedirectUrl(ctx context.Context) string
 	GoogleRedirectUrl(ctx context.Context) string
 
+	// LogOut
+	// PasswordChange
+	// 탈퇴
+
+	// 입력받은 이메일로 임시 비밀번호 전송하는 모듈
 	SendEmailResetPassword(ctx context.Context, email string) error
 	CheckDuplicatedEmail(ctx context.Context, email string) error
-	VerifiedEmail(ctx context.Context, email string, authKey string) error
+	VerifiyEmail(ctx context.Context, email string, authKey string) error
 	Refresh(ctx context.Context, authorizationHeader []byte) (*RefreshResult, error)
 }
 
@@ -261,7 +266,7 @@ func (a *authUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) er
 
 	go a.authSvc.SendEmailVerifiedUser(body.Email, key, a.config.Onthemat.HOST)
 
-	return err
+	return nil
 }
 
 func (a *authUseCase) CheckDuplicatedEmail(ctx context.Context, email string) error {
@@ -277,7 +282,7 @@ func (a *authUseCase) CheckDuplicatedEmail(ctx context.Context, email string) er
 	return nil
 }
 
-func (a *authUseCase) VerifiedEmail(ctx context.Context, email string, authKey string) error {
+func (a *authUseCase) VerifiyEmail(ctx context.Context, email string, authKey string) error {
 	key := a.store.Get(ctx, email)
 
 	if key != authKey {
@@ -323,12 +328,10 @@ func (a *authUseCase) SendEmailResetPassword(ctx context.Context, email string) 
 	if err := a.userRepo.UpdateTempPassword(ctx, u); err != nil {
 		return err
 	}
-	if err := a.authSvc.SendEmailResetPassword(u); err != nil {
-		return err
-	}
+
+	go a.authSvc.SendEmailResetPassword(u)
 
 	return nil
-	// 이메일로 패스워드 찾아서,
 }
 
 type RefreshResult struct {
@@ -347,6 +350,7 @@ func (a *authUseCase) Refresh(ctx context.Context, authorizationHeader []byte) (
 		return nil, err
 	}
 
+	// 없는 경우 예외처리
 	val := a.store.Get(ctx, claim.Uuid)
 	if val != strconv.Itoa(claim.UserId) {
 		return nil, common.NewAuthenticationFailedError("잘못된 토큰입니다.")
@@ -369,7 +373,7 @@ func (a *authUseCase) Refresh(ctx context.Context, authorizationHeader []byte) (
 
 	loginType := "normal"
 	if u.SocialName != nil {
-		loginType = "social"
+		loginType = *u.SocialName.ToString()
 	}
 
 	access, err := a.tokenSvc.GenerateToken(uid, u.ID, loginType, userType, a.config.JWT.AccessTokenExpired)

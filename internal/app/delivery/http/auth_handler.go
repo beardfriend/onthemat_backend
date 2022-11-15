@@ -721,7 +721,7 @@ func (h *authHandler) VerifiyEmail(c *fiber.Ctx) error {
 			JSON(ex.NewInvalidInputError(err))
 	}
 
-	if err := h.AuthUseCase.VerifiedEmail(ctx, queries.Email, queries.Key); err != nil {
+	if err := h.AuthUseCase.VerifiyEmail(ctx, queries.Email, queries.Key); err != nil {
 		code, json := ex.ParseHttpError(err)
 		return c.Status(code).JSON(json)
 	}
