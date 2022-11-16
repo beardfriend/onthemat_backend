@@ -1,28 +1,50 @@
 package common
 
 import (
-	"errors"
-	"fmt"
-	"net/http"
-	"strings"
-
 	"onthemat/pkg/validatorx"
 )
 
-var (
-	ErrUnauthorized         = errors.New("unauthorized")
-	ErrAuthenticationFailed = errors.New("authentication vailed")
-	ErrBadRequest           = errors.New("bad request")
-	ErrConflict             = errors.New("conflict")
-	ErrNotFound             = errors.New("not found")
-	ErrUnprocessableEntity  = errors.New("unprocessable entity")
-	ErrInternalServerError  = errors.New("internal server error")
+const (
+	ErrInternalError = 500
+
+	// Unprocessable
+	ErrJsonMissing        = 1000 // JSON을 입력해주세요
+	ErrQueryStringMissing = 1001 // QueryString을 입력해주세요
+
+	// 벨리데이션 에러 2000 ~
+	ErrReqeustsInvalid = 2000
+	ErrPasswordInvalid = 2001
+	ErrEmailInvalid    = 2002
+	ErrUrlInvalid      = 2003
+	ErrPhoneNumInvalid = 2004
+
+	// 3000 ~ BadReqeust
+
+	// 4000 ~ Conflict
+
+	// 5000 ~ NotFound
+
+	// 6000 ~ 인증
+
 )
 
-type HttpErr interface {
-	Status() int
-	Error() string
-	Details() interface{}
+func ErrorText(code int) string {
+	switch code {
+	// 1000 ~
+	case ErrJsonMissing:
+		return "JSON을 입력해주세요"
+	case ErrQueryStringMissing:
+		return "QueryString을 입력해주세요"
+
+	case ErrReqeustsInvalid:
+		return "유효하지 않은 요청값들이 존재합니다."
+	case ErrPasswordInvalid:
+		return "유효하지 않은 패스워드입니다."
+	case ErrPhoneNumInvalid:
+		return "유효하지 않은 휴대폰번호입니다."
+	default:
+		return "일시적인 에러가 발생했습니다."
+	}
 }
 
 type HttpError struct {
@@ -31,113 +53,56 @@ type HttpError struct {
 	ErrDetails interface{} `json:"details"`
 }
 
-func (e HttpError) Error() string {
-	return fmt.Sprintf("status: %d - errors: %s - details: %v", e.ErrCode, e.ErrMessage, e.ErrDetails)
-}
-
-// Error status
-func (e HttpError) Status() int {
-	return e.ErrCode
-}
-
-// HttpError Details
-func (e HttpError) Details() interface{} {
-	return e.ErrDetails
-}
-
-func NewHttpError(status int, err string, details interface{}) HttpErr {
+func NewHttpError(ErrorCode int, details interface{}) HttpError {
 	return HttpError{
-		ErrCode:    status,
-		ErrMessage: err,
+		ErrCode:    ErrorCode,
+		ErrMessage: ErrorText(ErrorCode),
 		ErrDetails: details,
 	}
 }
 
-func NewAuthenticationFailedError(details interface{}) HttpErr {
-	return HttpError{
-		ErrCode:    401,
-		ErrMessage: ErrAuthenticationFailed.Error(),
-		ErrDetails: details,
+const (
+	TagPassword  = "password"
+	TagEmail     = "email"
+	TagNickName  = "nickname"
+	TagPhoneNum  = "phoneNum"
+	TagTermAgree = "termAgree"
+)
+
+func ErrorValidationCode(name string) int {
+	switch name {
+	case TagPassword:
+		return ErrPasswordInvalid
+	case TagEmail:
+		return ErrEmailInvalid
+	case TagPhoneNum:
+		return ErrPhoneNumInvalid
+
+	default:
+		return ErrReqeustsInvalid
 	}
 }
 
-func NewBadRequestError(details interface{}) HttpErr {
-	return HttpError{
-		ErrCode:    http.StatusBadRequest,
-		ErrMessage: ErrBadRequest.Error(),
-		ErrDetails: details,
-	}
-}
+func NewInvalidInputError(errs []*validatorx.ErrorResponse) HttpError {
+	errors := make([]interface{}, len(errs))
 
-func NewConflictError(details interface{}) HttpErr {
-	return HttpError{
-		ErrCode:    http.StatusConflict,
-		ErrMessage: ErrConflict.Error(),
-		ErrDetails: details,
-	}
-}
-
-func NewUnauthorizedError(details interface{}) HttpErr {
-	return HttpError{
-		ErrCode:    http.StatusUnauthorized,
-		ErrMessage: ErrUnauthorized.Error(),
-		ErrDetails: details,
-	}
-}
-
-// New Not Found Error
-func NewNotFoundError(details interface{}) HttpErr {
-	return HttpError{
-		ErrCode:    http.StatusNotFound,
-		ErrMessage: ErrNotFound.Error(),
-		ErrDetails: details,
-	}
-}
-
-// New Unprocessable Entity Error
-func NewUnprocessableEntityError(details interface{}) HttpErr {
-	return HttpError{
-		ErrCode:    http.StatusUnprocessableEntity,
-		ErrMessage: ErrUnprocessableEntity.Error(),
-		ErrDetails: details,
-	}
-}
-
-// New Internal Server Error
-func NewInternalServerError(details interface{}) HttpErr {
-	// TODO : loging
-	return HttpError{
-		ErrCode:    http.StatusInternalServerError,
-		ErrMessage: ErrInternalServerError.Error(),
-		ErrDetails: "일시적인 에러가 발생했습니다.",
-	}
-}
-
-// New Invalid Input Error - Validation
-func NewInvalidInputError(errs []*validatorx.ErrorResponse) HttpErr {
-	var errors []interface{}
 	for _, field := range errs {
-
-		splited := strings.Split(field.FailedField, ".")
-		fieldName := splited[1]
-
 		errors = append(errors, map[string]interface{}{
-			strings.ToLower(fieldName): field.Tag,
+			field.FailedFieldTagName: field.Tag,
 		})
+	}
 
+	if len(errs) == 1 {
+		return HttpError{
+			ErrCode:    ErrorValidationCode(errs[0].FailedFieldTagName),
+			ErrMessage: ErrorText(ErrorValidationCode(errs[0].FailedFieldTagName)),
+			ErrDetails: errors,
+		}
 	}
 
 	return HttpError{
-		ErrCode:    http.StatusBadRequest,
-		ErrMessage: ErrBadRequest.Error(),
+		ErrCode:    ErrReqeustsInvalid,
+		ErrMessage: ErrorText(ErrReqeustsInvalid),
 		ErrDetails: errors,
 	}
-}
-
-// Parse Http Error
-func ParseHttpError(err error) (int, interface{}) {
-	if httpErr, ok := err.(HttpErr); ok {
-		return httpErr.Status(), httpErr
-	}
-	return http.StatusInternalServerError, NewInternalServerError(err)
 }

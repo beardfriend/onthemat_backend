@@ -15,10 +15,6 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-func TestUserYogaRepoTestSuite(t *testing.T) {
-	suite.Run(t, new(UserYogaRepositoryTestSuite))
-}
-
 type UserYogaRepositoryTestSuite struct {
 	suite.Suite
 	config       *config.Config
@@ -113,4 +109,8 @@ func (ts *UserYogaRepositoryTestSuite) TestCreate() {
 		ts.Equal(len(u), 0)
 		ts.NoError(err)
 	})
+}
+
+func TestUserYogaRepositoryTestSuite(t *testing.T) {
+	suite.Run(t, new(UserYogaRepositoryTestSuite))
 }

@@ -16,10 +16,6 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-func TestUserRepoTestSuite(t *testing.T) {
-	suite.Run(t, new(UserRepositoryTestSuite))
-}
-
 type UserRepositoryTestSuite struct {
 	suite.Suite
 	config   *config.Config
@@ -95,9 +91,8 @@ func (ts *UserRepositoryTestSuite) TearDownTest() {
 
 func (ts *UserRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 	if suiteName == "UserRepositoryTestSuite" {
-
-		if testName == "TestUpdate" {
-
+		switch testName {
+		case "TestUpdate":
 			ts.testUpdateData.email = "asd@naver.com"
 			ts.testUpdateData.password = "password"
 			ts.testUpdateData.nickname = "nick"
@@ -113,19 +108,7 @@ func (ts *UserRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			})
 			ts.NoError(err)
 			ts.testUpdateData.id = u.ID
-		}
-
-		if testName == "TestGet" {
-			ts.testGetData.email = "asd@gmail.com"
-			user, err := ts.userRepo.Create(ts.ctx, &ent.User{
-				Email: &ts.testGetData.email,
-			})
-			ts.NoError(err)
-			ts.testGetData.id = user.ID
-		}
-
-		if testName == "TestFindByEmail" {
-
+		case "TestFindByEmail":
 			ts.testFindByEmailData.email = "asd@gmail.com"
 			user, err := ts.userRepo.Create(ts.ctx, &ent.User{
 				Email: &ts.testFindByEmailData.email,
@@ -133,9 +116,7 @@ func (ts *UserRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			ts.NoError(err)
 
 			ts.testFindByEmailData.id = user.ID
-		}
-
-		if testName == "TestGetByEmaillPassword" {
+		case "TestGetByEmaillPassword":
 			// 첫 번째 유저
 
 			ts.testGetByEmailPassword[0].email = "asd@gmail.com"
@@ -330,4 +311,8 @@ func (ts *UserRepositoryTestSuite) TestGetByEmaillPassword() {
 			ts.Equal(ent.IsNotFound(err), true)
 		})
 	})
+}
+
+func TestUserRepoTestSuite(t *testing.T) {
+	suite.Run(t, new(UserRepositoryTestSuite))
 }
