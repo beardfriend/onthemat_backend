@@ -111,7 +111,7 @@ func (a *authUseCase) Login(ctx context.Context, body *transport.LoginBody) (*Lo
 		return nil, err
 	}
 
-	if err := a.store.Set(ctx, uid, strconv.Itoa(user.ID), time.Duration(a.config.JWT.RefreshTokenExpired)*time.Minute); err != nil {
+	if err := a.store.HSet(ctx, strconv.Itoa(user.ID), uid, strconv.Itoa(user.ID), time.Duration(a.config.JWT.RefreshTokenExpired)*time.Minute); err != nil {
 		return nil, err
 	}
 
@@ -140,6 +140,7 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialTy
 	if socialNameString == &model.KakaoString {
 
 		kakaoInfo, err := a.authSvc.GetKakaoInfo(code)
+		// TODO : 카카오 에러에 따라 error 분기처리.
 		if err != nil {
 			return nil, err
 		}
@@ -206,7 +207,7 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialTy
 		return nil, err
 	}
 
-	if err := a.store.Set(ctx, uid, strconv.Itoa(user.ID), time.Duration(a.config.JWT.RefreshTokenExpired)*time.Minute); err != nil {
+	if err := a.store.HSet(ctx, strconv.Itoa(user.ID), uid, strconv.Itoa(user.ID), time.Duration(a.config.JWT.RefreshTokenExpired)*time.Minute); err != nil {
 		return nil, err
 	}
 
@@ -372,8 +373,12 @@ func (a *authUseCase) Refresh(ctx context.Context, authorizationHeader []byte) (
 		return nil, err
 	}
 
-	val := a.store.Get(ctx, claim.Uuid)
-	if val != strconv.Itoa(claim.UserId) {
+	userIdString := strconv.Itoa(claim.UserId)
+	val, err := a.store.HGet(ctx, userIdString, claim.Uuid)
+	if err != nil {
+		return nil, err
+	}
+	if val != userIdString {
 		return nil, ex.NewBadRequestError(ex.ErrTokenInvalid, nil)
 	}
 
