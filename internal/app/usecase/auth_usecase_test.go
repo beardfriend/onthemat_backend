@@ -210,8 +210,8 @@ func (ts *AuthUCTestSuite) TestRefresh() {
 			arg.UserId = 1
 		}).Once()
 
-		ts.mockStore.On("Get", mock.Anything, mock.AnythingOfType("string")).
-			Return("1").Once()
+		ts.mockStore.On("HGet", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+			Return("1", nil).Once()
 
 		ts.mockUserRepo.On("Get", mock.Anything, mock.AnythingOfType("int")).
 			Return(&ent.User{
@@ -247,8 +247,8 @@ func (ts *AuthUCTestSuite) TestRefresh() {
 			arg.UserId = 1
 		}).Once()
 
-		ts.mockStore.On("Get", mock.Anything, mock.AnythingOfType("string")).
-			Return("1").Once()
+		ts.mockStore.On("HGet", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+			Return("1", nil).Once()
 
 		ts.mockUserRepo.On("Get", mock.Anything, mock.AnythingOfType("int")).
 			Return(&ent.User{
@@ -319,7 +319,12 @@ func (ts *AuthUCTestSuite) TestLogin() {
 			Return("refreshToken", nil).
 			Once()
 
-		ts.mockStore.On("Set", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("time.Duration")).Return(nil).Once()
+		ts.mockStore.On("HSet", mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("time.Duration"),
+		).Return(nil).Once()
 
 		ts.mockTokenService.On("GenerateToken", mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int")).
 			Return("AccessToken", nil).
@@ -388,7 +393,11 @@ func (ts *AuthUCTestSuite) TestSocialLogin() {
 			Return("refreshToken", nil).
 			Once()
 
-		ts.mockStore.On("Set", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("time.Duration")).Return(nil).Once()
+		ts.mockStore.On("HSet", mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("time.Duration")).Return(nil).Once()
 
 		ts.mockTokenService.On("GenerateToken", mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int")).
 			Return("AccessToken", nil).
@@ -424,7 +433,12 @@ func (ts *AuthUCTestSuite) TestSocialLogin() {
 			Return("refreshToken", nil).
 			Once()
 
-		ts.mockStore.On("Set", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("time.Duration")).Return(nil).Once()
+		ts.mockStore.On("HSet",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("time.Duration")).Return(nil).Once()
 
 		ts.mockTokenService.On("GenerateToken", mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int")).
 			Return("AccessToken", nil).
@@ -466,7 +480,9 @@ func (ts *AuthUCTestSuite) TestSocialLogin() {
 			Return("refreshToken", nil).
 			Once()
 
-		ts.mockStore.On("Set", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("time.Duration")).Return(nil).Once()
+		ts.mockStore.On("HSet", mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("time.Duration")).Return(nil).Once()
 
 		ts.mockTokenService.On("GenerateToken", mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int")).
 			Return("AccessToken", nil).

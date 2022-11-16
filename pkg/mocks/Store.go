@@ -64,6 +64,41 @@ func (_m *Store) Get(ctx context.Context, key string) string {
 	return r0
 }
 
+// HGet provides a mock function with given fields: ctx, key, field
+func (_m *Store) HGet(ctx context.Context, key string, field string) (string, error) {
+	ret := _m.Called(ctx, key, field)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) string); ok {
+		r0 = rf(ctx, key, field)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, key, field)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// HSet provides a mock function with given fields: ctx, key, field, value, expiration
+func (_m *Store) HSet(ctx context.Context, key string, field string, value string, expiration time.Duration) error {
+	ret := _m.Called(ctx, key, field, value, expiration)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, time.Duration) error); ok {
+		r0 = rf(ctx, key, field, value, expiration)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Set provides a mock function with given fields: ctx, key, value, expiration
 func (_m *Store) Set(ctx context.Context, key string, value string, expiration time.Duration) error {
 	ret := _m.Called(ctx, key, value, expiration)
