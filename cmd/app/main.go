@@ -19,6 +19,7 @@ import (
 	"onthemat/pkg/kakao"
 	"onthemat/pkg/naver"
 	"onthemat/pkg/openapi"
+	"onthemat/pkg/validatorx"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -58,6 +59,12 @@ func main() {
 	db := infrastructure.NewPostgresDB(c)
 	redisCli := infrastructure.NewRedis(c)
 
+	// utils
+	validator := validatorx.NewValidatorx().
+		AddPasswordAtLeastOneCharNumValidation("PassWordAtLeastOneCharOneNum").
+		AddPhoneNumValidation("phoneNumNoDash").
+		AddUrlValidation("urlStartHttpHttps").Init()
+
 	// repo
 	userRepo := repository.NewUserRepository(db)
 	imageRepo := repository.NewImageRepository(db)
@@ -83,13 +90,14 @@ func main() {
 	// app
 	app := fiber.New()
 	app.Use(recover.New())
+	// app.Use(limiter.New(limiter.ConfigDefault))
 
 	// handler
 	router := app.Group("/api/v1")
-	http.NewAuthHandler(authUseCase, router)
-	http.NewUploadHandler(middleWare, uploadUsecase, router)
+	http.NewAuthHandler(authUseCase, validator, router)
+	http.NewUploadHandler(middleWare, uploadUsecase, validator, router)
 	http.NewUserHandler(middleWare, userUsecase, router)
-	http.NewAcademyHandler(middleWare, academyUsecase, router)
+	http.NewAcademyHandler(middleWare, academyUsecase, validator, router)
 
 	app.Listen(":3000")
 }

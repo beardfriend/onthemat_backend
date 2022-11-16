@@ -17,7 +17,8 @@ func (m *MiddleWare) Auth(c *fiber.Ctx) error {
 
 	access, err := m.authSvc.ExtractTokenFromHeader(string(authorizationHeader))
 	if err != nil {
-		return c.Status(http.StatusUnauthorized).JSON(ex.NewBadRequestError("헤더를 확인해주세요."))
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewBadRequestError(ex.ErrAuthorizationHeaderFormatUnavailable, "Bearer"))
 	}
 
 	claim := &token.TokenClaim{}
@@ -26,11 +27,11 @@ func (m *MiddleWare) Auth(c *fiber.Ctx) error {
 		if err.Error() == jwt.ErrExiredToken {
 			return c.
 				Status(http.StatusUnauthorized).
-				JSON(ex.NewUnauthorizedError("토큰이 만료되었습니다. 재발급 해주세요."))
+				JSON(ex.NewUnauthorizedError(ex.ErrTokenExpired, nil))
 		}
 
 		return c.Status(http.StatusBadRequest).
-			JSON(ex.NewBadRequestError("토큰을 확인해주세요."))
+			JSON(ex.NewBadRequestError(ex.ErrTokenInvalid, nil))
 	}
 
 	ctx.SetUserValue("login_type", claim.LoginType)
@@ -45,7 +46,7 @@ func (m *MiddleWare) OnlyAcademy(c *fiber.Ctx) error {
 	if userType != "academy" {
 		return c.
 			Status(http.StatusUnauthorized).
-			JSON(ex.NewUnauthorizedError("사업자 회원만 접근할 수 있습니다."))
+			JSON(ex.NewForbiddenError(ex.ErrOnlyAcademy, nil))
 	}
 
 	return c.Next()
@@ -57,7 +58,7 @@ func (m *MiddleWare) OnlyTeacher(c *fiber.Ctx) error {
 	if userType != "teacher" {
 		return c.
 			Status(http.StatusUnauthorized).
-			JSON(ex.NewUnauthorizedError("선생님 회원만 접근할 수 있습니다."))
+			JSON(ex.NewForbiddenError(ex.ErrOnlyTeacher, nil))
 	}
 
 	return c.Next()

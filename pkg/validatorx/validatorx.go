@@ -8,11 +8,13 @@ import (
 )
 
 // ------------------- Validator -------------------
+
 type Validator interface {
 	ValidateStruct(request interface{}) []*ErrorResponse
 }
 
 // ------------------- New -------------------
+
 type validator struct {
 	validator *goValidator.Validate
 }

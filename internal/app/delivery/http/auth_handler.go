@@ -6,6 +6,7 @@ import (
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/model"
 	"onthemat/internal/app/transport"
+	"onthemat/internal/app/utils"
 
 	"onthemat/internal/app/usecase"
 	"onthemat/pkg/validatorx"
@@ -15,15 +16,17 @@ import (
 
 type authHandler struct {
 	AuthUseCase usecase.AuthUseCase
-	UserUseCase usecase.UserUseCase
+	Validator   validatorx.Validator
 }
 
 func NewAuthHandler(
 	authUseCase usecase.AuthUseCase,
+	validator validatorx.Validator,
 	router fiber.Router,
 ) {
 	handler := &authHandler{
 		AuthUseCase: authUseCase,
+		Validator:   validator,
 	}
 	g := router.Group("/auth")
 	// 카카오 리디렉션
@@ -113,8 +116,7 @@ func (h *authHandler) KakaoCallBackToken(c *fiber.Ctx) error {
 	code := c.Query("code")
 	data, err := h.AuthUseCase.SocialLogin(ctx, model.KakaoSocialType, code)
 	if err != nil {
-		code, json := ex.ParseHttpError(err)
-		return c.Status(code).JSON(json)
+		return utils.NewError(c, err)
 	}
 
 	return c.Status(200).
@@ -184,8 +186,7 @@ func (h *authHandler) GoogleCallBackToken(c *fiber.Ctx) error {
 	code := c.Query("code")
 	data, err := h.AuthUseCase.SocialLogin(ctx, model.GoogleSocialType, code)
 	if err != nil {
-		code, json := ex.ParseHttpError(err)
-		return c.Status(code).JSON(json)
+		return utils.NewError(c, err)
 	}
 
 	return c.Status(200).
@@ -255,8 +256,7 @@ func (h *authHandler) NaverCallBackToken(c *fiber.Ctx) error {
 	code := c.Query("code")
 	data, err := h.AuthUseCase.SocialLogin(ctx, model.NaverSocialType, code)
 	if err != nil {
-		code, json := ex.ParseHttpError(err)
-		return c.Status(code).JSON(json)
+		return utils.NewError(c, err)
 	}
 
 	return c.Status(200).
@@ -320,20 +320,18 @@ func (h *authHandler) SignUp(c *fiber.Ctx) error {
 
 	body := new(transport.SignUpBody)
 	if err := c.BodyParser(body); err != nil {
-		return c.
-			Status(http.StatusUnprocessableEntity).
-			JSON(ex.NewUnprocessableEntityError("JSON을 입력해주세요."))
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
 	}
 
-	if err := validatorx.ValidateStruct(body); err != nil {
+	if err := h.Validator.ValidateStruct(body); err != nil {
 		return c.
 			Status(http.StatusBadRequest).
 			JSON(ex.NewInvalidInputError(err))
 	}
 
 	if err := h.AuthUseCase.SignUp(ctx, body); err != nil {
-		code, json := ex.ParseHttpError(err)
-		return c.Status(code).JSON(json)
+		return utils.NewError(c, err)
 	}
 
 	return c.Status(201).
@@ -397,20 +395,18 @@ func (h *authHandler) SocialSignUp(c *fiber.Ctx) error {
 
 	body := new(transport.SocialSignUpBody)
 	if err := c.BodyParser(body); err != nil {
-		return c.
-			Status(http.StatusUnprocessableEntity).
-			JSON(ex.NewUnprocessableEntityError("JSON을 입력해주세요."))
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
 	}
 
-	if err := validatorx.ValidateStruct(body); err != nil {
+	if err := h.Validator.ValidateStruct(body); err != nil {
 		return c.
 			Status(http.StatusBadRequest).
 			JSON(ex.NewInvalidInputError(err))
 	}
 
 	if err := h.AuthUseCase.SocialSignUp(ctx, body); err != nil {
-		code, json := ex.ParseHttpError(err)
-		return c.Status(code).JSON(json)
+		return utils.NewError(c, err)
 	}
 
 	return c.Status(201).
@@ -487,12 +483,11 @@ func (h *authHandler) Login(c *fiber.Ctx) error {
 
 	body := new(transport.LoginBody)
 	if err := c.BodyParser(body); err != nil {
-		return c.
-			Status(http.StatusUnprocessableEntity).
-			JSON(ex.NewUnprocessableEntityError("JSON을 입력해주세요"))
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
 	}
 
-	if err := validatorx.ValidateStruct(body); err != nil {
+	if err := h.Validator.ValidateStruct(body); err != nil {
 		return c.
 			Status(http.StatusBadRequest).
 			JSON(ex.NewInvalidInputError(err))
@@ -500,8 +495,7 @@ func (h *authHandler) Login(c *fiber.Ctx) error {
 
 	data, err := h.AuthUseCase.Login(ctx, body)
 	if err != nil {
-		code, json := ex.ParseHttpError(err)
-		return c.Status(code).JSON(json)
+		return utils.NewError(c, err)
 	}
 
 	return c.Status(200).
@@ -560,19 +554,18 @@ func (h *authHandler) CheckDuplicatedEmail(c *fiber.Ctx) error {
 	queries := new(transport.CheckDuplicatedEmailQueries)
 
 	if err := c.QueryParser(queries); err != nil {
-		code, json := ex.ParseHttpError(err)
-		return c.Status(code).JSON(json)
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrQueryStringMissing, nil))
 	}
 
-	if err := validatorx.ValidateStruct(queries); err != nil {
+	if err := h.Validator.ValidateStruct(queries); err != nil {
 		return c.
 			Status(http.StatusBadRequest).
 			JSON(ex.NewInvalidInputError(err))
 	}
 
 	if err := h.AuthUseCase.CheckDuplicatedEmail(ctx, queries.Email); err != nil {
-		code, json := ex.ParseHttpError(err)
-		return c.Status(code).JSON(json)
+		return utils.NewError(c, err)
 	}
 
 	return c.Status(200).
@@ -630,19 +623,18 @@ func (h *authHandler) SendTempPassword(c *fiber.Ctx) error {
 	queries := new(transport.CheckDuplicatedEmailQueries)
 
 	if err := c.QueryParser(queries); err != nil {
-		code, json := ex.ParseHttpError(err)
-		return c.Status(code).JSON(json)
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrQueryStringMissing, nil))
 	}
 
-	if err := validatorx.ValidateStruct(queries); err != nil {
+	if err := h.Validator.ValidateStruct(queries); err != nil {
 		return c.
 			Status(http.StatusBadRequest).
 			JSON(ex.NewInvalidInputError(err))
 	}
 
 	if err := h.AuthUseCase.SendEmailResetPassword(ctx, queries.Email); err != nil {
-		code, json := ex.ParseHttpError(err)
-		return c.Status(code).JSON(json)
+		return utils.NewError(c, err)
 	}
 
 	return c.Status(200).
@@ -711,19 +703,17 @@ func (h *authHandler) VerifiyEmail(c *fiber.Ctx) error {
 	queries := new(transport.VerifyEmailQueries)
 
 	if err := c.QueryParser(queries); err != nil {
-		code, json := ex.ParseHttpError(err)
-		return c.Status(code).JSON(json)
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrQueryStringMissing, nil))
 	}
 
-	if err := validatorx.ValidateStruct(queries); err != nil {
-		return c.
-			Status(http.StatusBadRequest).
+	if err := h.Validator.ValidateStruct(queries); err != nil {
+		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewInvalidInputError(err))
 	}
 
-	if err := h.AuthUseCase.VerifiyEmail(ctx, queries.Email, queries.Key); err != nil {
-		code, json := ex.ParseHttpError(err)
-		return c.Status(code).JSON(json)
+	if err := h.AuthUseCase.VerifiyEmail(ctx, queries.Email, queries.Key, queries.IssuedAt); err != nil {
+		return utils.NewError(c, err)
 	}
 
 	return c.Status(200).
@@ -790,8 +780,7 @@ func (h *authHandler) Refresh(c *fiber.Ctx) error {
 
 	data, err := h.AuthUseCase.Refresh(ctx, authorizationHeader)
 	if err != nil {
-		code, json := ex.ParseHttpError(err)
-		return c.Status(code).JSON(json)
+		return utils.NewError(c, err)
 	}
 
 	return c.Status(200).

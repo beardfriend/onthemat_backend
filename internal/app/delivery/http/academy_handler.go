@@ -15,15 +15,18 @@ import (
 
 type academyHandler struct {
 	academyUsecase usecase.AcademyUsecase
+	Validator      validatorx.Validator
 }
 
 func NewAcademyHandler(
 	middleware *middlewares.MiddleWare,
 	academyUsecase usecase.AcademyUsecase,
+	validator validatorx.Validator,
 	router fiber.Router,
 ) {
 	handler := &academyHandler{
 		academyUsecase: academyUsecase,
+		Validator:      validator,
 	}
 
 	g := router.Group("/academy")
@@ -39,9 +42,10 @@ func (h *academyHandler) Detail(c *fiber.Ctx) error {
 	reqParam := new(transport.AcademyDetailParam)
 
 	if err := c.ParamsParser(reqParam); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(ex.NewBadRequestError("파라메터를 확인해주세요."))
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrParamsMissing, nil))
 	}
-	if err := validatorx.ValidateStruct(reqParam); err != nil {
+	if err := h.Validator.ValidateStruct(reqParam); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
 	}
 
@@ -67,9 +71,8 @@ func (h *academyHandler) Create(c *fiber.Ctx) error {
 	reqBody := new(transport.AcademyCreateRequestBody)
 
 	if err := c.BodyParser(reqBody); err != nil {
-		return c.
-			Status(http.StatusUnprocessableEntity).
-			JSON(ex.NewUnprocessableEntityError("JSON을 입력해주세요."))
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
 	}
 
 	if err := h.academyUsecase.Create(ctx, reqBody, userId); err != nil {
@@ -90,9 +93,8 @@ func (h *academyHandler) Update(c *fiber.Ctx) error {
 	reqBody := new(transport.AcademyUpdateRequestBody)
 
 	if err := c.BodyParser(reqBody); err != nil {
-		return c.
-			Status(http.StatusUnprocessableEntity).
-			JSON(ex.NewUnprocessableEntityError("JSON을 입력해주세요."))
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
 	}
 
 	if err := h.academyUsecase.Update(ctx, reqBody, userId); err != nil {
@@ -111,11 +113,13 @@ func (h *academyHandler) List(c *fiber.Ctx) error {
 	reqQueries := transport.NewAcademyListQueries()
 
 	if err := c.QueryParser(reqQueries); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(ex.NewBadRequestError("쿼리스트링을 확인해주세요."))
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrQueryStringMissing, nil))
 	}
 
-	if err := validatorx.ValidateStruct(reqQueries); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
+	if err := h.Validator.ValidateStruct(reqQueries); err != nil {
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewInvalidInputError(err))
 	}
 
 	academies, pagination, err := h.academyUsecase.List(ctx, reqQueries)

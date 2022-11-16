@@ -32,8 +32,9 @@ type CheckDuplicatedEmailQueries struct {
 }
 
 type VerifyEmailQueries struct {
-	Email string `json:"email" validate:"required,email"`
-	Key   string `json:"key" validate:"required"`
+	Email    string `json:"email" validate:"required,email"`
+	IssuedAt string `json:"isseudAt" validate:"required"`
+	Key      string `json:"key" validate:"required"`
 }
 
 // ------------------- Response -------------------

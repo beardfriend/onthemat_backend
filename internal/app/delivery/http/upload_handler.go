@@ -14,14 +14,17 @@ import (
 
 type uploadHandler struct {
 	uploadUseCase usecase.UploadUsecase
+	Validator     validatorx.Validator
 }
 
 func NewUploadHandler(
 	middleware *middlewares.MiddleWare,
 	uploadUseCase usecase.UploadUsecase,
+	validator validatorx.Validator,
 	router fiber.Router,
 ) {
 	handler := &uploadHandler{
+		Validator:     validator,
 		uploadUseCase: uploadUseCase,
 	}
 
@@ -101,15 +104,19 @@ func (h *uploadHandler) Upload(c *fiber.Ctx) error {
 
 	reqParams := new(transport.UploadParams)
 	if err := c.ParamsParser(reqParams); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(ex.NewBadRequestError("파라메터를 확인해주세요."))
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrParamsMissing, nil))
 	}
-	if err := validatorx.ValidateStruct(reqParams); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
+	if err := h.Validator.ValidateStruct(reqParams); err != nil {
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewInvalidInputError(err))
 	}
 
 	file, err := c.FormFile("file")
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(ex.NewBadRequestError("form key를 확인해주세요."))
+		return c.
+			Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrFormDataKeyUnavailable, "key name is file"))
 	}
 
 	if err := h.uploadUseCase.Upload(ctx, file, reqParams, userId); err != nil {
