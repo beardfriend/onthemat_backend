@@ -173,6 +173,20 @@ func (_m *UserRepository) Update(ctx context.Context, user *ent.User) (*ent.User
 	return r0, r1
 }
 
+// UpdateEmail provides a mock function with given fields: ctx, email, userId
+func (_m *UserRepository) UpdateEmail(ctx context.Context, email string, userId int) error {
+	ret := _m.Called(ctx, email, userId)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, int) error); ok {
+		r0 = rf(ctx, email, userId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdateEmailVerifeid provides a mock function with given fields: ctx, userId
 func (_m *UserRepository) UpdateEmailVerifeid(ctx context.Context, userId int) error {
 	ret := _m.Called(ctx, userId)

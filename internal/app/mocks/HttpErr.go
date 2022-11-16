@@ -39,8 +39,22 @@ func (_m *HttpErr) Error() string {
 	return r0
 }
 
-// Status provides a mock function with given fields:
-func (_m *HttpErr) Status() int {
+// ErrorCode provides a mock function with given fields:
+func (_m *HttpErr) ErrorCode() int {
+	ret := _m.Called()
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func() int); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	return r0
+}
+
+// HttpStatusCode provides a mock function with given fields:
+func (_m *HttpErr) HttpStatusCode() int {
 	ret := _m.Called()
 
 	var r0 int

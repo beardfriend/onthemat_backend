@@ -22,7 +22,7 @@ func (s *store) Del(ctx context.Context, key string) error {
 }
 
 func (s *store) Set(ctx context.Context, key string, value string, expiration time.Duration) error {
-	return s.cli.Set(ctx, key, value, expiration).Err()
+	return s.cli.SetEx(ctx, key, value, expiration).Err()
 }
 
 func (s *store) Get(ctx context.Context, key string) string {

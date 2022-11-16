@@ -39,7 +39,7 @@ func (u *uploadUseCase) Upload(ctx context.Context, file *multipart.FileHeader, 
 
 	isUsable, _ := validatorx.ImageExtensionValidator(fileExt)
 	if !isUsable {
-		return ex.NewBadRequestError("사용할 수 없는 확장자입니다.")
+		return ex.NewBadRequestError(ex.ErrImageExtensionUnavailable, "jpe?g,gif,svg,png")
 	}
 
 	// make Filename

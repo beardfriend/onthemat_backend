@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"onthemat/internal/app/common"
+	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/config"
 	"onthemat/internal/app/model"
 	"onthemat/internal/app/repository"
 	"onthemat/internal/app/service"
 	"onthemat/internal/app/service/token"
 	"onthemat/internal/app/transport"
+	"onthemat/pkg/auth/jwt"
 	"onthemat/pkg/auth/store"
 	"onthemat/pkg/ent"
 
@@ -35,7 +37,7 @@ type AuthUseCase interface {
 	// 입력받은 이메일로 임시 비밀번호 전송하는 모듈
 	SendEmailResetPassword(ctx context.Context, email string) error
 	CheckDuplicatedEmail(ctx context.Context, email string) error
-	VerifiyEmail(ctx context.Context, email string, authKey string) error
+	VerifiyEmail(ctx context.Context, email string, authKey string, issuedAt string) error
 	Refresh(ctx context.Context, authorizationHeader []byte) (*RefreshResult, error)
 }
 
@@ -88,13 +90,13 @@ func (a *authUseCase) Login(ctx context.Context, body *transport.LoginBody) (*Lo
 	})
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return nil, common.NewNotFoundError("이메일 혹은 비밀번호를 다시 확인해주세요.")
+			return nil, ex.NewNotFoundError(ex.ErrUserNotFound, "이메일 혹은 비밀번호를 다시 확인해주세요.")
 		}
 		return nil, err
 	}
 
 	if !user.IsEmailVerified {
-		return nil, common.NewBadRequestError("이메일 인증이 필요합니다.")
+		return nil, common.NewUnauthorizedError(ex.ErrUserEmailUnauthorization, nil)
 	}
 
 	userType := ""
@@ -226,13 +228,19 @@ func (a *authUseCase) GoogleRedirectUrl(ctx context.Context) string {
 }
 
 func (a *authUseCase) SocialSignUp(ctx context.Context, body *transport.SocialSignUpBody) error {
-	_, err := a.userRepo.Update(ctx, &ent.User{
-		ID:          body.UserID,
-		Email:       &body.Email,
-		TermAgreeAt: time.Now(),
-		Type:        nil,
-	})
-	return err
+	isExist, err := a.userRepo.FindByEmail(ctx, body.Email)
+	if err != nil {
+		return err
+	}
+
+	if isExist {
+		return common.NewConflictError(ex.ErrUserEmailAlreadyExist, nil)
+	}
+
+	if err := a.userRepo.UpdateEmail(ctx, body.Email, body.UserID); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *authUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) error {
@@ -242,7 +250,7 @@ func (a *authUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) er
 	}
 
 	if isExist {
-		return common.NewConflictError("이미 존재하는 이메일입니다.")
+		return common.NewConflictError(ex.ErrUserEmailAlreadyExist, nil)
 	}
 
 	hashPassword := a.authSvc.HashPassword(body.Password, a.config.Secret.Password)
@@ -264,7 +272,7 @@ func (a *authUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) er
 		return err
 	}
 
-	go a.authSvc.SendEmailVerifiedUser(body.Email, key, a.config.Onthemat.HOST)
+	go a.authSvc.SendEmailVerifiedUser(body.Email, key, time.Now().Format(time.RFC3339), a.config.Onthemat.HOST)
 
 	return nil
 }
@@ -276,26 +284,33 @@ func (a *authUseCase) CheckDuplicatedEmail(ctx context.Context, email string) er
 	}
 
 	if isExist {
-		return common.NewConflictError("이미 존재하는 이메일입니다.")
+		return common.NewConflictError(ex.ErrUserEmailAlreadyExist, nil)
 	}
 
 	return nil
 }
 
-func (a *authUseCase) VerifiyEmail(ctx context.Context, email string, authKey string) error {
+func (a *authUseCase) VerifiyEmail(ctx context.Context, email string, authKey string, issuedAt string) error {
+	if a.authSvc.IsEmailForVerifyExpired(issuedAt) {
+		return ex.NewAuthenticationFailedError(ex.ErrEmailForVerifyExpired, nil)
+	}
+
 	key := a.store.Get(ctx, email)
 
 	if key != authKey {
-		return common.NewBadRequestError("올바르지 않은 인증키입니다.")
+		return ex.NewBadRequestError(ex.ErrRandomKeyForEmailVerfiyUnavailable, nil)
 	}
 
 	u, err := a.userRepo.GetByEmail(ctx, email)
 	if err != nil {
+		if ent.IsNotFound(err) {
+			return ex.NewNotFoundError(ex.ErrUserNotFound, nil)
+		}
 		return err
 	}
 
 	if u.IsEmailVerified {
-		return common.NewConflictError("이미 인증된 유저입니다.")
+		return ex.NewConflictError(ex.ErrUserEmailAlreadyVerfied, nil)
 	}
 
 	if err := a.userRepo.UpdateEmailVerifeid(ctx, u.ID); err != nil {
@@ -316,7 +331,7 @@ func (a *authUseCase) SendEmailResetPassword(ctx context.Context, email string) 
 	}
 
 	if !isExist {
-		return common.NewBadRequestError("존재하지 않는 이메일입니다.")
+		return ex.NewNotFoundError(ex.ErrUserNotFound, "존재하지 않는 이메일입니다.")
 	}
 
 	hashPassword := a.authSvc.HashPassword(a.authSvc.GenerateRandomPassword(), a.config.Secret.Password)
@@ -342,24 +357,30 @@ type RefreshResult struct {
 func (a *authUseCase) Refresh(ctx context.Context, authorizationHeader []byte) (*RefreshResult, error) {
 	refreshToken, err := a.authSvc.ExtractTokenFromHeader(string(authorizationHeader))
 	if err != nil {
-		return nil, common.NewBadRequestError("헤더를 확인해주세요.")
+		return nil, ex.NewBadRequestError(ex.ErrAuthorizationHeaderFormatUnavailable, "Bearer")
 	}
 
 	claim := new(token.TokenClaim)
 	if err := a.tokenSvc.ParseToken(refreshToken, claim); err != nil {
+		if err.Error() == jwt.ErrExiredToken {
+			return nil, ex.NewUnauthorizedError(ex.ErrTokenExpired, nil)
+		}
+
+		if err.Error() == jwt.ErrInvalidToken {
+			return nil, ex.NewBadRequestError(ex.ErrTokenInvalid, nil)
+		}
 		return nil, err
 	}
 
-	// 없는 경우 예외처리
 	val := a.store.Get(ctx, claim.Uuid)
 	if val != strconv.Itoa(claim.UserId) {
-		return nil, common.NewAuthenticationFailedError("잘못된 토큰입니다.")
+		return nil, ex.NewBadRequestError(ex.ErrTokenInvalid, nil)
 	}
 
 	u, err := a.userRepo.Get(ctx, claim.UserId)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return nil, common.NewNotFoundError("존재하지 않는 유저입니다.")
+			return nil, common.NewNotFoundError(ex.ErrUserNotFound, nil)
 		}
 		return nil, err
 	}

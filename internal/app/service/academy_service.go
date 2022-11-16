@@ -11,6 +11,8 @@ type AcademyService interface {
 	VerifyBusinessMan(businessCode string) error
 }
 
+const ErrBussinessCodeInvalid = "ErrBusinessCodeInvalid"
+
 type academyService struct {
 	businessAPI *openapi.BusinessMan
 }
@@ -33,7 +35,7 @@ func (s *academyService) VerifyBusinessMan(businessCode string) error {
 	json.Unmarshal(resp.Body(), &result)
 
 	if result.Data[0].Bstt == "" {
-		return errors.New("사업자 번호를 다시 확인해주세요")
+		return errors.New(ErrBussinessCodeInvalid)
 	}
 	return nil
 }

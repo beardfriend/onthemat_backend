@@ -185,8 +185,8 @@ func (_m *AuthUseCase) SocialSignUp(ctx context.Context, body *transport.SocialS
 	return r0
 }
 
-// VerifiedEmail provides a mock function with given fields: ctx, email, authKey
-func (_m *AuthUseCase) VerifiedEmail(ctx context.Context, email string, authKey string) error {
+// VerifiyEmail provides a mock function with given fields: ctx, email, authKey
+func (_m *AuthUseCase) VerifiyEmail(ctx context.Context, email string, authKey string) error {
 	ret := _m.Called(ctx, email, authKey)
 
 	var r0 error

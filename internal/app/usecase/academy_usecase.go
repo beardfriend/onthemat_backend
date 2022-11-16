@@ -40,7 +40,10 @@ func NewAcademyUsecase(
 
 func (u *academyUseCase) Create(ctx context.Context, academy *transport.AcademyCreateRequestBody, userId int) error {
 	if err := u.academySvc.VerifyBusinessMan(academy.BusinessCode); err != nil {
-		return ex.NewBadRequestError(err.Error())
+		if err.Error() == service.ErrBussinessCodeInvalid {
+			return ex.NewBadRequestError(ex.ErrBusinessCodeInvalid, nil)
+		}
+		return err
 	}
 
 	getUser, err := u.userRepo.Get(ctx, userId)
@@ -49,7 +52,7 @@ func (u *academyUseCase) Create(ctx context.Context, academy *transport.AcademyC
 	}
 
 	if getUser.Type != nil {
-		return ex.NewConflictError("이미 존재하는 유저입니다.")
+		return ex.NewConflictError(ex.ErrUserTypeAlreadyRegisted, nil)
 	}
 
 	return u.academyRepo.Create(ctx, &ent.Academy{
@@ -70,7 +73,7 @@ func (u *academyUseCase) Get(ctx context.Context, userId int) (*ent.Academy, err
 	academy, err := u.academyRepo.Get(ctx, userId)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return nil, ex.NewNotFoundError("존재하지 않는 유저입니다.")
+			return nil, ex.NewNotFoundError(ex.ErrAcademyNotFound, nil)
 		}
 	}
 	return academy, nil
