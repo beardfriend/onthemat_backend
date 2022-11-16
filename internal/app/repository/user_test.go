@@ -116,6 +116,16 @@ func (ts *UserRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			ts.NoError(err)
 
 			ts.testFindByEmailData.id = user.ID
+
+		case "TestGet":
+			ts.testGetData.email = "asd@gmail.com"
+			user, err := ts.userRepo.Create(ts.ctx, &ent.User{
+				Email: &ts.testFindByEmailData.email,
+			})
+			ts.NoError(err)
+
+			ts.testGetData.id = user.ID
+
 		case "TestGetByEmaillPassword":
 			// 첫 번째 유저
 

@@ -24,10 +24,10 @@ type UploadUsecase interface {
 
 type uploadUseCase struct {
 	imageRepo repository.ImageRepository
-	s3        *aws.S3
+	s3        aws.S3
 }
 
-func NewUploadUsecase(imageRepo repository.ImageRepository, s3 *aws.S3) UploadUsecase {
+func NewUploadUsecase(imageRepo repository.ImageRepository, s3 aws.S3) UploadUsecase {
 	return &uploadUseCase{
 		imageRepo: imageRepo,
 		s3:        s3,
@@ -51,13 +51,15 @@ func (u *uploadUseCase) Upload(ctx context.Context, file *multipart.FileHeader, 
 
 	resp := u.s3.Upload(key, fileBody)
 
-	u.imageRepo.Create(ctx, &ent.Image{
+	if err := u.imageRepo.Create(ctx, &ent.Image{
 		Name:        key,
 		Path:        resp.Location,
 		Size:        int(file.Size),
 		ContentType: file.Header.Get("Content-Type"),
 		Type:        image.Type(params.Purpose),
-	}, userId)
+	}, userId); err != nil {
+		return err
+	}
 
 	return nil
 }
