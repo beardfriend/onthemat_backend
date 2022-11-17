@@ -6,11 +6,7 @@
 
 계속 진행중 .....
 
-TODO : 
-[] postgres Test용 만들기
-[] postgres 연결 시 env 거치기 (.env.test도.)
-[] usecase context를 일반 context로 변경
-[] auth.service 하드코딩 제거
+
 
 ## 1.1. 스택
 
