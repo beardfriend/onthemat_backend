@@ -48,6 +48,9 @@ func (u *academyUseCase) Create(ctx context.Context, academy *transport.AcademyC
 
 	getUser, err := u.userRepo.Get(ctx, userId)
 	if err != nil {
+		if ent.IsNotFound(err) {
+			return ex.NewNotFoundError(ex.ErrUserNotFound, nil)
+		}
 		return err
 	}
 
@@ -80,7 +83,7 @@ func (u *academyUseCase) Get(ctx context.Context, userId int) (*ent.Academy, err
 }
 
 func (u *academyUseCase) Update(ctx context.Context, a *transport.AcademyUpdateRequestBody, userId int) error {
-	err := u.academyRepo.Update(ctx, &ent.Academy{
+	if err := u.academyRepo.Update(ctx, &ent.Academy{
 		Name:          a.Name,
 		CallNumber:    a.CallNumber,
 		AddressRoad:   a.AddressRoad,
@@ -90,10 +93,12 @@ func (u *academyUseCase) Update(ctx context.Context, a *transport.AcademyUpdateR
 		AddressDetail: a.AddressDetail,
 		AddressX:      a.AddressX,
 		AddressY:      a.AddressY,
-	}, userId)
-	if err != nil {
-		return err
+	}, userId); err != nil {
+		if ent.IsNotFound(err) {
+			return ex.NewNotFoundError(ex.ErrAcademyNotFound, nil)
+		}
 	}
+
 	return nil
 }
 

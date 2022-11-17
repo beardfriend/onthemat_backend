@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"onthemat/internal/app/common"
 	"onthemat/internal/app/utils"
@@ -22,6 +23,8 @@ type AcademyRepository interface {
 type academyRepository struct {
 	db *ent.Client
 }
+
+const ErrSearchColumnInvalid = "유효하지 않은 Column입니다"
 
 func NewAcademyRepository(db *ent.Client) AcademyRepository {
 	return &academyRepository{
@@ -53,7 +56,7 @@ func (repo *academyRepository) Create(ctx context.Context, academy *ent.Academy,
 }
 
 func (repo *academyRepository) Update(ctx context.Context, aca *ent.Academy, userId int) error {
-	return repo.db.Debug().Academy.Update().
+	return repo.db.Academy.UpdateOneID(userId).
 		SetName(aca.Name).
 		SetCallNumber(aca.CallNumber).
 		SetAddressRoad(aca.AddressRoad).
@@ -63,7 +66,6 @@ func (repo *academyRepository) Update(ctx context.Context, aca *ent.Academy, use
 		SetAddressDong(aca.AddressDetail).
 		SetAddressX(aca.AddressX).
 		SetAddressY(aca.AddressY).
-		Where(academy.IDEQ(userId)).
 		Exec(ctx)
 }
 
@@ -87,15 +89,18 @@ func (repo *academyRepository) Get(ctx context.Context, userId int) (*ent.Academ
 }
 
 func (repo *academyRepository) Total(ctx context.Context, p *common.TotalParams) (int, error) {
-	clause := repo.db.Debug().Academy.Query()
-	clause = repo.conditionQuery(ctx, p, clause)
+	clause := repo.db.Academy.Query()
+	clause, err := repo.conditionQuery(ctx, p, clause)
+	if err != nil {
+		return 0, err
+	}
 	return clause.Count(ctx)
 }
 
 func (repo *academyRepository) List(ctx context.Context, p *common.ListParams) ([]*ent.Academy, error) {
 	pagination := utils.NewPagination(p.PageNo, p.PageSize)
 
-	clause := repo.db.Debug().Academy.
+	clause := repo.db.Academy.
 		Query().
 		Select(
 			academy.FieldID,
@@ -120,32 +125,44 @@ func (repo *academyRepository) List(ctx context.Context, p *common.ListParams) (
 	if p.OrderCol != nil && p.OrderType != nil {
 		orderCol := useableOrderCol[*p.OrderCol]
 
+		if orderCol == "" {
+			// 에러를 던질 것인지.
+			clause.Order(ent.Desc(academy.FieldID))
+		}
+
 		if *p.OrderType == "ASC" {
 			clause.Order(ent.Asc(orderCol))
 		} else {
 			clause.Order(ent.Desc(orderCol))
 		}
-	} else {
-		clause.Order(ent.Desc(academy.FieldID))
 	}
 
-	clause = repo.conditionQuery(ctx, &common.TotalParams{
+	clause, err := repo.conditionQuery(ctx, &common.TotalParams{
 		SearchKey:   p.SearchKey,
 		SearchValue: p.SearchValue,
 	}, clause)
+	if err != nil {
+		return nil, err
+	}
 
 	return clause.All(ctx)
 }
 
-func (repo *academyRepository) conditionQuery(ctx context.Context, p *common.TotalParams, clause *ent.AcademyQuery) *ent.AcademyQuery {
+func (repo *academyRepository) conditionQuery(ctx context.Context, p *common.TotalParams, clause *ent.AcademyQuery) (*ent.AcademyQuery, error) {
 	useableSearchCol := map[string]func(v string) predicate.Academy{
 		"NAME": academy.NameContains,
 		"GU":   academy.AddressGuContains,
 	}
 
 	if p.SearchKey != nil && p.SearchValue != nil {
+
 		whereFunc := useableSearchCol[*p.SearchKey]
+
+		if whereFunc == nil {
+			return nil, errors.New(ErrSearchColumnInvalid)
+		}
+
 		clause.Where(whereFunc(*p.SearchValue))
 	}
-	return clause
+	return clause, nil
 }

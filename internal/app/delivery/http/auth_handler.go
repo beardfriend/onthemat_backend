@@ -114,6 +114,10 @@ func (h *authHandler) KakaoCallBackToken(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	code := c.Query("code")
+	if code == "" {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewBadRequestError(ex.ErrQueryStringMissing, nil))
+	}
+
 	data, err := h.AuthUseCase.SocialLogin(ctx, model.KakaoSocialType, code)
 	if err != nil {
 		return utils.NewError(c, err)
@@ -184,6 +188,10 @@ func (h *authHandler) GoogleCallBackToken(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	code := c.Query("code")
+	if code == "" {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewBadRequestError(ex.ErrQueryStringMissing, nil))
+	}
+
 	data, err := h.AuthUseCase.SocialLogin(ctx, model.GoogleSocialType, code)
 	if err != nil {
 		return utils.NewError(c, err)
@@ -254,6 +262,10 @@ func (h *authHandler) NaverCallBackToken(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	code := c.Query("code")
+	if code == "" {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewBadRequestError(ex.ErrQueryStringMissing, nil))
+	}
+
 	data, err := h.AuthUseCase.SocialLogin(ctx, model.NaverSocialType, code)
 	if err != nil {
 		return utils.NewError(c, err)
@@ -376,11 +388,11 @@ HTTP/1.1 400 Bad Request
 ]
 }
 
-HTTP/1.1 422 Unprocessable Entity
+HTTP/1.1 400 Bad Request
 {
-	"code": 422,
-	"message": "unprocessable entity",
-	"detail": "JSON을 입력해주세요."
+    "code": 3000,
+    "message": "JSON을 입력해주세요.",
+    "details": null
 }
 
 HTTP/1.1 500 Internal Server Error

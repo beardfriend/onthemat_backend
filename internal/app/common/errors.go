@@ -243,6 +243,7 @@ func ParseHttpError(err error) (int, interface{}) {
 	if httpErr, ok := err.(HttpErr); ok {
 		return httpErr.HttpStatusCode(), NewHttpError(httpErr.ErrorCode(), httpErr.Details())
 	}
+	fmt.Println(err)
 	return http.StatusInternalServerError, NewInternalServerError()
 }
 

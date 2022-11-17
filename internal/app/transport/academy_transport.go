@@ -59,7 +59,6 @@ type AcademyCreateRequestBody struct {
 }
 
 type AcademyUpdateRequestBody struct {
-	ID            int    `json:"id"`
 	Name          string `json:"name"`
 	CallNumber    string `json:"callNumber"`
 	AddressRoad   string `json:"addressRoad"`
