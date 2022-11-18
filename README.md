@@ -80,7 +80,14 @@
 │    ├── validatorx
 ```
 
-## 1.3. API 명세 
+## 1.3. 아키텍처
+
+
+### 1.3.1. 서버 아키텍처
+
+![서버 아키텍처](https://user-images.githubusercontent.com/97140962/202600851-884abaad-c12c-4f7e-8b23-715dee475e5c.jpg)
+
+## 1.4. API 명세 
 ![api문서](https://user-images.githubusercontent.com/97140962/201019708-08588b56-8304-4a77-946a-cf67e443a7a5.png)
 
 
