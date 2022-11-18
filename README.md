@@ -85,6 +85,8 @@
 
 ### 1.3.1. 서버 아키텍처
 
+의존성을 최대한 낮추기 위해 노력했습니다.
+
 ![서버 아키텍처](https://user-images.githubusercontent.com/97140962/202600851-884abaad-c12c-4f7e-8b23-715dee475e5c.jpg)
 
 ## 1.4. API 명세 
