@@ -504,7 +504,8 @@ func (ts *AuthUCTestSuite) TestSocialLogin() {
 
 func (ts *AuthUCTestSuite) TestSocialSignup() {
 	ts.Run("email-already Exisit", func() {
-		ts.mockUserRepo.On("FindByEmail", mock.Anything, mock.AnythingOfType("string")).Return(true, nil).Once()
+		email := "asd@naver.com"
+		ts.mockUserRepo.On("Get", mock.Anything, mock.AnythingOfType("int")).Return(&ent.User{Email: &email}, nil).Once()
 		err := ts.authUC.SocialSignUp(context.TODO(), &transport.SocialSignUpBody{
 			UserID: 1,
 			Email:  "asd@naver.com",
@@ -512,8 +513,9 @@ func (ts *AuthUCTestSuite) TestSocialSignup() {
 		errorStruct := err.(common.HttpError)
 		ts.Equal(409, errorStruct.ErrHttpCode)
 	})
+
 	ts.Run("success", func() {
-		ts.mockUserRepo.On("FindByEmail", mock.Anything, mock.AnythingOfType("string")).Return(false, nil).Once()
+		ts.mockUserRepo.On("Get", mock.Anything, mock.AnythingOfType("int")).Return(&ent.User{}, nil).Once()
 		ts.mockUserRepo.On("UpdateEmail",
 			mock.Anything,
 			mock.AnythingOfType("string"),

@@ -98,16 +98,16 @@ HTTP/1.1 200 OK
 @apiErrorExample Error-Response:
 HTTP/1.1 400 Bad Request
 {
-	"code": 400,
-	"message": "bad request",
-	"detail": "올바르지 않은 소셜 이름입니다."
+    "code": 3001,
+    "message": "쿼리스트링을 입력해주세요.",
+    "details": null
 }
 
 HTTP/1.1 500 Internal Server Error
 {
-	"code": 500,
-	"message": "internal server error",
-	"detail": "일시적인 에러가 발생했습니다."
+    "code": 500,
+    "message": "일시적인 에러가 발생했습니다.",
+    "details": null
 }
 */
 func (h *authHandler) KakaoCallBackToken(c *fiber.Ctx) error {
@@ -115,7 +115,7 @@ func (h *authHandler) KakaoCallBackToken(c *fiber.Ctx) error {
 
 	code := c.Query("code")
 	if code == "" {
-		return c.Status(http.StatusBadRequest).JSON(ex.NewBadRequestError(ex.ErrQueryStringMissing, nil))
+		return c.Status(http.StatusBadRequest).JSON(ex.NewHttpError(ex.ErrQueryStringMissing, nil))
 	}
 
 	data, err := h.AuthUseCase.SocialLogin(ctx, model.KakaoSocialType, code)
@@ -172,16 +172,16 @@ HTTP/1.1 200 OK
 @apiErrorExample Error-Response:
 HTTP/1.1 400 Bad Request
 {
-	"code": 400,
-	"message": "bad request",
-	"detail": "올바르지 않은 소셜 이름입니다."
+    "code": 3001,
+    "message": "쿼리스트링을 입력해주세요.",
+    "details": null
 }
 
 HTTP/1.1 500 Internal Server Error
 {
-	"code": 500,
-	"message": "internal server error",
-	"detail": "일시적인 에러가 발생했습니다."
+    "code": 500,
+    "message": "일시적인 에러가 발생했습니다.",
+    "details": null
 }
 */
 func (h *authHandler) GoogleCallBackToken(c *fiber.Ctx) error {
@@ -246,16 +246,16 @@ HTTP/1.1 200 OK
 @apiErrorExample Error-Response:
 HTTP/1.1 400 Bad Request
 {
-	"code": 400,
-	"message": "bad request",
-	"detail": "올바르지 않은 소셜 이름입니다."
+    "code": 3001,
+    "message": "쿼리스트링을 입력해주세요.",
+    "details": null
 }
 
 HTTP/1.1 500 Internal Server Error
 {
-	"code": 500,
-	"message": "internal server error",
-	"detail": "일시적인 에러가 발생했습니다."
+    "code": 500,
+    "message": "일시적인 에러가 발생했습니다.",
+    "details": null
 }
 */
 func (h *authHandler) NaverCallBackToken(c *fiber.Ctx) error {
@@ -263,7 +263,7 @@ func (h *authHandler) NaverCallBackToken(c *fiber.Ctx) error {
 
 	code := c.Query("code")
 	if code == "" {
-		return c.Status(http.StatusBadRequest).JSON(ex.NewBadRequestError(ex.ErrQueryStringMissing, nil))
+		return c.Status(http.StatusBadRequest).JSON(ex.NewHttpError(ex.ErrQueryStringMissing, nil))
 	}
 
 	data, err := h.AuthUseCase.SocialLogin(ctx, model.NaverSocialType, code)
@@ -301,25 +301,40 @@ HTTP/1.1 201 OK
 @apiErrorExample Error-Response:
 HTTP/1.1 400 Bad Request
 {
-"code": 400,
-"message": "bad request",
-"detail": [
-	{
-	"Password": "min10"
-	},
-	{
-	"NickName": "required"
-	}
-]
+    "code": 3000,
+    "message": "JSON을 입력해주세요.",
+    "details": null
 }
-
-HTTP/1.1 422 Unprocessable Entity
 {
-	"code": 422,
-	"message": "unprocessable entity",
-	"detail": "JSON을 입력해주세요."
+    "code": 2000,
+    "message": "유효하지 않은 요청값들이 존재합니다.",
+    "details": [
+        {
+            "nickname": "max"
+        },
+        {
+            "termAgree": "required"
+        }
+    ]
 }
-
+{
+    "code": 2001,
+    "message": "유효하지 않은 패스워드입니다.",
+    "details": [
+        {
+            "password": "max"
+        }
+    ]
+}
+{
+    "code": 2002,
+    "message": "유효하지 않은 이메일입니다.",
+    "details": [
+        {
+            "email": "email"
+        }
+    ]
+}
 HTTP/1.1 500 Internal Server Error
 {
 	"code": 500,

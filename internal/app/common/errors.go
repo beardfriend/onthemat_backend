@@ -61,6 +61,8 @@ func ErrorText(code int) string {
 		return "유효하지 않은 요청값들이 존재합니다."
 	case ErrPasswordInvalid:
 		return "유효하지 않은 패스워드입니다."
+	case ErrEmailInvalid:
+		return "유효하지 않은 이메일입니다."
 	case ErrPhoneNumInvalid:
 		return "유효하지 않은 휴대폰번호입니다."
 
@@ -262,7 +264,7 @@ func ErrorValidationCode(name string) int {
 }
 
 func NewInvalidInputError(errs []*validatorx.ErrorResponse) HttpError {
-	errors := make([]interface{}, len(errs))
+	errors := make([]interface{}, 0)
 
 	for _, field := range errs {
 		errors = append(errors, map[string]interface{}{
@@ -270,7 +272,7 @@ func NewInvalidInputError(errs []*validatorx.ErrorResponse) HttpError {
 		})
 	}
 
-	if len(errs) == 1 {
+	if len(errors) == 1 {
 		return HttpError{
 			ErrCode:    ErrorValidationCode(errs[0].FailedFieldTagName),
 			ErrMessage: ErrorText(ErrorValidationCode(errs[0].FailedFieldTagName)),

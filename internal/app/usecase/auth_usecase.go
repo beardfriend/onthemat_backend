@@ -228,20 +228,25 @@ func (a *authUseCase) GoogleRedirectUrl(ctx context.Context) string {
 	return a.authSvc.GetGoogleRedirectUrl()
 }
 
-func (a *authUseCase) SocialSignUp(ctx context.Context, body *transport.SocialSignUpBody) error {
-	isExist, err := a.userRepo.FindByEmail(ctx, body.Email)
+func (a *authUseCase) SocialSignUp(ctx context.Context, body *transport.SocialSignUpBody) (err error) {
+	u, err := a.userRepo.Get(ctx, body.UserID)
 	if err != nil {
-		return err
+		if ent.IsNotFound(err) {
+			err = ex.NewNotFoundError(ex.ErrUserNotFound, nil)
+			return
+		}
+		return
 	}
 
-	if isExist {
-		return common.NewConflictError(ex.ErrUserEmailAlreadyExist, nil)
+	if u.Email != nil {
+		err = ex.NewConflictError(ex.ErrUserEmailAlreadyExist, nil)
+		return
 	}
 
-	if err := a.userRepo.UpdateEmail(ctx, body.Email, body.UserID); err != nil {
-		return err
+	if err = a.userRepo.UpdateEmail(ctx, body.Email, body.UserID); err != nil {
+		return
 	}
-	return nil
+	return
 }
 
 func (a *authUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) error {

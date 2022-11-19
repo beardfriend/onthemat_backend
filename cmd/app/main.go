@@ -64,7 +64,7 @@ func main() {
 	validator := validatorx.NewValidatorx().
 		AddPasswordAtLeastOneCharNumValidation("PassWordAtLeastOneCharOneNum").
 		AddPhoneNumValidation("phoneNumNoDash").
-		AddUrlValidation("urlStartHttpHttps").Init()
+		AddUrlValidation("urlStartHttpHttps").SetExtractTagName().Init()
 
 	// repo
 	userRepo := repository.NewUserRepository(db)

@@ -58,14 +58,37 @@ func (t *UserType) ToUserType(v *string) *UserType {
 
 	var result *UserType
 
-	if *v == TeacherString {
+	if v == &TeacherString {
 		teacher := TeacherType
 		result = &teacher
 
-	} else if *v == AcademyString {
+	} else if v == &AcademyString {
 		academy := AcademyType
 		result = &academy
 
+	}
+
+	return result
+}
+
+func (t *SocialType) ToSocialType(v *string) *SocialType {
+	if v == nil {
+		return nil
+	}
+
+	var result *SocialType
+
+	if v == &GoogleString {
+		google := GoogleSocialType
+		result = &google
+
+	} else if v == &KakaoString {
+		kakao := KakaoSocialType
+		result = &kakao
+
+	} else if v == &NaverString {
+		naver := NaverSocialType
+		result = &naver
 	}
 
 	return result
