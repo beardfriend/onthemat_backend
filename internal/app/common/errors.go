@@ -33,9 +33,10 @@ const (
 	ErrBusinessCodeInvalid                  = 3008
 
 	// 4000 ~ Conflict
-	ErrUserEmailAlreadyExist   = 4001
-	ErrUserEmailAlreadyVerfied = 4002
-	ErrUserTypeAlreadyRegisted = 4003
+	ErrUserEmailAlreadyExist    = 4001
+	ErrUserEmailAlreadyVerfied  = 4002
+	ErrUserTypeAlreadyRegisted  = 4003
+	ErrUserEmailAlreadyRegisted = 4004
 
 	// 5000 ~ NotFound
 	ErrUserNotFound      = 5001
@@ -94,6 +95,8 @@ func ErrorText(code int) string {
 		return "이미 이메일 인증이 완료됐습니다."
 	case ErrUserTypeAlreadyRegisted:
 		return "이미 회원 유형이 등록됐습니다."
+	case ErrUserEmailAlreadyRegisted:
+		return "이미 회원의 이메일이 등록됐습니다."
 
 	// 5000 ~
 	case ErrUserNotFound:

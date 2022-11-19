@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 
 	"onthemat/internal/app/config"
 	"onthemat/internal/app/delivery/http"
@@ -51,7 +52,7 @@ func main() {
 	// ------- s3 ----------
 	s3 := aws.NewS3(c)
 	if err := s3.SetConfig(); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	businessManM := openapi.NewBusinessMan(c)

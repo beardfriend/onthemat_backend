@@ -46,7 +46,7 @@ func NewAuthHandler(
 	// 로그인
 	g.Post("/login", handler.Login)
 	// 소셜 회원가입
-	g.Post("/social/signup", handler.SocialSignUp)
+	g.Patch("/social/signup", handler.SocialSignUp)
 	// 임시 비밀번호 발급
 	g.Get("/temp-password", handler.SendTempPassword)
 	// 이메일 중복체크
@@ -290,6 +290,7 @@ func (h *authHandler) NaverCallBackToken(c *fiber.Ctx) error {
 @apiBody {String} email 이메일
 @apiBody {String} password 비밀번호
 @apiBody {String} nickname 닉네임
+@apiBody {Boolean} termAgree 약관동의여부
 
 @apiSuccessExample Success-Response:
 HTTP/1.1 201 OK
@@ -338,8 +339,8 @@ HTTP/1.1 400 Bad Request
 HTTP/1.1 500 Internal Server Error
 {
 	"code": 500,
-	"message": "internal server error",
-	"detail": "일시적인 에러가 발생했습니다."
+	"message": "일시적인 에러가 발생했습니다.",
+	"details": null
 }
 */
 func (h *authHandler) SignUp(c *fiber.Ctx) error {
@@ -370,7 +371,7 @@ func (h *authHandler) SignUp(c *fiber.Ctx) error {
 
 // 소셜 회원가입
 /**
-@api {post} /auth/signup 소셜 회원가입
+@api {patch} /auth/social/signup 소셜 회원가입
 @apiName socialSingup
 @apiVersion 1.0.0
 @apiGroup auth
@@ -378,8 +379,7 @@ func (h *authHandler) SignUp(c *fiber.Ctx) error {
 
 @apiBody {Number} userId 유저의 Primary Key
 @apiBody {String} email 이메일
-@apiBody {boolean} termAgree 약관 동의 여부
-@apiBody {String} nickname 닉네임
+
 
 @apiSuccessExample Success-Response:
 HTTP/1.1 201 OK
@@ -391,30 +391,53 @@ HTTP/1.1 201 OK
 @apiErrorExample Error-Response:
 HTTP/1.1 400 Bad Request
 {
-"code": 400,
-"message": "bad request",
-"detail": [
-	{
-	"Password": "min10"
-	},
-	{
-	"NickName": "required"
-	}
-]
-}
-
-HTTP/1.1 400 Bad Request
-{
     "code": 3000,
     "message": "JSON을 입력해주세요.",
+    "details": null
+}
+{
+    "code": 2000,
+    "message": "유효하지 않은 요청값들이 존재합니다.",
+    "details": [
+        {
+            "userId": "required"
+        }
+    ]
+}
+{
+    "code": 2002,
+    "message": "유효하지 않은 이메일입니다.",
+    "details": [
+        {
+            "email": "email"
+        }
+    ]
+}
+
+HTTP/1.1 404 Not Found
+{
+    "code": 5001,
+    "message": "존재하지 않는 유저입니다.",
+    "details": null
+}
+
+HTTP/1.1 409 Conflict
+{
+    "code": 4001,
+    "message": "이미 존재하는 이메일입니다.",
+    "details": null
+}
+{
+    "code": 4004,
+    "message": "이미 회원의 이메일이 등록됐습니다.",
     "details": null
 }
 
 HTTP/1.1 500 Internal Server Error
 {
 	"code": 500,
-	"message": "internal server error",
-	"detail": "일시적인 에러가 발생했습니다."
+	"message": "일시적인 에러가 발생했습니다.",
+	"details": null
 }
 */
 func (h *authHandler) SocialSignUp(c *fiber.Ctx) error {
@@ -423,7 +446,7 @@ func (h *authHandler) SocialSignUp(c *fiber.Ctx) error {
 	body := new(transport.SocialSignUpBody)
 	if err := c.BodyParser(body); err != nil {
 		return c.Status(http.StatusBadRequest).
-			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
+			JSON(ex.NewHttpError(ex.ErrJsonMissing, err.Error()))
 	}
 
 	if err := h.Validator.ValidateStruct(body); err != nil {
@@ -464,45 +487,48 @@ HTTP/1.1 200 OK
 @apiErrorExample Error-Response:
 HTTP/1.1 400 Bad Request
 {
-"code": 400,
-"message": "bad request",
-"detail": [
-	{
-	"Password": "min10"
-	},
-	{
-	"NickName": "required"
-	}
-]
+    "code": 3000,
+    "message": "JSON을 입력해주세요.",
+    "details": null
+}
+{
+    "code": 2001,
+    "message": "유효하지 않은 패스워드입니다.",
+    "details": [
+        {
+            "password": "max"
+        }
+    ]
+}
+{
+    "code": 2002,
+    "message": "유효하지 않은 이메일입니다.",
+    "details": [
+        {
+            "email": "email"
+        }
+    ]
 }
 
-HTTP/1.1 400 Bad Request
+HTTP/1.1 404 Not Found
 {
-	"code": 400,
-	"message": "bad request",
-	"detail": "이메일 혹은 비밀번호를 다시 확인해주세요."
+    "code": 5001,
+    "message": "존재하지 않는 유저입니다.",
+    "details": "이메일 혹은 비밀번호를 다시 확인해주세요."
 }
 
-HTTP/1.1 400 Bad Request
+HTTP/1.1 401 Unauthorized
 {
-	"code": 400,
-	"message": "bad request",
-	"detail": "이메일 인증이 필요합니다."
-}
-
-
-HTTP/1.1 422 Unprocessable Entity
-{
-	"code": 422,
-	"message": "unprocessable entity",
-	"detail": "JSON을 입력해주세요."
+    "code": 6001,
+    "message": "유저의 이메일 인증이 필요합니다.",
+    "details": null
 }
 
 HTTP/1.1 500 Internal Server Error
 {
 	"code": 500,
-	"message": "internal server error",
-	"detail": "일시적인 에러가 발생했습니다."
+	"message": "일시적인 에러가 발생했습니다.",
+	"details": null
 }
 */
 func (h *authHandler) Login(c *fiber.Ctx) error {
@@ -552,28 +578,32 @@ HTTP/1.1 200 OK
 @apiErrorExample Error-Response:
 HTTP/1.1 400 Bad Request
 {
-"code": 400,
-"message": "bad request",
-"detail": [
-	{
-	"email": "email"
-	}
-]
+	"code": 3001,
+	"message": "쿼리스트링을 입력해주세요.",
+	"details": null
+}
+{
+    "code": 2002,
+    "message": "유효하지 않은 이메일입니다.",
+    "details": [
+        {
+            "email": "email"
+        }
+    ]
 }
 
 HTTP/1.1 409 Conflict
 {
-"code": 409,
-"message": "conflict",
-"detail": "이미 존재하는 이메일입니다."
+	"code": 4001,
+	"message": "이미 존재하는 이메일입니다.",
+	"details": null
 }
-
 
 HTTP/1.1 500 Internal Server Error
 {
 	"code": 500,
-	"message": "internal server error",
-	"detail": "일시적인 에러가 발생했습니다."
+	"message": "일시적인 에러가 발생했습니다.",
+	"details": null
 }
 */
 func (h *authHandler) CheckDuplicatedEmail(c *fiber.Ctx) error {
@@ -582,7 +612,7 @@ func (h *authHandler) CheckDuplicatedEmail(c *fiber.Ctx) error {
 
 	if err := c.QueryParser(queries); err != nil {
 		return c.Status(http.StatusBadRequest).
-			JSON(ex.NewHttpError(ex.ErrQueryStringMissing, nil))
+			JSON(ex.NewHttpError(ex.ErrQueryStringMissing, err.Error()))
 	}
 
 	if err := h.Validator.ValidateStruct(queries); err != nil {
@@ -613,45 +643,50 @@ func (h *authHandler) CheckDuplicatedEmail(c *fiber.Ctx) error {
 @apiQuery {String} email 유저의 email
 
 @apiSuccessExample Success-Response:
-HTTP/1.1 200 OK
+HTTP/1.1 202 Accepted
 {
-	"code": 200,
+	"code": 202,
 	"message": ""
 }
+
 @apiErrorExample Error-Response:
 HTTP/1.1 400 Bad Request
 {
-"code": 400,
-"message": "bad request",
-"detail": [
-	{
-	"email": "email"
-	}
-]
+	"code": 3001,
+	"message": "쿼리스트링을 입력해주세요.",
+	"details": null
 }
-
-HTTP/1.1 400 Bad Request
 {
-"code": 400,
-"message": "bad request",
-"detail": "존재하지 않는 이메일입니다."
+    "code": 2002,
+    "message": "유효하지 않은 이메일입니다.",
+    "details": [
+        {
+            "email": "email"
+        }
+    ]
 }
 
+HTTP/1.1 404 Not Found
+{
+    "code": 5001,
+    "message": "존재하지 않는 유저입니다.",
+    "details": "존재하지 않는 이메일입니다."
+}
 
 HTTP/1.1 500 Internal Server Error
 {
 	"code": 500,
-	"message": "internal server error",
-	"detail": "일시적인 에러가 발생했습니다."
+	"message": "일시적인 에러가 발생했습니다.",
+	"details": null
 }
 */
 func (h *authHandler) SendTempPassword(c *fiber.Ctx) error {
 	ctx := c.Context()
-	queries := new(transport.CheckDuplicatedEmailQueries)
+	queries := new(transport.SendTempPasswordQueries)
 
 	if err := c.QueryParser(queries); err != nil {
 		return c.Status(http.StatusBadRequest).
-			JSON(ex.NewHttpError(ex.ErrQueryStringMissing, nil))
+			JSON(ex.NewHttpError(ex.ErrQueryStringMissing, err.Error()))
 	}
 
 	if err := h.Validator.ValidateStruct(queries); err != nil {
@@ -664,7 +699,7 @@ func (h *authHandler) SendTempPassword(c *fiber.Ctx) error {
 		return utils.NewError(c, err)
 	}
 
-	return c.Status(200).
+	return c.Status(http.StatusAccepted).
 		JSON(ex.Response{
 			Code:    200,
 			Message: "",
@@ -691,38 +726,51 @@ HTTP/1.1 200 OK
 @apiErrorExample Error-Response:
 HTTP/1.1 400 Bad Request
 {
-	"code": 400,
-	"message": "bad request",
-	"detail": [
-		{
-		"email": "email"
-		},
-		{
-		"key": "required"
-		}
-	]
+	"code": 3001,
+	"message": "쿼리스트링을 입력해주세요.",
+	"details": null
 }
-
-HTTP/1.1 400 Bad Request
 {
-	"code": 400,
-	"message": "bad request",
-	"detail": "올바르지 않은 인증키입니다."
+    "code": 2002,
+    "message": "유효하지 않은 이메일입니다.",
+    "details": [
+        {
+            "email": "email"
+        }
+    ]
 }
-
-HTTP/1.1 400 Bad Request
 {
-	"code": 400,
-	"message": "bad request",
-	"detail": "이미 인증된 유저입니다."
+	"code": 3006,
+	"message": "사용할 수 없는 인증 키입니다.",
+	"details": null
 }
 
+HTTP/1.1 401 Authentication UnAuthorization
+{
+	"code": 6003,
+	"message": "이메일 인증 시간이 만료되었습니다.",
+	"details": null
+}
+
+HTTP/1.1 404 Not Found
+{
+    "code": 5001,
+    "message": "존재하지 않는 유저입니다.",
+    "details": null
+}
+
+HTTP/1.1 409 Conflict
+{
+	"code": 4002,
+	"message": "이미 이메일 인증이 완료됐습니다.",
+	"details": null
+}
 
 HTTP/1.1 500 Internal Server Error
 {
 	"code": 500,
-	"message": "internal server error",
-	"detail": "일시적인 에러가 발생했습니다."
+	"message": "일시적인 에러가 발생했습니다.",
+	"details": null
 }
 */
 func (h *authHandler) VerifiyEmail(c *fiber.Ctx) error {
@@ -731,7 +779,7 @@ func (h *authHandler) VerifiyEmail(c *fiber.Ctx) error {
 
 	if err := c.QueryParser(queries); err != nil {
 		return c.Status(http.StatusBadRequest).
-			JSON(ex.NewHttpError(ex.ErrQueryStringMissing, nil))
+			JSON(ex.NewHttpError(ex.ErrQueryStringMissing, err.Error()))
 	}
 
 	if err := h.Validator.ValidateStruct(queries); err != nil {
@@ -773,32 +821,37 @@ HTTP/1.1 200 OK
 @apiErrorExample Error-Response:
 HTTP/1.1 400 Bad Request
 {
-	"code": 400,
-	"message": "bad request",
-	"detail": "헤더를 확인해주세요."
+	"code": 3005,
+	"message": "Authorization 헤더 형식을 확인해주세요.",
+	"details": null
+}
+{
+	"code": 3007,
+	"message": "유효하지 않은 토큰입니다.",
+	"details": null
 }
 
-HTTP/1.1 401 Authentication Vailed
+HTTP/1.1 401 Authentication UnAuthorization
 {
-	"code": 401,
-	"message": "authentication vailed",
-	"detail": "잘못된 토큰입니다."
+	"code": 6002,
+	"message": "토큰이 만료되었습니다.",
+	"details": null
 }
 
 HTTP/1.1 404 Not Found
 {
-    "code": 404,
-    "message": "not found",
-    "details": "존재하지 않는 유저입니다."
+	"code": 5001,
+	"message": "존재하지 않는 유저입니다.",
+	"details": null
 }
-
 
 HTTP/1.1 500 Internal Server Error
 {
 	"code": 500,
-	"message": "internal server error",
-	"detail": "일시적인 에러가 발생했습니다."
+	"message": "일시적인 에러가 발생했습니다.",
+	"details": null
 }
+
 */
 func (h *authHandler) Refresh(c *fiber.Ctx) error {
 	ctx := c.Context()

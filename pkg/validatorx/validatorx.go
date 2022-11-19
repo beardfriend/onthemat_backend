@@ -62,7 +62,7 @@ func (v *validator) SetExtractTagName() ValidatorSetter {
 	v.validator.RegisterTagNameFunc(func(field reflect.StructField) string {
 		jsonName := strings.SplitN(field.Tag.Get("json"), ",", 2)[0]
 		queryName := strings.SplitN(field.Tag.Get("query"), ",", 2)[0]
-		paramName := strings.SplitN(field.Tag.Get("param"), ",", 2)[0]
+		paramName := strings.SplitN(field.Tag.Get("params"), ",", 2)[0]
 
 		if jsonName != "" && jsonName != "-" {
 			return jsonName

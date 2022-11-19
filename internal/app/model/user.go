@@ -1,8 +1,6 @@
 package model
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
@@ -29,6 +27,7 @@ func (User) Fields() []ent.Field {
 			}).MaxLen(100).
 			Optional().
 			Nillable().
+			Unique().
 			Comment("이메일"),
 
 		field.Bool("isEmailVerified").
@@ -87,7 +86,6 @@ func (User) Fields() []ent.Field {
 			Comment("약관 동의 일시"),
 
 		field.Time("lastLoginAt").
-			Default(time.Now()).
 			Comment("마지막 로그인 일시"),
 	}
 }

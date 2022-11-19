@@ -214,6 +214,23 @@ func (ts *UserRepositoryTestSuite) TestCreate() {
 
 		ts.Equal(ent.IsConstraintError(err), true)
 	})
+
+	ts.Run("이메일 중복됐을 때", func() {
+		email := "asd123@naver.com"
+
+		_, err := ts.userRepo.Create(ts.ctx, &ent.User{
+			Email: &email,
+		})
+
+		ts.NoError(err)
+
+		// duplicated key
+		_, err = ts.userRepo.Create(ts.ctx, &ent.User{
+			Email: &email,
+		})
+
+		ts.Equal(ent.IsConstraintError(err), true)
+	})
 }
 
 func (ts *UserRepositoryTestSuite) TestUpdate() {

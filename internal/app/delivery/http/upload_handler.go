@@ -7,6 +7,7 @@ import (
 	"onthemat/internal/app/delivery/middlewares"
 	"onthemat/internal/app/transport"
 	"onthemat/internal/app/usecase"
+	"onthemat/internal/app/utils"
 	"onthemat/pkg/validatorx"
 
 	"github.com/gofiber/fiber/v2"
@@ -30,7 +31,7 @@ func NewUploadHandler(
 
 	g := router.Group("/upload")
 	// 이미지 업로드
-	g.Post("/:purpose", middleware.Auth, handler.Upload)
+	g.Post("/:purpose", handler.Upload)
 }
 
 // 이미지 업로드
@@ -53,48 +54,30 @@ HTTP/1.1 201 Created
 @apiErrorExample Error-Response:
 HTTP/1.1 400 Bad Request
 {
-	"code": 400,
-	"message": "bad request",
-	"detail": "파라메터를 확인해주세요."
-}
-
-HTTP/1.1 400 Bad Request
-{
-    "code": 400,
-    "message": "bad request",
+    "code": 2000,
+    "message": "유효하지 않은 요청값들이 존재합니다.",
     "details": [
         {
             "purpose": "oneof"
         }
     ]
 }
-
-HTTP/1.1 400 Bad Request
 {
-    "code": 400,
-    "message": "bad request",
-    "details": "form key를 확인해주세요."
+    "code": 3004,
+    "message": "폼 데이터 Key를 확인해주세요.",
+    "details": "key name is file"
 }
-
-HTTP/1.1 400 Bad Request
 {
-    "code": 400,
-    "message": "bad request",
-    "details": "form key를 확인해주세요."
-}
-
-HTTP/1.1 400 Bad Request
-{
-    "code": 400,
-    "message": "bad request",
-    "details": "사용할 수 없는 확장자입니다."
+    "code": 3003,
+    "message": "이미지 파일이 아닙니다.",
+    "details": null
 }
 
 HTTP/1.1 500 Internal Server Error
 {
 	"code": 500,
-	"message": "internal server error",
-	"detail": "일시적인 에러가 발생했습니다."
+	"message": "일시적인 에러가 발생했습니다.",
+	"details": null
 }
 */
 func (h *uploadHandler) Upload(c *fiber.Ctx) error {
@@ -120,8 +103,7 @@ func (h *uploadHandler) Upload(c *fiber.Ctx) error {
 	}
 
 	if err := h.uploadUseCase.Upload(ctx, file, reqParams, userId); err != nil {
-		code, json := ex.ParseHttpError(err)
-		return c.Status(code).JSON(json)
+		return utils.NewError(c, err)
 	}
 
 	return c.Status(http.StatusCreated).JSON(ex.Response{

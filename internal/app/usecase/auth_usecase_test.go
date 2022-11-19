@@ -72,7 +72,8 @@ func (ts *AuthUCTestSuite) TestCheckDuplicateEmail() {
 
 func (ts *AuthUCTestSuite) TestSignUp() {
 	ts.Run("이미 존재하는 이메일", func() {
-		ts.mockUserRepo.On("FindByEmail", mock.Anything, mock.AnythingOfType("string")).Return(true, nil).Once()
+		ts.mockAuthService.On("HashPassword", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return("hashedPassword")
+		ts.mockUserRepo.On("Create", mock.Anything, mock.AnythingOfType("*ent.User")).Return(nil, &ent.ConstraintError{}).Once()
 		err := ts.authUC.SignUp(context.TODO(), &transport.SignUpBody{
 			Email:     "alreadyExisit@naver.com",
 			Password:  "password",
@@ -84,7 +85,6 @@ func (ts *AuthUCTestSuite) TestSignUp() {
 	})
 
 	ts.Run("회원가입 성공", func() {
-		ts.mockUserRepo.On("FindByEmail", mock.Anything, mock.AnythingOfType("string")).Return(false, nil).Once()
 		ts.mockAuthService.On("HashPassword", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return("hashedPassword")
 		ts.mockUserRepo.On("Create", mock.Anything, mock.AnythingOfType("*ent.User")).Return(nil, nil).Once()
 		ts.mockAuthService.On("GenerateRandomString").Return("randomasdqwd")

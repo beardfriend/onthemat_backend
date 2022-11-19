@@ -81,7 +81,6 @@ type LoginResult struct {
 }
 
 func (a *authUseCase) Login(ctx context.Context, body *transport.LoginBody) (*LoginResult, error) {
-	defer ctx.Done()
 	hashPassword := a.authSvc.HashPassword(body.Password, a.config.Secret.Password)
 
 	user, err := a.userRepo.GetByEmailPassword(ctx, &ent.User{
@@ -239,36 +238,32 @@ func (a *authUseCase) SocialSignUp(ctx context.Context, body *transport.SocialSi
 	}
 
 	if u.Email != nil {
-		err = ex.NewConflictError(ex.ErrUserEmailAlreadyExist, nil)
+		err = ex.NewConflictError(ex.ErrUserEmailAlreadyRegisted, nil)
 		return
 	}
 
 	if err = a.userRepo.UpdateEmail(ctx, body.Email, body.UserID); err != nil {
+		if ent.IsConstraintError(err) {
+			err = ex.NewConflictError(ex.ErrUserEmailAlreadyExist, nil)
+		}
 		return
 	}
 	return
 }
 
 func (a *authUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) error {
-	isExist, err := a.userRepo.FindByEmail(ctx, body.Email)
-	if err != nil {
-		return err
-	}
-
-	if isExist {
-		return common.NewConflictError(ex.ErrUserEmailAlreadyExist, nil)
-	}
-
 	hashPassword := a.authSvc.HashPassword(body.Password, a.config.Secret.Password)
 
-	_, err = a.userRepo.Create(ctx, &ent.User{
+	_, err := a.userRepo.Create(ctx, &ent.User{
 		Email:       &body.Email,
 		Password:    &hashPassword,
 		Nickname:    &body.NickName,
 		TermAgreeAt: time.Now(),
 	})
-
 	if err != nil {
+		if ent.IsConstraintError(err) {
+			return common.NewConflictError(ex.ErrUserEmailAlreadyExist, nil)
+		}
 		return err
 	}
 
