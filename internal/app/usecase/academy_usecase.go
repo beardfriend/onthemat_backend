@@ -132,6 +132,10 @@ func (u *academyUseCase) List(ctx context.Context, a *transport.AcademyListQueri
 		SearchValue: a.SearchValue,
 	})
 	if err != nil {
+		if err.Error() == repository.ErrOrderColumnInvalid || err.Error() == repository.ErrSearchColumnInvalid {
+			err = ex.NewBadRequestError(ex.ErrColumnInvalid, nil)
+			return
+		}
 		return
 	}
 	paginationInfo = pginationModule.GetInfo(len(result))

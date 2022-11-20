@@ -26,7 +26,10 @@ type academyRepository struct {
 	db *ent.Client
 }
 
-const ErrSearchColumnInvalid = "유효하지 않은 Column입니다"
+const (
+	ErrSearchColumnInvalid = "유효하지 않은 Column입니다"
+	ErrOrderColumnInvalid  = "유효하지 않은 Column입니다"
+)
 
 func NewAcademyRepository(db *ent.Client) AcademyRepository {
 	return &academyRepository{
@@ -127,22 +130,31 @@ func (repo *academyRepository) List(ctx context.Context, p *common.ListParams) (
 		"CREATEDAT": academy.FieldCreatedAt,
 	}
 
+	if p.OrderCol == nil || p.OrderType == nil {
+		clause.Order(ent.Desc(academy.FieldID))
+	}
+
 	if p.OrderCol != nil && p.OrderType != nil {
 		orderCol := useableOrderCol[*p.OrderCol]
+
+		if orderCol == "" {
+			err = errors.New(ErrOrderColumnInvalid)
+			return
+		}
 
 		if *p.OrderType == "ASC" {
 			clause.Order(ent.Asc(orderCol))
 		} else {
 			clause.Order(ent.Desc(orderCol))
 		}
-	} else {
-		clause.Order(ent.Desc(academy.FieldID))
+
 	}
 
 	clause, err = repo.conditionQuery(ctx, &common.TotalParams{
 		SearchKey:   p.SearchKey,
 		SearchValue: p.SearchValue,
 	}, clause)
+
 	if err != nil {
 		return
 	}
@@ -150,7 +162,11 @@ func (repo *academyRepository) List(ctx context.Context, p *common.ListParams) (
 	return
 }
 
-func (repo *academyRepository) conditionQuery(ctx context.Context, p *common.TotalParams, clause *ent.AcademyQuery) (*ent.AcademyQuery, error) {
+func (repo *academyRepository) conditionQuery(
+	ctx context.Context,
+	p *common.TotalParams,
+	clause *ent.AcademyQuery,
+) (*ent.AcademyQuery, error) {
 	useableSearchCol := map[string]func(v string) predicate.Academy{
 		"NAME": academy.NameContains,
 		"GU":   academy.AddressGuContains,

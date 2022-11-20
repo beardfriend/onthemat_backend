@@ -31,6 +31,7 @@ const (
 	ErrRandomKeyForEmailVerfiyUnavailable   = 3006
 	ErrTokenInvalid                         = 3007
 	ErrBusinessCodeInvalid                  = 3008
+	ErrColumnInvalid                        = 3009
 
 	// 4000 ~ Conflict
 	ErrUserEmailAlreadyExist    = 4001
@@ -89,6 +90,8 @@ func ErrorText(code int) string {
 		return "유효하지 않은 토큰입니다."
 	case ErrBusinessCodeInvalid:
 		return "유효하지 않은 사업자 번호입니다."
+	case ErrColumnInvalid:
+		return "사용할 수 없는 컬럼입니다."
 
 	// 4000 ~ Conflict
 	case ErrUserEmailAlreadyExist:
