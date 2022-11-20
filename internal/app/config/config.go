@@ -48,8 +48,8 @@ type Redis struct {
 
 type JWT struct {
 	SignKey             string `env:"JWT_SignKey" envDefault:"1sfkfWjfOkQ8hFhka8"`
-	AccessTokenExpired  int    `env:"JWT_A_EXPIRED" envDefault:"15"`    // min
-	RefreshTokenExpired int    `env:"JWT_R_EXPIRED" envDefault:"20160"` // min
+	AccessTokenExpired  int    `env:"JWT_A_EXPIRED" envDefault:"1000000"` // min
+	RefreshTokenExpired int    `env:"JWT_R_EXPIRED" envDefault:"20160"`   // min
 }
 
 type Oauth struct {

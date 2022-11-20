@@ -37,7 +37,7 @@ func NewUploadHandler(
 // 이미지 업로드
 /**
 @api {get} /upload/:purpose 이미지 업로드
-@apiName acessTokenRefresh
+@apiName uploadImage
 @apiVersion 1.0.0
 @apiGroup upload
 @apiDescription 이미지를 업로드하는 API

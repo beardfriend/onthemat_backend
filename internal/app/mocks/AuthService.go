@@ -192,8 +192,8 @@ func (_m *AuthService) HashPassword(password string, secret string) string {
 	return r0
 }
 
-// IsEmailForVerifyExpired provides a mock function with given fields: issuedAt
-func (_m *AuthService) IsEmailForVerifyExpired(issuedAt string) bool {
+// IsExpiredEmailForVerify provides a mock function with given fields: issuedAt
+func (_m *AuthService) IsExpiredEmailForVerify(issuedAt string) bool {
 	ret := _m.Called(issuedAt)
 
 	var r0 bool

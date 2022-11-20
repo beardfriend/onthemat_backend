@@ -5,7 +5,9 @@ import (
 	"errors"
 
 	"onthemat/internal/app/common"
+	"onthemat/internal/app/model"
 	"onthemat/internal/app/utils"
+
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/academy"
 	"onthemat/pkg/ent/predicate"
@@ -33,8 +35,8 @@ func NewAcademyRepository(db *ent.Client) AcademyRepository {
 }
 
 func (repo *academyRepository) Create(ctx context.Context, academy *ent.Academy, userId int) error {
-	return entx.WithTx(ctx, repo.db, func(tx *ent.Tx) error {
-		if err := repo.db.Academy.Create().
+	return entx.WithTx(ctx, repo.db, func(tx *ent.Tx) (err error) {
+		if err = repo.db.Academy.Create().
 			SetName(academy.Name).
 			SetBusinessCode(academy.BusinessCode).
 			SetCallNumber(academy.CallNumber).
@@ -44,14 +46,14 @@ func (repo *academyRepository) Create(ctx context.Context, academy *ent.Academy,
 			SetAddressDong(academy.AddressDong).
 			SetAddressX(academy.AddressX).
 			SetAddressY(academy.AddressY).SetUserID(userId).Exec(ctx); err != nil {
-			return err
+			return
 		}
 
-		if err := repo.db.User.UpdateOneID(userId).SetType(1).Exec(ctx); err != nil {
-			return err
+		if err = repo.db.User.UpdateOneID(userId).SetType(model.AcademyType).Exec(ctx); err != nil {
+			return
 		}
 
-		return nil
+		return
 	})
 }
 
@@ -83,21 +85,24 @@ func (repo *academyRepository) Get(ctx context.Context, userId int) (*ent.Academ
 			academy.FieldAddressDetail,
 			academy.FieldAddressX,
 			academy.FieldAddressY,
+			academy.FieldCreatedAt,
+			academy.FieldUpdatedAt,
 		).
 		Where(academy.ID(userId)).
 		Only(ctx)
 }
 
-func (repo *academyRepository) Total(ctx context.Context, p *common.TotalParams) (int, error) {
+func (repo *academyRepository) Total(ctx context.Context, p *common.TotalParams) (total int, err error) {
 	clause := repo.db.Academy.Query()
-	clause, err := repo.conditionQuery(ctx, p, clause)
+	clause, err = repo.conditionQuery(ctx, p, clause)
 	if err != nil {
-		return 0, err
+		return
 	}
-	return clause.Count(ctx)
+	total, err = clause.Count(ctx)
+	return
 }
 
-func (repo *academyRepository) List(ctx context.Context, p *common.ListParams) ([]*ent.Academy, error) {
+func (repo *academyRepository) List(ctx context.Context, p *common.ListParams) (result []*ent.Academy, err error) {
 	pagination := utils.NewPagination(p.PageNo, p.PageSize)
 
 	clause := repo.db.Academy.
@@ -125,27 +130,24 @@ func (repo *academyRepository) List(ctx context.Context, p *common.ListParams) (
 	if p.OrderCol != nil && p.OrderType != nil {
 		orderCol := useableOrderCol[*p.OrderCol]
 
-		if orderCol == "" {
-			// 에러를 던질 것인지.
-			clause.Order(ent.Desc(academy.FieldID))
-		}
-
 		if *p.OrderType == "ASC" {
 			clause.Order(ent.Asc(orderCol))
 		} else {
 			clause.Order(ent.Desc(orderCol))
 		}
+	} else {
+		clause.Order(ent.Desc(academy.FieldID))
 	}
 
-	clause, err := repo.conditionQuery(ctx, &common.TotalParams{
+	clause, err = repo.conditionQuery(ctx, &common.TotalParams{
 		SearchKey:   p.SearchKey,
 		SearchValue: p.SearchValue,
 	}, clause)
 	if err != nil {
-		return nil, err
+		return
 	}
-
-	return clause.All(ctx)
+	result, err = clause.All(ctx)
+	return
 }
 
 func (repo *academyRepository) conditionQuery(ctx context.Context, p *common.TotalParams, clause *ent.AcademyQuery) (*ent.AcademyQuery, error) {

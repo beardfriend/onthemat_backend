@@ -1,6 +1,8 @@
 package model
 
 import (
+	"time"
+
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
@@ -83,16 +85,23 @@ func (User) Fields() []ent.Field {
 			Comment("휴대폰 번호"),
 
 		field.Time("termAgreeAt").
+			SchemaType(map[string]string{
+				dialect.Postgres: "timestamp",
+			}).
 			Comment("약관 동의 일시"),
 
 		field.Time("lastLoginAt").
+			Default(time.Now).
+			SchemaType(map[string]string{
+				dialect.Postgres: "timestamp",
+			}).
 			Comment("마지막 로그인 일시"),
 	}
 }
 
 func (User) Mixin() []ent.Mixin {
 	return []ent.Mixin{
-		TimeWithRemovedAtMixin{},
+		DefaultTimeMixin{},
 	}
 }
 

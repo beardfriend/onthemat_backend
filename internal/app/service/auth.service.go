@@ -31,7 +31,7 @@ type AuthService interface {
 	GenerateRandomPassword() string
 	SendEmailResetPassword(user *ent.User) error
 	SendEmailVerifiedUser(email string, authKey string, issuedAt string, onthematHost string) error
-	IsEmailForVerifyExpired(issuedAt string) bool
+	IsExpiredEmailForVerify(issuedAt string) bool
 }
 
 type authService struct {
@@ -222,7 +222,7 @@ func (a *authService) HashPassword(password string, secret string) string {
 
 // 현재시간 < 발행일 + 1 -> still
 // 현재시간 > 발행일 + 1 -> 만료
-func (a *authService) IsEmailForVerifyExpired(issuedAt string) bool {
+func (a *authService) IsExpiredEmailForVerify(issuedAt string) bool {
 	issuedAtTime, _ := time.Parse(time.RFC3339, issuedAt)
 	isseudAtAfterOneDay := issuedAtTime.Add(time.Hour * 24)
 	return time.Now().After(isseudAtAfterOneDay)

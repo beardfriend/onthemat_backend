@@ -66,6 +66,8 @@ func ErrorText(code int) string {
 		return "유효하지 않은 이메일입니다."
 	case ErrPhoneNumInvalid:
 		return "유효하지 않은 휴대폰번호입니다."
+	case ErrUrlInvalid:
+		return "유효하지 않은 url입니다."
 
 	// 3000 ~
 	case ErrJsonMissing:
@@ -259,6 +261,10 @@ func ErrorValidationCode(name string) int {
 	case transport.TagEmail:
 		return ErrEmailInvalid
 	case transport.TagPhoneNum:
+		return ErrPhoneNumInvalid
+	case transport.TagLogoUrl:
+		return ErrUrlInvalid
+	case transport.TagCallNumber:
 		return ErrPhoneNumInvalid
 
 	default:

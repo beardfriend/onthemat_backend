@@ -31,20 +31,20 @@ func NewTeacherRepository(db *ent.Client) TeacherRepository {
 }
 
 func (repo *teacherRepository) Create(ctx context.Context, t *ent.Teacher, userId int) error {
-	return entx.WithTx(ctx, repo.db, func(tx *ent.Tx) error {
-		if err := repo.db.Teacher.Create().
+	return entx.WithTx(ctx, repo.db, func(tx *ent.Tx) (err error) {
+		if err = repo.db.Teacher.Create().
 			SetAge(t.Age).
 			SetName(t.Name).
 			SetUserID(userId).
 			Exec(ctx); err != nil {
-			return err
+			return
 		}
 
-		if err := repo.db.User.UpdateOneID(userId).SetType(model.AcademyType).Exec(ctx); err != nil {
-			return err
+		if err = repo.db.User.UpdateOneID(userId).SetType(model.AcademyType).Exec(ctx); err != nil {
+			return
 		}
 
-		return nil
+		return
 	})
 }
 

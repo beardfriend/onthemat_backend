@@ -6,6 +6,7 @@ import (
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/model"
 	"onthemat/internal/app/transport"
+	"onthemat/internal/app/transport/response"
 	"onthemat/internal/app/utils"
 
 	"onthemat/internal/app/usecase"
@@ -811,12 +812,12 @@ func (h *authHandler) VerifiyEmail(c *fiber.Ctx) error {
 @apiSuccessExample Success-Response:
 HTTP/1.1 200 OK
 {
-	"code": 200,
-	"message": "",
-	"result": {
-		"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVdWlkIjoiNjE5YWUxYTYtN2YyNy00NDZmLTkzZGUtNDBjNjJkM2MwOWU3IiwiVXNlcklkIjowLCJMb2dpblR5cGUiOiJrYWthbyIsIlVzZXJUeXBlIjoiIiwiaXNzIjoib25lVGhlTWF0IiwiZXhwIjoxNjY3ODAzMTAyLCJpYXQiOjE2Njc4MDIyMDJ9.wFaNMotM7E38mM_Rcyk5GlAe7WTUX-zJv9CPGgixpds",
-		"accessTokenexpiredAt": "2022-11-07T15:38:22.270238+09:00"
-	}
+    "code": 200,
+    "message": "",
+    "result": {
+        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVdWlkIjoiZGE1MmE3NTgtNmZjZS00MDhkLTlmYWQtN2E0YTk4Njc1YmQ3IiwiVXNlcklkIjoxLCJMb2dpblR5cGUiOiJub3JtYWwiLCJVc2VyVHlwZSI6IiIsImlzcyI6Im9uZVRoZU1hdCIsImV4cCI6MTcyODkwMzkxMCwiaWF0IjoxNjY4OTAzOTEwfQ.945I_QAC2uK7f4YQdWQKn_z0RotL3FlLs9J6XbztBmg",
+        "accessTokenExpiredAt": "2024-10-14T20:05:10"
+    }
 }
 @apiErrorExample Error-Response:
 HTTP/1.1 400 Bad Request
@@ -863,10 +864,12 @@ func (h *authHandler) Refresh(c *fiber.Ctx) error {
 		return utils.NewError(c, err)
 	}
 
+	res := response.NewRefreshResponse(data)
+
 	return c.Status(200).
 		JSON(ex.ResponseWithData{
 			Code:    200,
 			Message: "",
-			Result:  data,
+			Result:  res,
 		})
 }

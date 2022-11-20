@@ -102,7 +102,7 @@ func (ts *AuthUCTestSuite) TestSignUp() {
 
 func (ts *AuthUCTestSuite) TestVerifiyEmail() {
 	ts.Run("인증 만료일이 지났을 때", func() {
-		ts.mockAuthService.On("IsEmailForVerifyExpired", mock.AnythingOfType("string")).
+		ts.mockAuthService.On("IsExpiredEmailForVerify", mock.AnythingOfType("string")).
 			Return(true).Once()
 
 		err := ts.authUC.VerifiyEmail(context.TODO(), "email@naver.com", "HackingRandomKey", "issuedAt")
@@ -110,7 +110,7 @@ func (ts *AuthUCTestSuite) TestVerifiyEmail() {
 		ts.Equal(401, errorStruct.ErrHttpCode)
 	})
 	ts.Run("인증키가 잘못됐을 때", func() {
-		ts.mockAuthService.On("IsEmailForVerifyExpired", mock.AnythingOfType("string")).
+		ts.mockAuthService.On("IsExpiredEmailForVerify", mock.AnythingOfType("string")).
 			Return(false).Once()
 		ts.mockStore.On("Get", mock.Anything, mock.AnythingOfType("string")).
 			Return("randomasdqwd").
@@ -123,7 +123,7 @@ func (ts *AuthUCTestSuite) TestVerifiyEmail() {
 	ts.Run("이미 인증된 유저", func() {
 		email := "email@naver.com"
 
-		ts.mockAuthService.On("IsEmailForVerifyExpired", mock.AnythingOfType("string")).
+		ts.mockAuthService.On("IsExpiredEmailForVerify", mock.AnythingOfType("string")).
 			Return(false).Once()
 		ts.mockStore.On("Get", mock.Anything, mock.AnythingOfType("string")).
 			Return("randomasdqwd").
@@ -143,7 +143,7 @@ func (ts *AuthUCTestSuite) TestVerifiyEmail() {
 
 	ts.Run("인증 성공", func() {
 		email2 := "email2@naver.com"
-		ts.mockAuthService.On("IsEmailForVerifyExpired", mock.AnythingOfType("string")).
+		ts.mockAuthService.On("IsExpiredEmailForVerify", mock.AnythingOfType("string")).
 			Return(false).Once()
 
 		ts.mockStore.On("Get", mock.Anything, mock.AnythingOfType("string")).

@@ -36,8 +36,8 @@ func (repo *userRepository) Get(ctx context.Context, id int) (*ent.User, error) 
 	return repo.db.User.Query().Where(user.IDEQ(id)).Only(ctx)
 }
 
-func (repo *userRepository) Create(ctx context.Context, user *ent.User) (*ent.User, error) {
-	u, err := repo.db.User.Create().
+func (repo *userRepository) Create(ctx context.Context, user *ent.User) (result *ent.User, err error) {
+	result, err = repo.db.User.Create().
 		SetNillableNickname(user.Nickname).
 		SetNillableEmail(user.Email).
 		SetNillablePassword(user.Password).
@@ -47,20 +47,20 @@ func (repo *userRepository) Create(ctx context.Context, user *ent.User) (*ent.Us
 		SetNillablePhoneNum(user.PhoneNum).
 		Save(ctx)
 	if err != nil {
-		return nil, err
+		return
 	}
-	return u, nil
+	return
 }
 
-func (repo *userRepository) Update(ctx context.Context, user *ent.User) (*ent.User, error) {
-	u, err := repo.db.User.UpdateOneID(user.ID).
+func (repo *userRepository) Update(ctx context.Context, user *ent.User) (result *ent.User, err error) {
+	result, err = repo.db.User.UpdateOneID(user.ID).
 		SetNillableNickname(user.Nickname).
 		SetNillablePhoneNum(user.PhoneNum).
 		Save(ctx)
 	if err != nil {
-		return nil, err
+		return
 	}
-	return u, nil
+	return
 }
 
 func (repo *userRepository) UpdateEmail(ctx context.Context, email string, userId int) error {

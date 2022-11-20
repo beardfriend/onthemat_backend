@@ -9,6 +9,7 @@ import (
 	"onthemat/internal/app/repository"
 	"onthemat/internal/app/service"
 	"onthemat/internal/app/transport"
+
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
 )
@@ -38,24 +39,27 @@ func NewAcademyUsecase(
 	}
 }
 
-func (u *academyUseCase) Create(ctx context.Context, academy *transport.AcademyCreateRequestBody, userId int) error {
-	if err := u.academySvc.VerifyBusinessMan(academy.BusinessCode); err != nil {
+func (u *academyUseCase) Create(ctx context.Context, academy *transport.AcademyCreateRequestBody, userId int) (err error) {
+	if err = u.academySvc.VerifyBusinessMan(academy.BusinessCode); err != nil {
 		if err.Error() == service.ErrBussinessCodeInvalid {
-			return ex.NewBadRequestError(ex.ErrBusinessCodeInvalid, nil)
+			err = ex.NewBadRequestError(ex.ErrBusinessCodeInvalid, nil)
+			return
 		}
-		return err
+		return
 	}
 
 	getUser, err := u.userRepo.Get(ctx, userId)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return ex.NewNotFoundError(ex.ErrUserNotFound, nil)
+			err = ex.NewNotFoundError(ex.ErrUserNotFound, nil)
+			return
 		}
-		return err
+		return
 	}
 
 	if getUser.Type != nil {
-		return ex.NewConflictError(ex.ErrUserTypeAlreadyRegisted, nil)
+		err = ex.NewConflictError(ex.ErrUserTypeAlreadyRegisted, nil)
+		return
 	}
 
 	return u.academyRepo.Create(ctx, &ent.Academy{
@@ -72,18 +76,20 @@ func (u *academyUseCase) Create(ctx context.Context, academy *transport.AcademyC
 	}, userId)
 }
 
-func (u *academyUseCase) Get(ctx context.Context, userId int) (*ent.Academy, error) {
-	academy, err := u.academyRepo.Get(ctx, userId)
+func (u *academyUseCase) Get(ctx context.Context, userId int) (result *ent.Academy, err error) {
+	result, err = u.academyRepo.Get(ctx, userId)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return nil, ex.NewNotFoundError(ex.ErrAcademyNotFound, nil)
+			err = ex.NewNotFoundError(ex.ErrAcademyNotFound, nil)
+			return
 		}
+		return
 	}
-	return academy, nil
+	return
 }
 
-func (u *academyUseCase) Update(ctx context.Context, a *transport.AcademyUpdateRequestBody, userId int) error {
-	if err := u.academyRepo.Update(ctx, &ent.Academy{
+func (u *academyUseCase) Update(ctx context.Context, a *transport.AcademyUpdateRequestBody, userId int) (err error) {
+	if err = u.academyRepo.Update(ctx, &ent.Academy{
 		Name:          a.Name,
 		CallNumber:    a.CallNumber,
 		AddressRoad:   a.AddressRoad,
@@ -95,27 +101,29 @@ func (u *academyUseCase) Update(ctx context.Context, a *transport.AcademyUpdateR
 		AddressY:      a.AddressY,
 	}, userId); err != nil {
 		if ent.IsNotFound(err) {
-			return ex.NewNotFoundError(ex.ErrAcademyNotFound, nil)
+			err = ex.NewNotFoundError(ex.ErrAcademyNotFound, nil)
+			return
 		}
+		return
 	}
 
-	return nil
+	return
 }
 
-func (u *academyUseCase) List(ctx context.Context, a *transport.AcademyListQueries) ([]*ent.Academy, *utils.PagenationInfo, error) {
+func (u *academyUseCase) List(ctx context.Context, a *transport.AcademyListQueries) (result []*ent.Academy, paginationInfo *utils.PagenationInfo, err error) {
 	if a.OrderCol != nil {
 		*a.OrderCol = strings.ToUpper(*a.OrderCol)
 	}
 
-	pagination := utils.NewPagination(a.PageNo, a.PageSize)
+	pginationModule := utils.NewPagination(a.PageNo, a.PageSize)
 
 	total, err := u.academyRepo.Total(ctx, &common.TotalParams{SearchKey: a.SearchKey, SearchValue: a.SearchValue})
 	if err != nil {
-		return nil, nil, err
+		return
 	}
 
-	pagination.SetTotal(total)
-	academis, err := u.academyRepo.List(ctx, &common.ListParams{
+	pginationModule.SetTotal(total)
+	result, err = u.academyRepo.List(ctx, &common.ListParams{
 		PageNo:      a.PageNo,
 		PageSize:    a.PageSize,
 		OrderCol:    a.OrderCol,
@@ -124,8 +132,8 @@ func (u *academyUseCase) List(ctx context.Context, a *transport.AcademyListQueri
 		SearchValue: a.SearchValue,
 	})
 	if err != nil {
-		return nil, nil, err
+		return
 	}
-
-	return academis, pagination.GetInfo(len(academis)), nil
+	paginationInfo = pginationModule.GetInfo(len(result))
+	return
 }

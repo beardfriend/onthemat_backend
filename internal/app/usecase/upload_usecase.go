@@ -34,12 +34,13 @@ func NewUploadUsecase(imageRepo repository.ImageRepository, s3 aws.S3) UploadUse
 	}
 }
 
-func (u *uploadUseCase) Upload(ctx context.Context, file *multipart.FileHeader, params *transport.UploadParams, userId int) error {
+func (u *uploadUseCase) Upload(ctx context.Context, file *multipart.FileHeader, params *transport.UploadParams, userId int) (err error) {
 	fileExt := filepath.Ext(file.Filename)
 
 	isUsable, _ := validatorx.ImageExtensionValidator(fileExt)
 	if !isUsable {
-		return ex.NewBadRequestError(ex.ErrImageExtensionUnavailable, "jpe?g,gif,svg,png")
+		err = ex.NewBadRequestError(ex.ErrImageExtensionUnavailable, "jpe?g,gif,svg,png")
+		return
 	}
 
 	// make Filename
@@ -51,15 +52,15 @@ func (u *uploadUseCase) Upload(ctx context.Context, file *multipart.FileHeader, 
 
 	resp := u.s3.Upload(key, fileBody)
 
-	if err := u.imageRepo.Create(ctx, &ent.Image{
+	if err = u.imageRepo.Create(ctx, &ent.Image{
 		Name:        key,
 		Path:        resp.Location,
 		Size:        int(file.Size),
 		ContentType: file.Header.Get("Content-Type"),
 		Type:        image.Type(params.Purpose),
 	}, userId); err != nil {
-		return err
+		return
 	}
 
-	return nil
+	return
 }

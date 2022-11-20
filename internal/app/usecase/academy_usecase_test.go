@@ -84,16 +84,16 @@ func (ts *AcademyUCTestSuite) TestCreate() {
 
 func (ts *AcademyUCTestSuite) TestGet() {
 	ts.Run("성공", func() {
-		ts.mockUserRepo.On("Get", mock.Anything, mock.Anything).
-			Return(&ent.User{}, nil).Once()
+		ts.mockAcademyRepo.On("Get", mock.Anything, mock.Anything).
+			Return(&ent.Academy{}, nil).Once()
 
 		_, err := ts.academyUC.Get(context.Background(), 1)
 		ts.NoError(err)
 	})
 
 	ts.Run("NotFound", func() {
-		ts.mockUserRepo.On("Get", mock.Anything, mock.Anything).
-			Return(&ent.User{}, &ent.NotFoundError{}).Once()
+		ts.mockAcademyRepo.On("Get", mock.Anything, mock.Anything).
+			Return(&ent.Academy{}, &ent.NotFoundError{}).Once()
 
 		_, err := ts.academyUC.Get(context.Background(), 1)
 		errorStruct := err.(common.HttpError)

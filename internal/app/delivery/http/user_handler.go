@@ -33,7 +33,7 @@ func NewUserHandler(
 // 유저 정보 조회
 /**
 @api {get} /user/me 유저 정보 조회
-@apiName naverCallback
+@apiName getUser
 @apiVersion 1.0.0
 @apiGroup user
 @apiDescription 내 정보를 조회하는 API
@@ -45,15 +45,15 @@ HTTP/1.1 200 OK
     "code": 200,
     "message": "",
     "result": {
-        "id": 2,
-        "email": "beardfriend22@gmail.com",
+        "id": 1,
+        "email": "beardfriend21@naver.com",
         "nickname": "nick",
         "social_name": null,
         "social_key": null,
         "type": null,
         "phone_num": null,
-        "created_at": "2022-11-11T17:21:41+09:00",
-        "last_login_at": "2022-11-11T17:20:44+09:00"
+        "created_at": "2022-11-20T09:06:20",
+        "last_login_at": "2022-11-20T09:06:20"
     }
 }
 

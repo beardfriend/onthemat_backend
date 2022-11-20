@@ -80,22 +80,23 @@ type LoginResult struct {
 	RefreshTokenExpiredAt time.Time `json:"refreshTokenExpiredAt"`
 }
 
-func (a *authUseCase) Login(ctx context.Context, body *transport.LoginBody) (*LoginResult, error) {
+func (a *authUseCase) Login(ctx context.Context, body *transport.LoginBody) (result *LoginResult, err error) {
 	hashPassword := a.authSvc.HashPassword(body.Password, a.config.Secret.Password)
-
 	user, err := a.userRepo.GetByEmailPassword(ctx, &ent.User{
 		Email:    &body.Email,
 		Password: &hashPassword,
 	})
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return nil, ex.NewNotFoundError(ex.ErrUserNotFound, "이메일 혹은 비밀번호를 다시 확인해주세요.")
+			err = ex.NewNotFoundError(ex.ErrUserNotFound, "이메일 혹은 비밀번호를 다시 확인해주세요.")
+			return
 		}
-		return nil, err
+		return
 	}
 
 	if !user.IsEmailVerified {
-		return nil, common.NewUnauthorizedError(ex.ErrUserEmailUnauthorization, nil)
+		err = common.NewUnauthorizedError(ex.ErrUserEmailUnauthorization, nil)
+		return
 	}
 
 	userType := ""
@@ -107,41 +108,42 @@ func (a *authUseCase) Login(ctx context.Context, body *transport.LoginBody) (*Lo
 	uid := uuid.New().String()
 	refresh, err := a.tokenSvc.GenerateToken(uid, user.ID, "normal", userType, a.config.JWT.RefreshTokenExpired)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	if err := a.store.HSet(ctx, strconv.Itoa(user.ID), uid, strconv.Itoa(user.ID), time.Duration(a.config.JWT.RefreshTokenExpired)*time.Minute); err != nil {
-		return nil, err
+	if err = a.store.HSet(ctx, strconv.Itoa(user.ID), uid, strconv.Itoa(user.ID), time.Duration(a.config.JWT.RefreshTokenExpired)*time.Minute); err != nil {
+		return
 	}
 
 	access, err := a.tokenSvc.GenerateToken(uid, user.ID, "normal", userType, a.config.JWT.AccessTokenExpired)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return &LoginResult{
+	result = &LoginResult{
 		AccessToken:           access,
 		AccessTokenExpiredAt:  a.tokenSvc.GetExpiredAt(a.config.JWT.AccessTokenExpired),
 		RefreshToken:          refresh,
 		RefreshTokenExpiredAt: a.tokenSvc.GetExpiredAt(a.config.JWT.RefreshTokenExpired),
-	}, nil
-}
-
-func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialType, code string) (*LoginResult, error) {
-	user := new(ent.User)
-	socialNameString := socialName.ToString()
-
-	if socialNameString != &model.GoogleString && socialNameString != &model.KakaoString && socialNameString != &model.NaverString {
-		return nil, errors.New("입력 값을 확인해주세요")
 	}
 
+	return
+}
+
+func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialType, code string) (result *LoginResult, err error) {
+	socialNameString := socialName.ToString()
+	if socialNameString != &model.GoogleString && socialNameString != &model.KakaoString && socialNameString != &model.NaverString {
+		err = errors.New("입력 값을 확인해주세요")
+		return
+	}
+
+	user := new(ent.User)
 	// 카카오 로그인
 	if socialNameString == &model.KakaoString {
-
-		kakaoInfo, err := a.authSvc.GetKakaoInfo(code)
-		// TODO : 카카오 에러에 따라 error 분기처리.
-		if err != nil {
-			return nil, err
+		kakaoInfo, errA := a.authSvc.GetKakaoInfo(code)
+		if errA != nil {
+			err = errA
+			return
 		}
 
 		kakaoId := strconv.FormatUint(uint64(kakaoInfo.Id), 10)
@@ -154,9 +156,10 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialTy
 		// 구글 로그인
 	} else if socialNameString == &model.GoogleString {
 
-		googleInfo, err := a.authSvc.GetGoogleInfo(code)
-		if err != nil {
-			return nil, err
+		googleInfo, errA := a.authSvc.GetGoogleInfo(code)
+		if errA != nil {
+			err = errA
+			return
 		}
 
 		googleId := googleInfo.Sub
@@ -168,9 +171,10 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialTy
 		// 네이버 로그인
 	} else if socialNameString == &model.NaverString {
 
-		naverInfo, err := a.authSvc.GetNaverInfo(code)
-		if err != nil {
-			return nil, err
+		naverInfo, errA := a.authSvc.GetNaverInfo(code)
+		if errA != nil {
+			err = errA
+			return
 		}
 		user.Nickname = &naverInfo.NickName
 		user.SocialKey = &naverInfo.Id
@@ -182,7 +186,7 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialTy
 	// 이미 존재하는 회원인지 확인.
 	checkedUser, err := a.userRepo.GetBySocialKey(ctx, user)
 	if err != nil && !ent.IsNotFound(err) {
-		return nil, err
+		return
 	}
 
 	// 유저가 없으면 회원 정보 생성
@@ -190,7 +194,7 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialTy
 		user.TermAgreeAt = time.Now()
 		checkedUser, err = a.userRepo.Create(ctx, user)
 		if err != nil {
-			return nil, err
+			return
 		}
 	}
 
@@ -203,24 +207,25 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialTy
 	uid := uuid.New().String()
 	refresh, err := a.tokenSvc.GenerateToken(uid, user.ID, *socialNameString, userType, a.config.JWT.RefreshTokenExpired)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	if err := a.store.HSet(ctx, strconv.Itoa(user.ID), uid, strconv.Itoa(user.ID), time.Duration(a.config.JWT.RefreshTokenExpired)*time.Minute); err != nil {
-		return nil, err
+	if err = a.store.HSet(ctx, strconv.Itoa(user.ID), uid, strconv.Itoa(user.ID), time.Duration(a.config.JWT.RefreshTokenExpired)*time.Minute); err != nil {
+		return
 	}
 
 	access, err := a.tokenSvc.GenerateToken(uid, user.ID, *socialNameString, userType, a.config.JWT.AccessTokenExpired)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return &LoginResult{
+	result = &LoginResult{
 		AccessToken:           access,
 		AccessTokenExpiredAt:  a.tokenSvc.GetExpiredAt(a.config.JWT.AccessTokenExpired),
 		RefreshToken:          refresh,
 		RefreshTokenExpiredAt: a.tokenSvc.GetExpiredAt(a.config.JWT.RefreshTokenExpired),
-	}, nil
+	}
+	return
 }
 
 func (a *authUseCase) GoogleRedirectUrl(ctx context.Context) string {
@@ -251,10 +256,10 @@ func (a *authUseCase) SocialSignUp(ctx context.Context, body *transport.SocialSi
 	return
 }
 
-func (a *authUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) error {
+func (a *authUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) (err error) {
 	hashPassword := a.authSvc.HashPassword(body.Password, a.config.Secret.Password)
 
-	_, err := a.userRepo.Create(ctx, &ent.User{
+	_, err = a.userRepo.Create(ctx, &ent.User{
 		Email:       &body.Email,
 		Password:    &hashPassword,
 		Nickname:    &body.NickName,
@@ -262,77 +267,85 @@ func (a *authUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) er
 	})
 	if err != nil {
 		if ent.IsConstraintError(err) {
-			return common.NewConflictError(ex.ErrUserEmailAlreadyExist, nil)
+			err = ex.NewConflictError(ex.ErrUserEmailAlreadyExist, nil)
+			return
 		}
-		return err
+		return
 	}
 
 	// 이메일 인증을 위한 키 store에 저장.
 	key := a.authSvc.GenerateRandomString()
-	if err := a.store.Set(ctx, body.Email, key, time.Duration(time.Hour*24)); err != nil {
-		return err
+	if err = a.store.Set(ctx, body.Email, key, time.Duration(time.Hour*24)); err != nil {
+		return
 	}
 
 	go a.authSvc.SendEmailVerifiedUser(body.Email, key, time.Now().Format(time.RFC3339), a.config.Onthemat.HOST)
 
-	return nil
+	return
 }
 
-func (a *authUseCase) CheckDuplicatedEmail(ctx context.Context, email string) error {
+func (a *authUseCase) CheckDuplicatedEmail(ctx context.Context, email string) (err error) {
 	isExist, err := a.userRepo.FindByEmail(ctx, email)
 	if err != nil {
-		return err
+		return
 	}
 
 	if isExist {
-		return common.NewConflictError(ex.ErrUserEmailAlreadyExist, nil)
+		err = ex.NewConflictError(ex.ErrUserEmailAlreadyExist, nil)
+		return
 	}
-
-	return nil
+	return
 }
 
-func (a *authUseCase) VerifiyEmail(ctx context.Context, email string, authKey string, issuedAt string) error {
-	if a.authSvc.IsEmailForVerifyExpired(issuedAt) {
-		return ex.NewAuthenticationFailedError(ex.ErrEmailForVerifyExpired, nil)
+func (a *authUseCase) VerifiyEmail(ctx context.Context, email string, authKey string, issuedAt string) (err error) {
+	if a.authSvc.IsExpiredEmailForVerify(issuedAt) {
+		err = ex.NewAuthenticationFailedError(ex.ErrEmailForVerifyExpired, nil)
+		return
 	}
 
 	key := a.store.Get(ctx, email)
 
 	if key != authKey {
-		return ex.NewBadRequestError(ex.ErrRandomKeyForEmailVerfiyUnavailable, nil)
+		err = ex.NewBadRequestError(ex.ErrRandomKeyForEmailVerfiyUnavailable, nil)
+		return
 	}
 
 	u, err := a.userRepo.GetByEmail(ctx, email)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return ex.NewNotFoundError(ex.ErrUserNotFound, nil)
+			err = ex.NewNotFoundError(ex.ErrUserNotFound, nil)
+			return
 		}
-		return err
+		return
 	}
 
 	if u.IsEmailVerified {
-		return ex.NewConflictError(ex.ErrUserEmailAlreadyVerfied, nil)
+		err = ex.NewConflictError(ex.ErrUserEmailAlreadyVerfied, nil)
+		return
 	}
 
-	if err := a.userRepo.UpdateEmailVerifeid(ctx, u.ID); err != nil {
-		return err
+	if err = a.userRepo.UpdateEmailVerifeid(ctx, u.ID); err != nil {
+		err = ex.NewConflictError(ex.ErrUserEmailAlreadyVerfied, nil)
+		return
 	}
 
-	if err := a.store.Del(ctx, email); err != nil {
-		return err
+	if err = a.store.Del(ctx, email); err != nil {
+		err = ex.NewConflictError(ex.ErrUserEmailAlreadyVerfied, nil)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (a *authUseCase) SendEmailResetPassword(ctx context.Context, email string) error {
+func (a *authUseCase) SendEmailResetPassword(ctx context.Context, email string) (err error) {
 	isExist, err := a.userRepo.FindByEmail(ctx, email)
 	if err != nil {
-		return err
+		return
 	}
 
 	if !isExist {
-		return ex.NewNotFoundError(ex.ErrUserNotFound, "존재하지 않는 이메일입니다.")
+		err = ex.NewNotFoundError(ex.ErrUserNotFound, "존재하지 않는 이메일입니다.")
+		return
 	}
 
 	hashPassword := a.authSvc.HashPassword(a.authSvc.GenerateRandomPassword(), a.config.Secret.Password)
@@ -341,13 +354,13 @@ func (a *authUseCase) SendEmailResetPassword(ctx context.Context, email string) 
 		Email:        &email,
 		TempPassword: &hashPassword,
 	}
-	if err := a.userRepo.UpdateTempPassword(ctx, u); err != nil {
-		return err
+	if err = a.userRepo.UpdateTempPassword(ctx, u); err != nil {
+		return
 	}
 
 	go a.authSvc.SendEmailResetPassword(u)
 
-	return nil
+	return
 }
 
 type RefreshResult struct {
@@ -355,39 +368,45 @@ type RefreshResult struct {
 	AccessTokenExpiredAt time.Time `json:"accessTokenExpiredAt"`
 }
 
-func (a *authUseCase) Refresh(ctx context.Context, authorizationHeader []byte) (*RefreshResult, error) {
+func (a *authUseCase) Refresh(ctx context.Context, authorizationHeader []byte) (result *RefreshResult, err error) {
 	refreshToken, err := a.authSvc.ExtractTokenFromHeader(string(authorizationHeader))
 	if err != nil {
-		return nil, ex.NewBadRequestError(ex.ErrAuthorizationHeaderFormatUnavailable, "Bearer")
+		err = ex.NewBadRequestError(ex.ErrAuthorizationHeaderFormatUnavailable, "Bearer")
+		return
 	}
 
 	claim := new(token.TokenClaim)
-	if err := a.tokenSvc.ParseToken(refreshToken, claim); err != nil {
+	if err = a.tokenSvc.ParseToken(refreshToken, claim); err != nil {
 		if err.Error() == jwt.ErrExiredToken {
-			return nil, ex.NewUnauthorizedError(ex.ErrTokenExpired, nil)
+			err = ex.NewUnauthorizedError(ex.ErrTokenExpired, nil)
+			return
 		}
 
 		if err.Error() == jwt.ErrInvalidToken {
-			return nil, ex.NewBadRequestError(ex.ErrTokenInvalid, nil)
+			err = ex.NewBadRequestError(ex.ErrTokenInvalid, nil)
+			return
 		}
-		return nil, err
+		return
 	}
 
 	userIdString := strconv.Itoa(claim.UserId)
 	val, err := a.store.HGet(ctx, userIdString, claim.Uuid)
 	if err != nil {
-		return nil, err
+		return
 	}
 	if val != userIdString {
-		return nil, ex.NewBadRequestError(ex.ErrTokenInvalid, nil)
+		err = ex.NewBadRequestError(ex.ErrTokenInvalid, nil)
+		return
 	}
 
 	u, err := a.userRepo.Get(ctx, claim.UserId)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return nil, common.NewNotFoundError(ex.ErrUserNotFound, nil)
+			err = ex.NewNotFoundError(ex.ErrUserNotFound, nil)
+			return
 		}
-		return nil, err
+		return
+
 	}
 
 	uid := uuid.New().String()
@@ -404,11 +423,12 @@ func (a *authUseCase) Refresh(ctx context.Context, authorizationHeader []byte) (
 
 	access, err := a.tokenSvc.GenerateToken(uid, u.ID, loginType, userType, a.config.JWT.AccessTokenExpired)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return &RefreshResult{
+	result = &RefreshResult{
 		AccessToken:          access,
 		AccessTokenExpiredAt: a.tokenSvc.GetExpiredAt(a.config.JWT.AccessTokenExpired),
-	}, nil
+	}
+	return
 }

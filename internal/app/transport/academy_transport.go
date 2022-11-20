@@ -1,8 +1,6 @@
 package transport
 
 import (
-	"time"
-
 	"onthemat/pkg/ent"
 
 	"github.com/jinzhu/copier"
@@ -45,57 +43,57 @@ func NewAcademyListQueries() *AcademyListQueries {
 // ___________ Body ___________
 
 type AcademyCreateRequestBody struct {
-	Name          string `json:"name"`
-	LogoUrl       string `json:"logoUrl"`
-	BusinessCode  string `json:"businessCode"`
-	CallNumber    string `json:"callNumber"`
-	AddressRoad   string `json:"addressRoad"`
-	AddressSigun  string `json:"addressSiGun"`
-	AddressGu     string `json:"addressGu"`
-	AddressDong   string `json:"addressDong"`
+	Name          string `json:"name" validate:"required"`
+	LogoUrl       string `json:"logoUrl" validate:"required,urlStartHttpHttps"`
+	BusinessCode  string `json:"businessCode" validate:"required"`
+	CallNumber    string `json:"callNumber" validate:"required,phoneNumNoDash"`
+	AddressRoad   string `json:"addressRoad" validate:"required"`
+	AddressSigun  string `json:"addressSiGun" validate:"required"`
+	AddressGu     string `json:"addressGu" validate:"required"`
+	AddressDong   string `json:"addressDong" validate:"required"`
 	AddressDetail string `json:"addressDetail"`
-	AddressX      string `json:"addressX"`
-	AddressY      string `json:"addressY"`
+	AddressX      string `json:"addressX" validate:"required"`
+	AddressY      string `json:"addressY" validate:"required"`
 }
 
 type AcademyUpdateRequestBody struct {
-	Name          string `json:"name"`
+	Name          string `json:"name" validate:"required"`
 	CallNumber    string `json:"callNumber"`
-	AddressRoad   string `json:"addressRoad"`
-	AddressDetail string `json:"addressDetail"`
-	AddressSigun  string `json:"addressSigun"`
-	AddressGu     string `json:"addressGu"`
-	AddressDong   string `json:"addressDong"`
-	AddressX      string `json:"addressX"`
-	AddressY      string `json:"addressY"`
+	AddressRoad   string `json:"addressRoad" validate:"required"`
+	AddressDetail string `json:"addressDetail" validate:"required"`
+	AddressSigun  string `json:"addressSigun" validate:"required"`
+	AddressGu     string `json:"addressGu" validate:"required"`
+	AddressDong   string `json:"addressDong" validate:"required"`
+	AddressX      string `json:"addressX" validate:"required"`
+	AddressY      string `json:"addressY" validate:"required"`
 }
 
 // ------------------- Response -------------------
 
 type AcademyDetailRepsonse struct {
-	ID            int       `json:"id"`
-	Name          string    `json:"name"`
-	CallNumber    string    `json:"callNumber"`
-	AddressRoad   string    `json:"addressRoad"`
-	AddressDetail string    `json:"addressDetail"`
-	AddressSigun  string    `json:"addressSigun"`
-	AddressGu     string    `json:"addressGu"`
-	AddressX      string    `json:"addressX"`
-	AddressY      string    `json:"addressY"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
+	ID            int        `json:"id"`
+	Name          string     `json:"name"`
+	CallNumber    string     `json:"callNumber"`
+	AddressRoad   string     `json:"addressRoad"`
+	AddressDetail string     `json:"addressDetail"`
+	AddressSigun  string     `json:"addressSigun"`
+	AddressGu     string     `json:"addressGu"`
+	AddressX      string     `json:"addressX"`
+	AddressY      string     `json:"addressY"`
+	CreatedAt     TimeString `json:"createdAt"`
+	UpdatedAt     TimeString `json:"updatedAt"`
 }
 
 type AcademyListResponse struct {
-	ID            int       `json:"id"`
-	Name          string    `json:"name"`
-	CallNumber    string    `json:"callNumber"`
-	AddressRoad   string    `json:"addressRoad"`
-	AddressDetail string    `json:"addressDetail"`
-	AddressSigun  string    `json:"addressSigun"`
-	AddressGu     string    `json:"addressGu"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
+	ID            int        `json:"id"`
+	Name          string     `json:"name"`
+	CallNumber    string     `json:"callNumber"`
+	AddressRoad   string     `json:"addressRoad"`
+	AddressDetail string     `json:"addressDetail"`
+	AddressSigun  string     `json:"addressSigun"`
+	AddressGu     string     `json:"addressGu"`
+	CreatedAt     TimeString `json:"createdAt"`
+	UpdatedAt     TimeString `json:"updatedAt"`
 }
 
 func NewAcademyListResponse(model []*ent.Academy) []*AcademyListResponse {

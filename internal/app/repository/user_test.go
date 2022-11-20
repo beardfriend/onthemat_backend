@@ -171,7 +171,6 @@ func (ts *UserRepositoryTestSuite) TestCreate() {
 		ts.Empty(u.Nickname)
 		ts.Empty(u.Password)
 		ts.Empty(u.PhoneNum)
-		ts.Empty(u.RemovedAt)
 		ts.Empty(u.SocialKey)
 		ts.Empty(u.SocialName)
 		ts.Equal(u.ID, 1)

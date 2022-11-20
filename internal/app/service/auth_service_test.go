@@ -19,9 +19,10 @@ func TestHashPassword(t *testing.T) {
 
 func TestCheckEmailExpiredForVerify(t *testing.T) {
 	as := NewAuthService(nil, nil, nil, nil)
-	i := as.IsEmailForVerifyExpired("2022-11-16T13:04:05+09:00")
+	time.Now().Add(-time.Hour * 24)
+	i := as.IsExpiredEmailForVerify()
 	assert.Equal(t, i, false)
 	fmt.Println(time.Now().Format(time.RFC3339))
-	d := as.IsEmailForVerifyExpired("2022-11-15T13:04:05+09:00")
+	d := as.IsExpiredEmailForVerify("2022-11-15T13:04:05+09:00")
 	assert.Equal(t, d, true)
 }

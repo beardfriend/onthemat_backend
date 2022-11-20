@@ -18,7 +18,7 @@ func (m *MiddleWare) Auth(c *fiber.Ctx) error {
 	access, err := m.authSvc.ExtractTokenFromHeader(string(authorizationHeader))
 	if err != nil {
 		return c.Status(http.StatusBadRequest).
-			JSON(ex.NewBadRequestError(ex.ErrAuthorizationHeaderFormatUnavailable, "Bearer"))
+			JSON(ex.NewHttpError(ex.ErrAuthorizationHeaderFormatUnavailable, "Bearer"))
 	}
 
 	claim := &token.TokenClaim{}
@@ -27,11 +27,11 @@ func (m *MiddleWare) Auth(c *fiber.Ctx) error {
 		if err.Error() == jwt.ErrExiredToken {
 			return c.
 				Status(http.StatusUnauthorized).
-				JSON(ex.NewUnauthorizedError(ex.ErrTokenExpired, nil))
+				JSON(ex.NewHttpError(ex.ErrTokenExpired, nil))
 		}
 
 		return c.Status(http.StatusBadRequest).
-			JSON(ex.NewBadRequestError(ex.ErrTokenInvalid, nil))
+			JSON(ex.NewHttpError(ex.ErrTokenInvalid, nil))
 	}
 
 	ctx.SetUserValue("login_type", claim.LoginType)
@@ -46,7 +46,7 @@ func (m *MiddleWare) OnlyAcademy(c *fiber.Ctx) error {
 	if userType != "academy" {
 		return c.
 			Status(http.StatusUnauthorized).
-			JSON(ex.NewForbiddenError(ex.ErrOnlyAcademy, nil))
+			JSON(ex.NewHttpError(ex.ErrOnlyAcademy, nil))
 	}
 
 	return c.Next()
@@ -58,7 +58,7 @@ func (m *MiddleWare) OnlyTeacher(c *fiber.Ctx) error {
 	if userType != "teacher" {
 		return c.
 			Status(http.StatusUnauthorized).
-			JSON(ex.NewForbiddenError(ex.ErrOnlyTeacher, nil))
+			JSON(ex.NewHttpError(ex.ErrOnlyTeacher, nil))
 	}
 
 	return c.Next()

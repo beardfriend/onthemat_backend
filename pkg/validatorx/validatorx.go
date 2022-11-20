@@ -118,6 +118,7 @@ func (v *validator) ValidateStruct(request interface{}) []*ErrorResponse {
 	var errors []*ErrorResponse
 
 	err := v.validator.Struct(request)
+	// err := v.validator.Struct(request)
 	if err != nil {
 		for _, err := range err.(goValidator.ValidationErrors) {
 			var element ErrorResponse
