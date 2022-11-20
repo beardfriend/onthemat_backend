@@ -58,6 +58,7 @@ type AcademyCreateRequestBody struct {
 
 type AcademyUpdateRequestBody struct {
 	Name          string `json:"name" validate:"required"`
+	LogoUrl       string `json:"logoUrl" validate:"required,urlStartHttpHttps"`
 	CallNumber    string `json:"callNumber"`
 	AddressRoad   string `json:"addressRoad" validate:"required"`
 	AddressDetail string `json:"addressDetail" validate:"required"`

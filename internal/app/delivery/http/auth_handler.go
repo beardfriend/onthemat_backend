@@ -307,6 +307,8 @@ HTTP/1.1 400 Bad Request
     "message": "JSON을 입력해주세요.",
     "details": null
 }
+
+HTTP/1.1 400 Bad Request
 {
     "code": 2000,
     "message": "유효하지 않은 요청값들이 존재합니다.",
@@ -319,6 +321,8 @@ HTTP/1.1 400 Bad Request
         }
     ]
 }
+
+HTTP/1.1 400 Bad Request
 {
     "code": 2001,
     "message": "유효하지 않은 패스워드입니다.",
@@ -328,6 +332,8 @@ HTTP/1.1 400 Bad Request
         }
     ]
 }
+
+HTTP/1.1 400 Bad Request
 {
     "code": 2002,
     "message": "유효하지 않은 이메일입니다.",
@@ -396,6 +402,8 @@ HTTP/1.1 400 Bad Request
     "message": "JSON을 입력해주세요.",
     "details": null
 }
+
+HTTP/1.1 400 Bad Request
 {
     "code": 2000,
     "message": "유효하지 않은 요청값들이 존재합니다.",
@@ -405,6 +413,8 @@ HTTP/1.1 400 Bad Request
         }
     ]
 }
+
+HTTP/1.1 400 Bad Request
 {
     "code": 2002,
     "message": "유효하지 않은 이메일입니다.",
@@ -428,6 +438,8 @@ HTTP/1.1 409 Conflict
     "message": "이미 존재하는 이메일입니다.",
     "details": null
 }
+
+HTTP/1.1 409 Conflict
 {
     "code": 4004,
     "message": "이미 회원의 이메일이 등록됐습니다.",
@@ -492,6 +504,8 @@ HTTP/1.1 400 Bad Request
     "message": "JSON을 입력해주세요.",
     "details": null
 }
+
+HTTP/1.1 400 Bad Request
 {
     "code": 2001,
     "message": "유효하지 않은 패스워드입니다.",
@@ -501,6 +515,8 @@ HTTP/1.1 400 Bad Request
         }
     ]
 }
+
+HTTP/1.1 400 Bad Request
 {
     "code": 2002,
     "message": "유효하지 않은 이메일입니다.",
@@ -583,6 +599,8 @@ HTTP/1.1 400 Bad Request
 	"message": "쿼리스트링을 입력해주세요.",
 	"details": null
 }
+
+HTTP/1.1 400 Bad Request
 {
     "code": 2002,
     "message": "유효하지 않은 이메일입니다.",
@@ -657,6 +675,8 @@ HTTP/1.1 400 Bad Request
 	"message": "쿼리스트링을 입력해주세요.",
 	"details": null
 }
+
+HTTP/1.1 400 Bad Request
 {
     "code": 2002,
     "message": "유효하지 않은 이메일입니다.",
@@ -731,6 +751,8 @@ HTTP/1.1 400 Bad Request
 	"message": "쿼리스트링을 입력해주세요.",
 	"details": null
 }
+
+HTTP/1.1 400 Bad Request
 {
     "code": 2002,
     "message": "유효하지 않은 이메일입니다.",
@@ -740,6 +762,8 @@ HTTP/1.1 400 Bad Request
         }
     ]
 }
+
+HTTP/1.1 400 Bad Request
 {
 	"code": 3006,
 	"message": "사용할 수 없는 인증 키입니다.",
@@ -826,6 +850,8 @@ HTTP/1.1 400 Bad Request
 	"message": "Authorization 헤더 형식을 확인해주세요.",
 	"details": null
 }
+
+HTTP/1.1 400 Bad Request
 {
 	"code": 3007,
 	"message": "유효하지 않은 토큰입니다.",

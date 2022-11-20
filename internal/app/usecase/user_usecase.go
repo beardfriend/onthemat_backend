@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 
+	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/repository"
 	"onthemat/pkg/ent"
 )
@@ -21,6 +22,11 @@ func NewUserUseCase(userRepo repository.UserRepository) UserUseCase {
 	}
 }
 
-func (u *userUseCase) GetMe(ctx context.Context, id int) (*ent.User, error) {
-	return u.userRepo.Get(ctx, id)
+func (u *userUseCase) GetMe(ctx context.Context, id int) (result *ent.User, err error) {
+	result, err = u.userRepo.Get(ctx, id)
+	if ent.IsNotFound(err) {
+		err = ex.NewNotFoundError(ex.ErrUserNotFound, nil)
+		return
+	}
+	return
 }

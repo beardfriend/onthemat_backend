@@ -49,6 +49,18 @@ func NewAcademyHandler(
 @apiDescription 학원 회원가입
 @apiHeader Authorization accessToken (Bearer)
 
+@apiBody {String} name 학원 이름
+@apiBody {String} logoUrl 로고에 등록할 url
+@apiBody {String} businessCode 사업자 번호
+@apiBody {String} callNumber 연락가능한 번호
+@apiBody {String} addressRoad 도로명 주소
+@apiBody {String} addressSigun 행정구역 시/군
+@apiBody {String} addressGu 행정구역 구
+@apiBody {String} addressDong 행정구역 동
+@apiBody {String} addressDetail 상세 주소
+@apiBody {String} addressX X좌표
+@apiBody {String} addressY Y좌표
+
 @apiSuccessExample Success-Response:
 HTTP/1.1 201 Created
 {
@@ -144,6 +156,17 @@ func (h *academyHandler) Create(c *fiber.Ctx) error {
 @apiGroup academy
 @apiDescription 학원 정보 수정
 @apiHeader Authorization accessToken (Bearer)
+
+@apiBody {String} name 학원 이름
+@apiBody {String} logoUrl 로고에 등록할 url
+@apiBody {String} callNumber 연락가능한 번호
+@apiBody {String} addressRoad 도로명 주소
+@apiBody {String} addressSigun 행정구역 시/군
+@apiBody {String} addressGu 행정구역 구
+@apiBody {String} addressDong 행정구역 동
+@apiBody {String} addressDetail 상세 주소
+@apiBody {String} addressX X좌표
+@apiBody {String} addressY Y좌표
 
 @apiSuccessExample Success-Response:
 HTTP/1.1 201 Created
