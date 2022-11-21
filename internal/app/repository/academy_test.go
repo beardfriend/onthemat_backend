@@ -71,16 +71,10 @@ func (ts *AcademyRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			u, _ := ts.userRepo.Create(ts.ctx, &ent.User{})
 			ts.userId = u.ID
 			err := ts.academyRepository.Create(ts.ctx, &ent.Academy{
-				Name:          "학원이름",
-				BusinessCode:  "사업자번호",
-				CallNumber:    "0226065418",
-				AddressRoad:   "도로명주소",
-				AddressSigun:  "서울시",
-				AddressGu:     "강남구",
-				AddressDong:   "논현동",
-				AddressDetail: "상세주소",
-				AddressX:      "x좌표",
-				AddressY:      "y좌표",
+				Name:         "학원이름",
+				BusinessCode: "사업자번호",
+				CallNumber:   "0226065418",
+				AddressRoad:  "도로명주소",
 			}, ts.userId)
 			ts.NoError(err)
 
@@ -88,16 +82,10 @@ func (ts *AcademyRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			u, _ := ts.userRepo.Create(ts.ctx, &ent.User{})
 			ts.userId = u.ID
 			err := ts.academyRepository.Create(ts.ctx, &ent.Academy{
-				Name:          "학원이름",
-				BusinessCode:  "사업자번호",
-				CallNumber:    "0226065418",
-				AddressRoad:   "도로명주소",
-				AddressSigun:  "서울시",
-				AddressGu:     "강남구",
-				AddressDong:   "논현동",
-				AddressDetail: "상세주소",
-				AddressX:      "x좌표",
-				AddressY:      "y좌표",
+				Name:         "학원이름",
+				BusinessCode: "사업자번호",
+				CallNumber:   "0226065418",
+				AddressRoad:  "도로명주소",
 			}, ts.userId)
 			ts.NoError(err)
 
@@ -118,12 +106,7 @@ func (ts *AcademyRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 
 				academyBulk[i] = ts.client.Academy.Create().
 					SetAddressDetail(fakeit.Address().City).
-					SetAddressDong(fakeit.Address().City).
-					SetAddressGu(fakeit.Address().City).
 					SetAddressRoad(fakeit.Address().City).
-					SetAddressSigun(fakeit.Address().City).
-					SetAddressX(fakeit.Address().City).
-					SetAddressY(fakeit.Address().City).
 					SetBusinessCode(fakeit.Address().City).
 					SetCallNumber(fakeit.Phone()).
 					SetName(fakeit.Address().City).SetUserID(i + 1)
@@ -141,32 +124,20 @@ func (ts *AcademyRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 func (ts *AcademyRepositoryTestSuite) TestCreate() {
 	ts.Run("성공", func() {
 		err := ts.academyRepository.Create(ts.ctx, &ent.Academy{
-			Name:          "학원이름",
-			BusinessCode:  "사업자번호",
-			CallNumber:    "0226065418",
-			AddressRoad:   "도로명주소",
-			AddressSigun:  "서울시",
-			AddressGu:     "강남구",
-			AddressDong:   "논현동",
-			AddressDetail: "상세주소",
-			AddressX:      "x좌표",
-			AddressY:      "y좌표",
+			Name:         "학원이름",
+			BusinessCode: "사업자번호",
+			CallNumber:   "0226065418",
+			AddressRoad:  "도로명주소",
 		}, ts.userId)
 		ts.NoError(err)
 	})
 
 	ts.Run("없는 유저일 경우.", func() {
 		err := ts.academyRepository.Create(ts.ctx, &ent.Academy{
-			Name:          "학원이름",
-			BusinessCode:  "사업자번호",
-			CallNumber:    "0226065418",
-			AddressRoad:   "도로명주소",
-			AddressSigun:  "서울시",
-			AddressGu:     "강남구",
-			AddressDong:   "논현동",
-			AddressDetail: "상세주소",
-			AddressX:      "x좌표",
-			AddressY:      "y좌표",
+			Name:         "학원이름",
+			BusinessCode: "사업자번호",
+			CallNumber:   "0226065418",
+			AddressRoad:  "도로명주소",
 		}, 2)
 		ts.Equal(true, ent.IsConstraintError(err))
 	})
@@ -183,16 +154,10 @@ func (ts *AcademyRepositoryTestSuite) TestGet() {
 func (ts *AcademyRepositoryTestSuite) TestUpdate() {
 	ts.Run("성공", func() {
 		err := ts.academyRepository.Update(ts.ctx, &ent.Academy{
-			Name:          "이름변경",
-			BusinessCode:  "사업자번호",
-			CallNumber:    "0226065418",
-			AddressRoad:   "도로명주소",
-			AddressSigun:  "서울시",
-			AddressGu:     "강남구",
-			AddressDong:   "논현동",
-			AddressDetail: "상세주소",
-			AddressX:      "x좌표",
-			AddressY:      "y좌표",
+			Name:         "이름변경",
+			BusinessCode: "사업자번호",
+			CallNumber:   "0226065418",
+			AddressRoad:  "도로명주소",
 		}, ts.userId)
 		ts.NoError(err)
 
@@ -203,16 +168,10 @@ func (ts *AcademyRepositoryTestSuite) TestUpdate() {
 	ts.Run("없는 유저", func() {
 		// 쿼리 시 where로 찾으면 notFound error가 나오지 않고, UpdateOneId로 찾으면 notfound에러가 떨어짐
 		err := ts.academyRepository.Update(ts.ctx, &ent.Academy{
-			Name:          "이름변경",
-			BusinessCode:  "사업자번호",
-			CallNumber:    "0226065418",
-			AddressRoad:   "도로명주소",
-			AddressSigun:  "서울시",
-			AddressGu:     "강남구",
-			AddressDong:   "논현동",
-			AddressDetail: "상세주소",
-			AddressX:      "x좌표",
-			AddressY:      "y좌표",
+			Name:         "이름변경",
+			BusinessCode: "사업자번호",
+			CallNumber:   "0226065418",
+			AddressRoad:  "도로명주소",
 		}, 2)
 		ts.Equal(true, ent.IsNotFound(err))
 	})

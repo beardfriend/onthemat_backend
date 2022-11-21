@@ -28,7 +28,10 @@ func (Recruitment) Fields() []ent.Field {
 
 func (Recruitment) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("instead", RecruitmentInstead.Type),
+		edge.To("instead", RecruitmentInstead.Type).
+			Annotations(entsql.Annotation{
+				OnDelete: entsql.Cascade,
+			}),
 
 		edge.From("writer", Academy.Type).
 			Ref("recruitment").

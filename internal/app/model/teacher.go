@@ -52,12 +52,21 @@ func (Teacher) Edges() []ent.Edge {
 			Ref("applicant"),
 
 		// 자격증
-		edge.To("certification", TeacherCertification.Type),
+		edge.To("certification", TeacherCertification.Type).
+			Annotations(entsql.Annotation{
+				OnDelete: entsql.Cascade,
+			}),
 
 		// 근무 경험
-		edge.To("workExperience", TeacherWorkExperience.Type),
+		edge.To("workExperience", TeacherWorkExperience.Type).
+			Annotations(entsql.Annotation{
+				OnDelete: entsql.Cascade,
+			}),
 
 		// 근무지
-		edge.To("workArea", TeacherWorkArea.Type),
+		edge.To("workArea", TeacherWorkArea.Type).
+			Annotations(entsql.Annotation{
+				OnDelete: entsql.Cascade,
+			}),
 	}
 }

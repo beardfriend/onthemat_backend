@@ -14,6 +14,20 @@ type UserRepository struct {
 	mock.Mock
 }
 
+// AddYoga provides a mock function with given fields: ctx, id, yoga
+func (_m *UserRepository) AddYoga(ctx context.Context, id int, yoga []*ent.Yoga) error {
+	ret := _m.Called(ctx, id, yoga)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []*ent.Yoga) error); ok {
+		r0 = rf(ctx, id, yoga)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Create provides a mock function with given fields: ctx, user
 func (_m *UserRepository) Create(ctx context.Context, user *ent.User) (*ent.User, error) {
 	ret := _m.Called(ctx, user)

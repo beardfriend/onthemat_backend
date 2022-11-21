@@ -28,6 +28,29 @@ func (_m *AreaRepository) Create(ctx context.Context, d *ent.AreaSiDo, sigungu [
 	return r0
 }
 
+// GetSigunGu provides a mock function with given fields: ctx, name
+func (_m *AreaRepository) GetSigunGu(ctx context.Context, name string) (*ent.AreaSiGungu, error) {
+	ret := _m.Called(ctx, name)
+
+	var r0 *ent.AreaSiGungu
+	if rf, ok := ret.Get(0).(func(context.Context, string) *ent.AreaSiGungu); ok {
+		r0 = rf(ctx, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*ent.AreaSiGungu)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 type mockConstructorTestingTNewAreaRepository interface {
 	mock.TestingT
 	Cleanup(func())

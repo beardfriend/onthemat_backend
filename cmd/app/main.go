@@ -71,6 +71,7 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	imageRepo := repository.NewImageRepository(db)
 	academyRepo := repository.NewAcademyRepository(db)
+	areaRepo := repository.NewAreaRepository(db)
 
 	// service
 	authSvc := service.NewAuthService(k, g, n, emailM)
@@ -80,7 +81,7 @@ func main() {
 	// usecase
 	authUseCase := usecase.NewAuthUseCase(tokenModule, userRepo, authSvc, authStore, c)
 	userUsecase := usecase.NewUserUseCase(userRepo)
-	academyUsecase := usecase.NewAcademyUsecase(academyRepo, academySvc, userRepo)
+	academyUsecase := usecase.NewAcademyUsecase(academyRepo, academySvc, userRepo, areaRepo)
 	uploadUsecase := usecase.NewUploadUsecase(imageRepo, s3)
 
 	// middleware

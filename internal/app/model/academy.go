@@ -43,29 +43,10 @@ func (Academy) Fields() []ent.Field {
 			NotEmpty().
 			Comment("전체 주소"),
 
-		field.String("addressSigun").
-			NotEmpty().
-			Comment("시 or 군"),
-
-		field.String("addressGu").
-			NotEmpty().
-			Comment("구"),
-
-		field.String("addressDong").
-			NotEmpty().
-			Comment("동"),
-
 		field.String("addressDetail").
 			Optional().
+			Nillable().
 			Comment("상세주소"),
-
-		field.String("address_x").
-			NotEmpty().
-			Comment("x좌표"),
-
-		field.String("address_y").
-			NotEmpty().
-			Comment("y좌표"),
 	}
 }
 
@@ -77,6 +58,10 @@ func (Academy) Mixin() []ent.Mixin {
 
 func (Academy) Edges() []ent.Edge {
 	return []ent.Edge{
+		edge.From("sigungu", AreaSiGungu.Type).
+			Ref("academy").
+			Unique(),
+
 		edge.To("recruitment", Recruitment.Type),
 
 		edge.From("user", User.Type).

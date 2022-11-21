@@ -8,6 +8,8 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
+	request "onthemat/internal/app/transport/request"
+
 	transport "onthemat/internal/app/transport"
 
 	utils "onthemat/internal/app/utils"
@@ -56,11 +58,11 @@ func (_m *AcademyUsecase) Get(ctx context.Context, userId int) (*ent.Academy, er
 }
 
 // List provides a mock function with given fields: ctx, a
-func (_m *AcademyUsecase) List(ctx context.Context, a *transport.AcademyListQueries) ([]*ent.Academy, *utils.PagenationInfo, error) {
+func (_m *AcademyUsecase) List(ctx context.Context, a *request.AcademyListQueries) ([]*ent.Academy, *utils.PagenationInfo, error) {
 	ret := _m.Called(ctx, a)
 
 	var r0 []*ent.Academy
-	if rf, ok := ret.Get(0).(func(context.Context, *transport.AcademyListQueries) []*ent.Academy); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *request.AcademyListQueries) []*ent.Academy); ok {
 		r0 = rf(ctx, a)
 	} else {
 		if ret.Get(0) != nil {
@@ -69,7 +71,7 @@ func (_m *AcademyUsecase) List(ctx context.Context, a *transport.AcademyListQuer
 	}
 
 	var r1 *utils.PagenationInfo
-	if rf, ok := ret.Get(1).(func(context.Context, *transport.AcademyListQueries) *utils.PagenationInfo); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *request.AcademyListQueries) *utils.PagenationInfo); ok {
 		r1 = rf(ctx, a)
 	} else {
 		if ret.Get(1) != nil {
@@ -78,7 +80,7 @@ func (_m *AcademyUsecase) List(ctx context.Context, a *transport.AcademyListQuer
 	}
 
 	var r2 error
-	if rf, ok := ret.Get(2).(func(context.Context, *transport.AcademyListQueries) error); ok {
+	if rf, ok := ret.Get(2).(func(context.Context, *request.AcademyListQueries) error); ok {
 		r2 = rf(ctx, a)
 	} else {
 		r2 = ret.Error(2)

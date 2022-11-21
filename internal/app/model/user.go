@@ -113,9 +113,10 @@ func (User) Edges() []ent.Edge {
 				OnDelete: entsql.Cascade,
 			}),
 
+		edge.To("yoga_raw", YogaRaw.Type),
+
 		// 다루는 요가
-		edge.To("userYoga", UserYoga.Type).
-			StorageKey(edge.Column("user_id")),
+		edge.To("yoga", Yoga.Type),
 
 		edge.To("Teacher", Teacher.Type).
 			StorageKey(edge.Column("id")).

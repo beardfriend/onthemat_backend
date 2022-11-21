@@ -42,5 +42,7 @@ func (AreaSiGungu) Edges() []ent.Edge {
 		edge.From("sido", AreaSiDo.Type).
 			Ref("sigungu").
 			Unique(),
+
+		edge.To("academy", Academy.Type),
 	}
 }

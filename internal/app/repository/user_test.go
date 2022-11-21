@@ -21,6 +21,7 @@ type UserRepositoryTestSuite struct {
 	config   *config.Config
 	client   *ent.Client
 	userRepo UserRepository
+	yogaRepo YogaRepository
 	ctx      context.Context
 	// Data
 	testUpdateData struct {
@@ -50,6 +51,11 @@ type UserRepositoryTestSuite struct {
 		nickname     string
 	}
 
+	testAddYogaData struct {
+		id    int
+		email string
+	}
+
 	// Flag For BeforeRun
 	createSocialKey bool
 }
@@ -69,6 +75,7 @@ func (ts *UserRepositoryTestSuite) SetupSuite() {
 	ts.client = infrastructure.NewPostgresDB(ts.config)
 
 	// 모듈 연결
+	ts.yogaRepo = NewYogaRepository(ts.client)
 	ts.userRepo = NewUserRepository(ts.client)
 }
 
@@ -157,11 +164,18 @@ func (ts *UserRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			})
 			ts.NoError(err)
 			ts.testGetByEmailPassword[1].id = user2.ID
+
+		case "TestAddYoga":
+			ts.testAddYogaData.email = "asd@gmail.com"
+			user, err := ts.userRepo.Create(ts.ctx, &ent.User{
+				Email: &ts.testFindByEmailData.email,
+			})
+			ts.NoError(err)
+
+			ts.testAddYogaData.id = user.ID
 		}
 	}
 }
-
-// ------------------- Test Case  -------------------
 
 func (ts *UserRepositoryTestSuite) TestCreate() {
 	ts.Run("ID만 존재하는 경우", func() {
@@ -337,6 +351,36 @@ func (ts *UserRepositoryTestSuite) TestGetByEmaillPassword() {
 			ts.Equal(ent.IsNotFound(err), true)
 		})
 	})
+}
+
+func (ts *UserRepositoryTestSuite) TestAddYoga() {
+	ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+		Category:    "아쉬탕가",
+		CategoryEng: "Ashtanga",
+		Description: "동적인 요가",
+	})
+
+	ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
+		NameKor: "아쉬탕가 베이직",
+		Edges: ent.YogaEdges{
+			YogaGroup: &ent.YogaGroup{
+				ID: 1,
+			},
+		},
+	})
+
+	ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
+		NameKor: "아쉬탕가 레드",
+		Edges: ent.YogaEdges{
+			YogaGroup: &ent.YogaGroup{
+				ID: 1,
+			},
+		},
+	})
+	yogas, _ := ts.client.Yoga.Query().All(ts.ctx)
+	err := ts.userRepo.AddYoga(ts.ctx, ts.testAddYogaData.id, yogas)
+
+	ts.NoError(err)
 }
 
 func TestUserRepoTestSuite(t *testing.T) {

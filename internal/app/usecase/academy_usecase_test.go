@@ -12,6 +12,7 @@ import (
 	"onthemat/internal/app/model"
 	"onthemat/internal/app/service"
 	"onthemat/internal/app/transport"
+	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/usecase"
 	"onthemat/pkg/ent"
 
@@ -25,6 +26,7 @@ type AcademyUCTestSuite struct {
 	mockAcademyRepo *mocks.AcademyRepository
 	mockAcademySvc  *mocks.AcademyService
 	mockUserRepo    *mocks.UserRepository
+	mockAreaRepo    *mocks.AreaRepository
 }
 
 // 모든 테스트 시작 전 1회
@@ -32,8 +34,9 @@ func (ts *AcademyUCTestSuite) SetupSuite() {
 	ts.mockAcademyRepo = new(mocks.AcademyRepository)
 	ts.mockAcademySvc = new(mocks.AcademyService)
 	ts.mockUserRepo = new(mocks.UserRepository)
+	ts.mockAreaRepo = new(mocks.AreaRepository)
 
-	ts.academyUC = usecase.NewAcademyUsecase(ts.mockAcademyRepo, ts.mockAcademySvc, ts.mockUserRepo)
+	ts.academyUC = usecase.NewAcademyUsecase(ts.mockAcademyRepo, ts.mockAcademySvc, ts.mockUserRepo, ts.mockAreaRepo)
 }
 
 // ------------------- Test Case -------------------
@@ -48,6 +51,8 @@ func (ts *AcademyUCTestSuite) TestCreate() {
 			Return(&ent.User{
 				Type: nil,
 			}, nil).Once()
+
+		ts.mockAreaRepo.On("GetSigunGu", mock.Anything, mock.Anything).Return(&ent.AreaSiGungu{}, nil)
 
 		ts.mockAcademyRepo.On("Create", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil).Once()
@@ -80,10 +85,14 @@ func (ts *AcademyUCTestSuite) TestCreate() {
 		errorStruct := err.(common.HttpError)
 		ts.Equal(http.StatusConflict, errorStruct.ErrHttpCode)
 	})
+
+	ts.Run("시군구 없을 때", func() {
+	})
 }
 
 func (ts *AcademyUCTestSuite) TestGet() {
 	ts.Run("성공", func() {
+		ts.mockAreaRepo.On("GetSigunGu", mock.Anything, mock.Anything).Return(&ent.AreaSiGungu{}, nil)
 		ts.mockAcademyRepo.On("Get", mock.Anything, mock.Anything).
 			Return(&ent.Academy{}, nil).Once()
 
@@ -103,6 +112,7 @@ func (ts *AcademyUCTestSuite) TestGet() {
 
 func (ts *AcademyUCTestSuite) TestUpdate() {
 	ts.Run("성공", func() {
+		ts.mockAreaRepo.On("GetSigunGu", mock.Anything, mock.Anything).Return(&ent.AreaSiGungu{}, nil)
 		ts.mockAcademyRepo.On("Update", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil).Once()
 
@@ -118,6 +128,8 @@ func (ts *AcademyUCTestSuite) TestUpdate() {
 		errorStruct := err.(common.HttpError)
 		ts.Equal(http.StatusNotFound, errorStruct.ErrHttpCode)
 	})
+	ts.Run("NotFound 시군구", func() {
+	})
 }
 
 func (ts *AcademyUCTestSuite) TestList() {
@@ -128,7 +140,7 @@ func (ts *AcademyUCTestSuite) TestList() {
 	ts.mockAcademyRepo.On("List", mock.Anything, mock.Anything, mock.Anything).
 		Return(academies, nil).Once()
 
-	_, p, e := ts.academyUC.List(context.Background(), &transport.AcademyListQueries{
+	_, p, e := ts.academyUC.List(context.Background(), &request.AcademyListQueries{
 		PageNo:   1,
 		PageSize: 10,
 	})

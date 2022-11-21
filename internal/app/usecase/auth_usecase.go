@@ -100,7 +100,8 @@ func (a *authUseCase) Login(ctx context.Context, body *transport.LoginBody) (res
 	}
 
 	userType := ""
-	if user.Type == &model.AcademyType || user.Type == &model.TeacherType {
+
+	if user.Type != nil {
 		userType = *user.Type.ToString()
 	}
 
@@ -199,8 +200,8 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialTy
 	}
 
 	userType := ""
-	if checkedUser.Type == &model.AcademyType || checkedUser.Type == &model.TeacherType {
-		userType = *checkedUser.Type.ToString()
+	if checkedUser.Type != nil {
+		userType = *user.Type.ToString()
 	}
 
 	// 토큰 발행

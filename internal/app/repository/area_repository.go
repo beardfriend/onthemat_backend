@@ -4,11 +4,13 @@ import (
 	"context"
 
 	"onthemat/pkg/ent"
+	"onthemat/pkg/ent/areasigungu"
 	"onthemat/pkg/entx"
 )
 
 type AreaRepository interface {
 	Create(ctx context.Context, d *ent.AreaSiDo, sigungu []*ent.AreaSiGungu) error
+	GetSigunGu(ctx context.Context, name string) (*ent.AreaSiGungu, error)
 }
 
 type areaRepository struct {
@@ -40,7 +42,13 @@ func (repo *areaRepository) Create(ctx context.Context, d *ent.AreaSiDo, sigungu
 		return repo.db.AreaSiDo.Create().
 			SetName(d.Name).
 			SetAdmCode(d.AdmCode).
-			SetVersion(d.Version).AddSigungus(si...).
+			SetVersion(d.Version).AddSigungu(si...).
 			Exec(ctx)
 	})
+}
+
+func (repo *areaRepository) GetSigunGu(ctx context.Context, name string) (*ent.AreaSiGungu, error) {
+	return repo.db.AreaSiGungu.Query().
+		Where(areasigungu.NameEQ(name)).
+		Only(ctx)
 }

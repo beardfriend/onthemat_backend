@@ -6,6 +6,8 @@ import (
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/delivery/middlewares"
 	"onthemat/internal/app/transport"
+	"onthemat/internal/app/transport/request"
+	"onthemat/internal/app/transport/response"
 	"onthemat/internal/app/usecase"
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/validatorx"
@@ -323,12 +325,12 @@ func (h *academyHandler) Detail(c *fiber.Ctx) error {
 		return utils.NewError(c, err)
 	}
 
-	response := transport.NewAcademyDetailResponse(academy)
+	resp := response.NewAcademyDetailResponse(academy)
 
 	return c.Status(http.StatusOK).JSON(ex.ResponseWithData{
 		Code:    http.StatusOK,
 		Message: "",
-		Result:  response,
+		Result:  resp,
 	})
 }
 
@@ -486,10 +488,11 @@ HTTP/1.1 500 Internal Server Error
     "details": null
 }
 */
+
 func (h *academyHandler) List(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	reqQueries := transport.NewAcademyListQueries()
+	reqQueries := request.NewAcademyListQueries()
 
 	if err := c.QueryParser(reqQueries); err != nil {
 		return c.Status(http.StatusBadRequest).
@@ -501,12 +504,12 @@ func (h *academyHandler) List(c *fiber.Ctx) error {
 		return utils.NewError(c, err)
 	}
 
-	response := transport.NewAcademyListResponse(academies)
+	resp := response.NewAcademyListResponse(academies)
 
 	return c.Status(http.StatusOK).JSON(ex.ResponseWithPagination{
 		Code:       http.StatusOK,
 		Message:    "",
-		Result:     response,
+		Result:     resp,
 		Pagination: pagination,
 	})
 }

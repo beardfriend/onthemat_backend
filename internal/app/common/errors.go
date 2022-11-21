@@ -43,6 +43,7 @@ const (
 	ErrUserNotFound      = 5001
 	ErrUserEmailNotFound = 5002
 	ErrAcademyNotFound   = 5003
+	ErrAreaNotFound      = 5004
 
 	// 6000 ~ 401 Authentication UnAuthorization
 	ErrUserEmailUnauthorization = 6001
@@ -108,6 +109,8 @@ func ErrorText(code int) string {
 		return "존재하지 않는 유저입니다."
 	case ErrAcademyNotFound:
 		return "존재하지 않는 학원입니다."
+	case ErrAreaNotFound:
+		return "존재하지 않는 행정구역(시군구)입니다."
 
 	// 6000 ~
 	case ErrUserEmailUnauthorization:
