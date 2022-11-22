@@ -29,6 +29,10 @@ type YogaUpdateBody struct {
 	Description *string `json:"string"`
 }
 
+type YogaGroupsDeleteBody struct {
+	Ids []int `json:"ids" validate:"required"`
+}
+
 type YogaRawCreateBody struct {
 	YogaName string `json:"name"`
 }
@@ -51,10 +55,6 @@ func NewYogaGroupListQueries() *YogaGroupListQueries {
 		SearchKey:   nil,
 		SearchValue: nil,
 	}
-}
-
-type YogaGroupDeleteQueries struct {
-	Ids []int `query:"ids"`
 }
 
 // ------------------- Params -------------------

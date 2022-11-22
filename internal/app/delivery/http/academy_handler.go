@@ -21,7 +21,7 @@ type academyHandler struct {
 }
 
 func NewAcademyHandler(
-	middleware *middlewares.MiddleWare,
+	middleware middlewares.MiddleWare,
 	academyUsecase usecase.AcademyUsecase,
 	validator validatorx.Validator,
 	router fiber.Router,

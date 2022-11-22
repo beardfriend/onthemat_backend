@@ -10,7 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (m *MiddleWare) Auth(c *fiber.Ctx) error {
+func (m *middleWare) Auth(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	authorizationHeader := c.Request().Header.Peek("Authorization")
@@ -40,7 +40,19 @@ func (m *MiddleWare) Auth(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func (m *MiddleWare) OnlyAcademy(c *fiber.Ctx) error {
+func (m *middleWare) OnlySuperAdmin(c *fiber.Ctx) error {
+	userType := c.Context().UserValue("user_type").(string)
+
+	if userType != "superAdmin" {
+		return c.
+			Status(http.StatusUnauthorized).
+			JSON(ex.NewHttpError(ex.ErrOnlySuperAdmin, nil))
+	}
+
+	return c.Next()
+}
+
+func (m *middleWare) OnlyAcademy(c *fiber.Ctx) error {
 	userType := c.Context().UserValue("user_type").(string)
 
 	if userType != "academy" {
@@ -52,7 +64,7 @@ func (m *MiddleWare) OnlyAcademy(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func (m *MiddleWare) OnlyTeacher(c *fiber.Ctx) error {
+func (m *middleWare) OnlyTeacher(c *fiber.Ctx) error {
 	userType := c.Context().UserValue("user_type").(string)
 
 	if userType != "teacher" {

@@ -3,15 +3,24 @@ package middlewares
 import (
 	"onthemat/internal/app/service"
 	"onthemat/internal/app/service/token"
+
+	"github.com/gofiber/fiber/v2"
 )
 
-type MiddleWare struct {
+type MiddleWare interface {
+	Auth(c *fiber.Ctx) error
+	OnlyAcademy(c *fiber.Ctx) error
+	OnlyTeacher(c *fiber.Ctx) error
+	OnlySuperAdmin(c *fiber.Ctx) error
+}
+
+type middleWare struct {
 	authSvc  service.AuthService
 	tokensvc token.TokenService
 }
 
-func NewMiddelwWare(authSvc service.AuthService, tokensvc token.TokenService) *MiddleWare {
-	return &MiddleWare{
+func NewMiddelwWare(authSvc service.AuthService, tokensvc token.TokenService) MiddleWare {
+	return &middleWare{
 		authSvc:  authSvc,
 		tokensvc: tokensvc,
 	}

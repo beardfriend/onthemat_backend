@@ -9,11 +9,13 @@ type (
 var (
 	TeacherString    string     = "teacher"
 	AcademyString    string     = "academy"
+	SuperAdminString string     = "superAdmin"
 	KakaoString      string     = "kakao"
 	GoogleString     string     = "google"
 	NaverString      string     = "naver"
 	TeacherType      UserType   = 1
 	AcademyType      UserType   = 2
+	SuperAdminType   UserType   = 11
 	KakaoSocialType  SocialType = 1
 	GoogleSocialType SocialType = 2
 	NaverSocialType  SocialType = 3
@@ -40,12 +42,15 @@ func (t *UserType) ToString() *string {
 	if t == nil {
 		return nil
 	}
-
 	var result *string
-	if *t == TeacherType {
+
+	switch *t {
+	case TeacherType:
 		result = &TeacherString
-	} else if *t == AcademyType {
+	case AcademyType:
 		result = &AcademyString
+	case SuperAdminType:
+		result = &SuperAdminString
 	}
 
 	return result
@@ -66,6 +71,9 @@ func (t *UserType) ToUserType(v *string) *UserType {
 		academy := AcademyType
 		result = &academy
 
+	} else if v == &SuperAdminString {
+		superAdmin := SuperAdminType
+		result = &superAdmin
 	}
 
 	return result

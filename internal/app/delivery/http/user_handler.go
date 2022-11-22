@@ -16,11 +16,11 @@ import (
 type userHandler struct {
 	UserUseCase usecase.UserUseCase
 	Router      fiber.Router
-	Middleware  *middlewares.MiddleWare
+	Middleware  middlewares.MiddleWare
 }
 
 func NewUserHandler(
-	middleware *middlewares.MiddleWare,
+	middleware middlewares.MiddleWare,
 	userUseCase usecase.UserUseCase,
 	router fiber.Router,
 ) {
@@ -31,6 +31,7 @@ func NewUserHandler(
 	g := router.Group("/user")
 	// 유저 정보 조회
 	g.Get("/me", middleware.Auth, handler.GetMe)
+	g.Post("/yoga", middleware.Auth, handler.AddYoga)
 }
 
 // 유저 정보 조회

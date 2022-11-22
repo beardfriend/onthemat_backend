@@ -16,10 +16,11 @@ import (
 type uploadHandler struct {
 	uploadUseCase usecase.UploadUsecase
 	Validator     validatorx.Validator
+	middleware    middlewares.MiddleWare
 }
 
 func NewUploadHandler(
-	middleware *middlewares.MiddleWare,
+	middleware middlewares.MiddleWare,
 	uploadUseCase usecase.UploadUsecase,
 	validator validatorx.Validator,
 	router fiber.Router,
@@ -27,11 +28,12 @@ func NewUploadHandler(
 	handler := &uploadHandler{
 		Validator:     validator,
 		uploadUseCase: uploadUseCase,
+		middleware:    middleware,
 	}
 
 	g := router.Group("/upload")
 	// 이미지 업로드
-	g.Post("/:purpose", handler.Upload)
+	g.Post("/:purpose", middleware.Auth, handler.Upload)
 }
 
 // 이미지 업로드

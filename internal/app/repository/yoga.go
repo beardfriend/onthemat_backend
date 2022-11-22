@@ -146,12 +146,16 @@ func (repo *yogaRepository) CreateRaw(ctx context.Context, data *ent.YogaRaw) er
 }
 
 func (repo *yogaRepository) DeleteRaw(ctx context.Context, raw_yoga_id int, userId int) (int, error) {
-	return repo.db.YogaRaw.Delete().Where(
-		yogaraw.IDEQ(raw_yoga_id),
-		predicate.YogaRaw(user.IDEQ(userId)),
-	).Exec(ctx)
+	return repo.db.YogaRaw.Delete().
+		Where(
+			yogaraw.IDEQ(raw_yoga_id),
+			predicate.YogaRaw(user.IDEQ(userId)),
+		).Exec(ctx)
 }
 
 func (repo *yogaRepository) RawListByUserId(ctx context.Context, userId int) ([]*ent.YogaRaw, error) {
-	return repo.db.Debug().YogaRaw.Query().Where(predicate.YogaRaw(user.IDEQ(userId))).All(ctx)
+	return repo.db.YogaRaw.Query().
+		Where(
+			predicate.YogaRaw(user.IDEQ(userId)),
+		).All(ctx)
 }

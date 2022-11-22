@@ -52,8 +52,9 @@ const (
 	ErrTokenExpired             = 6002
 	ErrEmailForVerifyExpired    = 6003
 	// 7000 ~ Forbidden
-	ErrOnlyAcademy = 6004
-	ErrOnlyTeacher = 6005
+	ErrOnlyAcademy    = 6004
+	ErrOnlyTeacher    = 6005
+	ErrOnlySuperAdmin = 6006
 )
 
 func ErrorText(code int) string {
@@ -131,9 +132,10 @@ func ErrorText(code int) string {
 	// 7000 ~ Forbidden
 	case ErrOnlyAcademy:
 		return "학원으로 등록된 회원만 접근할 수 있습니다."
-
 	case ErrOnlyTeacher:
 		return "선생님으로 등록된 회원만 접근할 수 있습니다."
+	case ErrOnlySuperAdmin:
+		return "슈퍼 관리자로 등록된 회원만 접근할 수 있습니다."
 
 	default:
 		return "일시적인 에러가 발생했습니다."
