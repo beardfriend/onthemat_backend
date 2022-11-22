@@ -21,7 +21,7 @@ type UserRepository interface {
 	FindByEmail(ctx context.Context, email string) (bool, error)
 	Get(ctx context.Context, id int) (*ent.User, error)
 
-	AddYoga(ctx context.Context, id int, yoga []*ent.Yoga) error
+	AddYoga(ctx context.Context, id int, yogaIds []int) error
 }
 
 type userRepository struct {
@@ -126,6 +126,6 @@ func (repo *userRepository) FindByEmail(ctx context.Context, email string) (bool
 	).Exist(ctx)
 }
 
-func (repo *userRepository) AddYoga(ctx context.Context, id int, yoga []*ent.Yoga) error {
-	return repo.db.User.Update().Where(user.IDEQ(id)).AddYoga(yoga...).Exec(ctx)
+func (repo *userRepository) AddYoga(ctx context.Context, id int, yogaIds []int) error {
+	return repo.db.User.Update().Where(user.IDEQ(id)).AddYogaIDs(yogaIds...).Exec(ctx)
 }

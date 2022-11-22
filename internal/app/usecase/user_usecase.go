@@ -10,6 +10,7 @@ import (
 
 type UserUseCase interface {
 	GetMe(ctx context.Context, id int) (*ent.User, error)
+	AddYoga(ctx context.Context, id int, yogaIds []int) (err error)
 }
 
 type userUseCase struct {
@@ -28,5 +29,18 @@ func (u *userUseCase) GetMe(ctx context.Context, id int) (result *ent.User, err 
 		err = ex.NewNotFoundError(ex.ErrUserNotFound, nil)
 		return
 	}
+	return
+}
+
+func (u *userUseCase) AddYoga(ctx context.Context, id int, yogaIds []int) (err error) {
+	err = u.userRepo.AddYoga(ctx, id, yogaIds)
+	if err != nil {
+		if ent.IsConstraintError(err) {
+			err = ex.NewBadRequestError(ex.ErrYogaIdsInvliad, nil)
+			return
+		}
+		return
+	}
+
 	return
 }

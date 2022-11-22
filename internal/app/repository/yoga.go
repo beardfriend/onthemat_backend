@@ -2,17 +2,30 @@ package repository
 
 import (
 	"context"
+	"errors"
 
+	"onthemat/internal/app/common"
+	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
+	"onthemat/pkg/ent/predicate"
+	"onthemat/pkg/ent/user"
 	"onthemat/pkg/ent/yogagroup"
+	"onthemat/pkg/ent/yogaraw"
 )
 
 type YogaRepository interface {
 	CreateGroup(ctx context.Context, data *ent.YogaGroup) error
 	UpdateGroup(ctx context.Context, data *ent.YogaGroup) error
 	DeleteGroups(ctx context.Context, ids []int) (int, error)
+	GroupTotal(ctx context.Context, p *common.TotalParams) (count int, err error)
+	GroupList(ctx context.Context, pgModule *utils.Pagination, p *common.ListParams) (result []*ent.YogaGroup, err error)
 	Create(ctx context.Context, data *ent.Yoga) error
+	Update(ctx context.Context, data *ent.Yoga) error
+	Delete(ctx context.Context, id int) error
+	List(ctx context.Context, groupdId int) ([]*ent.Yoga, error)
 	CreateRaw(ctx context.Context, data *ent.YogaRaw) error
+	DeleteRaw(ctx context.Context, raw_yoga_id int, userId int) (int, error)
+	RawListByUserId(ctx context.Context, userId int) ([]*ent.YogaRaw, error)
 }
 
 type yogaRepository struct {
@@ -43,6 +56,52 @@ func (repo *yogaRepository) UpdateGroup(ctx context.Context, data *ent.YogaGroup
 		Exec(ctx)
 }
 
+func (repo *yogaRepository) GroupTotal(ctx context.Context, p *common.TotalParams) (count int, err error) {
+	clause := repo.db.YogaGroup.Query()
+	clause, err = repo.groupConditionQuery(p, clause)
+	if err != nil {
+		return
+	}
+	count, err = clause.Count(ctx)
+	return
+}
+
+func (repo *yogaRepository) GroupList(ctx context.Context, pgModule *utils.Pagination, p *common.ListParams) (result []*ent.YogaGroup, err error) {
+	clause := repo.db.YogaGroup.Query().
+		Limit(pgModule.GetLimit()).
+		Offset(pgModule.GetOffset())
+
+	clause, err = repo.groupConditionQuery(&common.TotalParams{
+		SearchKey:   p.SearchKey,
+		SearchValue: p.SearchValue,
+	}, clause)
+	if err != nil {
+		return
+	}
+
+	result, err = clause.All(ctx)
+	return
+}
+
+func (repo *yogaRepository) groupConditionQuery(p *common.TotalParams, clause *ent.YogaGroupQuery) (*ent.YogaGroupQuery, error) {
+	useableSearchCol := map[string]func(v string) predicate.YogaGroup{
+		"NAME": yogagroup.CategoryContains,
+	}
+
+	if p.SearchKey != nil && p.SearchValue != nil {
+
+		whereFunc := useableSearchCol[*p.SearchKey]
+
+		if whereFunc == nil {
+			return nil, errors.New(ErrSearchColumnInvalid)
+		}
+
+		clause.Where(whereFunc(*p.SearchValue))
+	}
+
+	return clause, nil
+}
+
 func (repo *yogaRepository) DeleteGroups(ctx context.Context, ids []int) (int, error) {
 	return repo.db.YogaGroup.Delete().Where(yogagroup.IDIn(ids...)).Exec(ctx)
 }
@@ -53,6 +112,7 @@ func (repo *yogaRepository) Create(ctx context.Context, data *ent.Yoga) error {
 	return repo.db.Yoga.Create().
 		SetNameKor(data.NameKor).
 		SetNillableNameEng(data.NameEng).
+		SetNillableLevel(data.Level).
 		SetNillableDescription(data.Description).
 		SetYogaGroupID(data.Edges.YogaGroup.ID).
 		Exec(ctx)
@@ -67,14 +127,12 @@ func (repo *yogaRepository) Update(ctx context.Context, data *ent.Yoga) error {
 		Exec(ctx)
 }
 
-func (repo *yogaRepository) UpdateYogaGroupID(ctx context.Context, id int, groupId int) error {
-	return repo.db.Yoga.UpdateOneID(id).
-		SetYogaGroupID(groupId).
-		Exec(ctx)
-}
-
 func (repo *yogaRepository) Delete(ctx context.Context, id int) error {
 	return repo.db.Yoga.DeleteOneID(id).Exec(ctx)
+}
+
+func (repo *yogaRepository) List(ctx context.Context, groupdId int) ([]*ent.Yoga, error) {
+	return repo.db.Yoga.Query().Where(predicate.Yoga(yogagroup.IDEQ(groupdId))).All(ctx)
 }
 
 // ------------------- Yoga_raw -------------------
@@ -85,4 +143,15 @@ func (repo *yogaRepository) CreateRaw(ctx context.Context, data *ent.YogaRaw) er
 		SetIsMigrated(false).
 		SetUserID(data.Edges.User.ID).
 		Exec(ctx)
+}
+
+func (repo *yogaRepository) DeleteRaw(ctx context.Context, raw_yoga_id int, userId int) (int, error) {
+	return repo.db.YogaRaw.Delete().Where(
+		yogaraw.IDEQ(raw_yoga_id),
+		predicate.YogaRaw(user.IDEQ(userId)),
+	).Exec(ctx)
+}
+
+func (repo *yogaRepository) RawListByUserId(ctx context.Context, userId int) ([]*ent.YogaRaw, error) {
+	return repo.db.Debug().YogaRaw.Query().Where(predicate.YogaRaw(user.IDEQ(userId))).All(ctx)
 }

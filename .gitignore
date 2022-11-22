@@ -6,3 +6,5 @@ pkg/ent
 .env.dev
 .env.test
 apidocs
+internal/app/mocks
+pkg/mocks

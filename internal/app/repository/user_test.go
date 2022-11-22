@@ -354,33 +354,50 @@ func (ts *UserRepositoryTestSuite) TestGetByEmaillPassword() {
 }
 
 func (ts *UserRepositoryTestSuite) TestAddYoga() {
-	ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
-		Category:    "아쉬탕가",
-		CategoryEng: "Ashtanga",
-		Description: "동적인 요가",
-	})
+	ts.Run("success", func() {
+		ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+			Category:    "아쉬탕가",
+			CategoryEng: "Ashtanga",
+			Description: "동적인 요가",
+		})
 
-	ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
-		NameKor: "아쉬탕가 베이직",
-		Edges: ent.YogaEdges{
-			YogaGroup: &ent.YogaGroup{
-				ID: 1,
+		ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
+			NameKor: "아쉬탕가 베이직",
+			Edges: ent.YogaEdges{
+				YogaGroup: &ent.YogaGroup{
+					ID: 1,
+				},
 			},
-		},
-	})
+		})
 
-	ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
-		NameKor: "아쉬탕가 레드",
-		Edges: ent.YogaEdges{
-			YogaGroup: &ent.YogaGroup{
-				ID: 1,
+		ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
+			NameKor: "아쉬탕가 레드",
+			Edges: ent.YogaEdges{
+				YogaGroup: &ent.YogaGroup{
+					ID: 1,
+				},
 			},
-		},
-	})
-	yogas, _ := ts.client.Yoga.Query().All(ts.ctx)
-	err := ts.userRepo.AddYoga(ts.ctx, ts.testAddYogaData.id, yogas)
+		})
 
-	ts.NoError(err)
+		ids, err := ts.client.Yoga.Query().IDs(ts.ctx)
+		ts.NoError(err)
+		err = ts.userRepo.AddYoga(ts.ctx, ts.testAddYogaData.id, ids)
+		ts.NoError(err)
+	})
+
+	ts.Run("NoUserID", func() {
+		ids, err := ts.client.Yoga.Query().IDs(ts.ctx)
+		ts.NoError(err)
+		// user ID가 없어도 에러가 안 남.
+		err = ts.userRepo.AddYoga(ts.ctx, 1000, ids)
+		ts.NoError(err)
+	})
+
+	ts.Run("NoUserID", func() {
+		ids := []int{10, 20}
+		err := ts.userRepo.AddYoga(ts.ctx, 1, ids)
+		ts.Equal(true, ent.IsConstraintError(err))
+	})
 }
 
 func TestUserRepoTestSuite(t *testing.T) {

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -19,7 +20,17 @@ type YogaRepositoryTestSuite struct {
 	config   *config.Config
 	client   *ent.Client
 	yogaRepo YogaRepository
+	userRepo UserRepository
 	ctx      context.Context
+
+	testGetYogaRawData struct {
+		userId int
+	}
+
+	testDeleteYogaRawData struct {
+		userId int
+		yogaId int
+	}
 }
 
 // 모든 테스트 시작 전 1회
@@ -37,6 +48,7 @@ func (ts *YogaRepositoryTestSuite) SetupSuite() {
 
 	// 모듈 연결
 	ts.yogaRepo = NewYogaRepository(ts.client)
+	ts.userRepo = NewUserRepository(ts.client)
 }
 
 // 모든 테스트 종료 후 1회
@@ -51,8 +63,43 @@ func (ts *YogaRepositoryTestSuite) TearDownTest() {
 	utils.RepoTestTruncateTable(context.Background(), ts.client)
 }
 
-// func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
-// }
+func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
+	switch testName {
+	case "TestGetYogaRaw":
+		u, err := ts.userRepo.Create(ts.ctx, &ent.User{})
+		ts.NoError(err)
+		ts.testGetYogaRawData.userId = u.ID
+
+		err = ts.yogaRepo.CreateRaw(ts.ctx, &ent.YogaRaw{
+			Name: "아쉬탕가",
+			Edges: ent.YogaRawEdges{
+				User: &ent.User{
+					ID: ts.testGetYogaRawData.userId,
+				},
+			},
+		})
+		ts.NoError(err)
+	case "TestDeleteYogaRaw":
+		u, err := ts.userRepo.Create(ts.ctx, &ent.User{})
+		ts.NoError(err)
+		ts.testDeleteYogaRawData.userId = u.ID
+
+		err = ts.yogaRepo.CreateRaw(ts.ctx, &ent.YogaRaw{
+			Name: "아쉬탕가",
+			Edges: ent.YogaRawEdges{
+				User: &ent.User{
+					ID: ts.testDeleteYogaRawData.userId,
+				},
+			},
+		})
+		ts.NoError(err)
+
+		data, err := ts.yogaRepo.RawListByUserId(ts.ctx, ts.testDeleteYogaRawData.userId)
+		ts.NoError(err)
+		ts.testDeleteYogaRawData.yogaId = data[0].ID
+
+	}
+}
 
 func (ts *YogaRepositoryTestSuite) TestCreate() {
 	ts.Run("존재하지 않는 키 입력", func() {
@@ -68,6 +115,23 @@ func (ts *YogaRepositoryTestSuite) TestCreate() {
 			},
 		})
 		ts.Equal(ent.IsConstraintError(err), true)
+	})
+}
+
+func (ts *YogaRepositoryTestSuite) TestDeleteYogaRaw() {
+	ts.Run("성공", func() {
+		rowAffected, err := ts.yogaRepo.DeleteRaw(ts.ctx, ts.testDeleteYogaRawData.yogaId, ts.testDeleteYogaRawData.userId)
+		ts.NoError(err)
+		ts.Equal(1, rowAffected)
+	})
+}
+
+func (ts *YogaRepositoryTestSuite) TestGetYogaRaw() {
+	ts.Run("성공", func() {
+		data, err := ts.yogaRepo.RawListByUserId(ts.ctx, ts.testGetYogaRawData.userId)
+		fmt.Println(data)
+		ts.Equal(1, len(data))
+		ts.NoError(err)
 	})
 }
 

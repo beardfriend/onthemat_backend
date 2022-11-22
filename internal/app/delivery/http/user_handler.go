@@ -1,9 +1,12 @@
 package http
 
 import (
+	"net/http"
+
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/delivery/middlewares"
 	"onthemat/internal/app/transport"
+	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/usecase"
 	"onthemat/internal/app/utils"
 
@@ -73,9 +76,31 @@ func (h *userHandler) GetMe(c *fiber.Ctx) error {
 	}
 
 	resp := transport.NewUserMeResponse(u)
-	return c.JSON(ex.ResponseWithData{
+	return c.Status(http.StatusOK).JSON(ex.ResponseWithData{
 		Code:    200,
 		Message: "",
 		Result:  resp,
+	})
+}
+
+func (h *userHandler) AddYoga(c *fiber.Ctx) error {
+	ctx := c.Context()
+	userId := c.Context().UserValue("user_id").(int)
+
+	reqBody := new(request.AddYogaBody)
+
+	if err := c.BodyParser(reqBody); err != nil {
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
+	}
+
+	err := h.UserUseCase.AddYoga(ctx, userId, reqBody.Ids)
+	if err != nil {
+		return utils.NewError(c, err)
+	}
+
+	return c.Status(http.StatusCreated).JSON(ex.ResponseWithData{
+		Code:    http.StatusCreated,
+		Message: "",
 	})
 }

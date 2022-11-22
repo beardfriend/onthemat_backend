@@ -32,6 +32,7 @@ const (
 	ErrTokenInvalid                         = 3007
 	ErrBusinessCodeInvalid                  = 3008
 	ErrColumnInvalid                        = 3009
+	ErrYogaIdsInvliad                       = 3010
 
 	// 4000 ~ Conflict
 	ErrUserEmailAlreadyExist    = 4001
@@ -94,6 +95,8 @@ func ErrorText(code int) string {
 		return "유효하지 않은 사업자 번호입니다."
 	case ErrColumnInvalid:
 		return "사용할 수 없는 컬럼입니다."
+	case ErrYogaIdsInvliad:
+		return "유효하지 않은 요가 아이디가 포함되어 있습니다."
 
 	// 4000 ~ Conflict
 	case ErrUserEmailAlreadyExist:
