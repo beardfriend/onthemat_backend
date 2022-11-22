@@ -21,7 +21,8 @@ func (YogaGroup) Annotations() []schema.Annotation {
 func (YogaGroup) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("category").
-			Comment("큰 범주의 요가 이름 (한글)"),
+			Comment("큰 범주의 요가 이름 (한글)").
+			Unique(),
 
 		field.String("category_eng").
 			Comment("요가 이름 영어"),

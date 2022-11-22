@@ -38,6 +38,7 @@ const (
 	ErrUserEmailAlreadyVerfied  = 4002
 	ErrUserTypeAlreadyRegisted  = 4003
 	ErrUserEmailAlreadyRegisted = 4004
+	ErrYogaGroupAlreadyExist    = 4005
 
 	// 5000 ~ NotFound
 	ErrUserNotFound      = 5001
@@ -103,6 +104,8 @@ func ErrorText(code int) string {
 		return "이미 회원 유형이 등록됐습니다."
 	case ErrUserEmailAlreadyRegisted:
 		return "이미 회원의 이메일이 등록됐습니다."
+	case ErrYogaGroupAlreadyExist:
+		return "이미 존재하는 요가 그룹입니다."
 
 	// 5000 ~
 	case ErrUserNotFound:

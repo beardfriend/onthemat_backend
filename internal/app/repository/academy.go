@@ -95,6 +95,7 @@ func (repo *academyRepository) Total(ctx context.Context, p *common.TotalParams)
 	return
 }
 
+// TODO :페이지네이션 모듈 생성을 여기서 하지 않고 Usecase에서만 할 수 있도록
 func (repo *academyRepository) List(ctx context.Context, p *common.ListParams) (result []*ent.Academy, err error) {
 	pagination := utils.NewPagination(p.PageNo, p.PageSize)
 
