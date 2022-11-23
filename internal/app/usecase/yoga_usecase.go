@@ -24,6 +24,7 @@ type YogaUsecase interface {
 
 	CreateRaw(ctx context.Context, req *request.YogaRawCreateBody, userId int) error
 	ListRawByUserId(ctx context.Context, userId int) ([]*ent.YogaRaw, error)
+	DeleteRaw(ctx context.Context, id int, userId int) (rowAffected int, err error)
 }
 
 type yogaUseCase struct {

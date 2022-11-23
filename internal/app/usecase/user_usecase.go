@@ -12,7 +12,7 @@ import (
 )
 
 type UserUseCase interface {
-	GetMe(ctx context.Context, id int) (*ent.User, error)
+	GetMe(ctx context.Context, id int) (result *ent.User, err error)
 	AddYoga(ctx context.Context, id int, yogaIds []int) (err error)
 }
 

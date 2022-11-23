@@ -9,6 +9,7 @@ import (
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/predicate"
 	"onthemat/pkg/ent/user"
+	"onthemat/pkg/ent/yoga"
 	"onthemat/pkg/ent/yogagroup"
 	"onthemat/pkg/ent/yogaraw"
 )
@@ -119,10 +120,12 @@ func (repo *yogaRepository) Create(ctx context.Context, data *ent.Yoga) error {
 }
 
 func (repo *yogaRepository) Update(ctx context.Context, data *ent.Yoga) error {
-	return repo.db.Yoga.UpdateOneID(data.ID).
+	// 업데이트 쿼리는 전부 WHEre로바꾸기 아니면 select까지 해버림
+	return repo.db.Yoga.Update().Where(yoga.IDEQ(data.ID)).
 		SetNameKor(data.NameKor).
 		SetNillableNameEng(data.NameEng).
 		SetNillableDescription(data.Description).
+		SetNillableLevel(data.Level).
 		SetYogaGroupID(data.Edges.YogaGroup.ID).
 		Exec(ctx)
 }
@@ -132,7 +135,12 @@ func (repo *yogaRepository) Delete(ctx context.Context, id int) error {
 }
 
 func (repo *yogaRepository) List(ctx context.Context, groupdId int) ([]*ent.Yoga, error) {
-	return repo.db.Yoga.Query().Where(predicate.Yoga(yogagroup.IDEQ(groupdId))).All(ctx)
+	// join reference
+	return repo.db.YogaGroup.Query().
+		Where(yogagroup.IDEQ(groupdId)).
+		QueryYoga().
+		Order(ent.Desc(yoga.FieldID)).
+		All(ctx)
 }
 
 // ------------------- Yoga_raw -------------------
@@ -146,16 +154,22 @@ func (repo *yogaRepository) CreateRaw(ctx context.Context, data *ent.YogaRaw) er
 }
 
 func (repo *yogaRepository) DeleteRaw(ctx context.Context, raw_yoga_id int, userId int) (int, error) {
-	return repo.db.YogaRaw.Delete().
+	return repo.db.Debug().YogaRaw.Delete().
 		Where(
 			yogaraw.IDEQ(raw_yoga_id),
-			predicate.YogaRaw(user.IDEQ(userId)),
+			yogaraw.UserIDEQ(userId),
 		).Exec(ctx)
 }
 
 func (repo *yogaRepository) RawListByUserId(ctx context.Context, userId int) ([]*ent.YogaRaw, error) {
-	return repo.db.YogaRaw.Query().
+	return repo.db.User.
+		Query().
 		Where(
-			predicate.YogaRaw(user.IDEQ(userId)),
-		).All(ctx)
+			user.IDEQ(userId),
+		).
+		QueryYogaRaw().
+		Where(
+			yogaraw.IsMigratedEQ(false),
+		).
+		All(ctx)
 }

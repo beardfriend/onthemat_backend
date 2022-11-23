@@ -18,7 +18,7 @@ type YogaCreateBody struct {
 	NameKor     string  `json:"nameKor"`
 	NameEng     *string `json:"nameEng"`
 	Level       *int    `json:"level"`
-	Description *string `json:"string"`
+	Description *string `json:"description"`
 }
 
 type YogaUpdateBody struct {
@@ -26,7 +26,7 @@ type YogaUpdateBody struct {
 	NameKor     string  `json:"nameKor"`
 	NameEng     *string `json:"nameEng"`
 	Level       *int    `json:"level"`
-	Description *string `json:"string"`
+	Description *string `json:"description"`
 }
 
 type YogaGroupsDeleteBody struct {
@@ -34,7 +34,7 @@ type YogaGroupsDeleteBody struct {
 }
 
 type YogaRawCreateBody struct {
-	YogaName string `json:"name"`
+	YogaName string `json:"name" validate:"required"`
 }
 
 // ------------------- Query String -------------------
@@ -57,8 +57,24 @@ func NewYogaGroupListQueries() *YogaGroupListQueries {
 	}
 }
 
+type YogaListQuery struct {
+	GroupId int `query:"groupId"`
+}
+
+type YogaRawListQuery struct {
+	UserId int `query:"userId"`
+}
+
 // ------------------- Params -------------------
 
 type YogaUpdateParam struct {
-	Id int `json:"id"`
+	Id int `params:"id"`
+}
+
+type YogaDeleteParam struct {
+	Id int `params:"id"`
+}
+
+type YogaDeleteRawParam struct {
+	Id int `params:"id"`
 }
