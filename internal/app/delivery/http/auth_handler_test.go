@@ -1,7 +1,9 @@
 package http
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -132,6 +134,23 @@ func (ts *AuthHDTestSuite) TestKakaoCallback() {
 }
 
 func (ts *AuthHDTestSuite) TestSignUp() {
+	ts.Run("Success", func() {
+		inputData := `{
+			"email" : "asd@naver.com",
+			"password" : "password1234!",
+			"nickname" : "nicname",
+			"termAgree" : true
+		 }`
+		req := httptest.NewRequest(fiber.MethodPost, "/auth/signup", bytes.NewBufferString(inputData))
+		req.Header.Set("Content-Type", "application/json")
+		ts.mockValidator.On("ValidateStruct", mock.Anything).Return(nil).Once()
+		ts.mockAuthUseCase.On("SignUp", mock.Anything, mock.Anything).Return(nil).Once()
+		resp, _ := ts.fiber.Test(req, -1)
+
+		resps := utils.MakeRespWithDataForTest[interface{}](resp.Body)
+		fmt.Println(resps)
+	})
+
 	ts.Run("Body를 보내지 않았을 때", func() {
 		req := httptest.NewRequest(fiber.MethodPost, "/auth/signup", nil)
 		req.Header.Set("Content-Type", "application/json")

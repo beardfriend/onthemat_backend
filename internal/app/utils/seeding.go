@@ -71,3 +71,28 @@ func (t *seeding) Academies() {
 
 	fmt.Println(err)
 }
+
+func (t *seeding) YogaGroup() {
+	bulk := make([]*ent.YogaGroupCreate, 4)
+	bulk[0] = t.db.YogaGroup.Create().SetCategory("아쉬탕가").SetCategoryEng("ashtanga").SetDescription("아쉬탕가 요가입니다.")
+	bulk[1] = t.db.YogaGroup.Create().SetCategory("하타").SetCategoryEng("hatha").SetDescription("하타 요가입니다.")
+	bulk[2] = t.db.YogaGroup.Create().SetCategory("빈야사").SetCategoryEng("vinyasa").SetDescription("빈야사 요가입니다.")
+	bulk[3] = t.db.YogaGroup.Create().SetCategory("아디다스").SetCategoryEng("adidas").SetDescription("아디다스 요가입니다.")
+
+	err := t.db.YogaGroup.CreateBulk(bulk...).Exec(context.Background())
+	fmt.Println(err)
+}
+
+func (t *seeding) Yoga() {
+	bulk := make([]*ent.YogaCreate, 8)
+	bulk[0] = t.db.Yoga.Create().SetNameKor("아쉬탕가 레드").SetLevel(5).SetYogaGroupID(1)
+	bulk[1] = t.db.Yoga.Create().SetNameKor("아쉬탕가 프라이머리").SetLevel(4).SetYogaGroupID(1)
+	bulk[2] = t.db.Yoga.Create().SetNameKor("아쉬탕가 프라이머리 하프").SetLevel(3).SetYogaGroupID(1)
+	bulk[3] = t.db.Yoga.Create().SetNameKor("하타 플로우").SetLevel(3).SetYogaGroupID(2)
+	bulk[4] = t.db.Yoga.Create().SetNameKor("하타 테라피").SetLevel(2).SetYogaGroupID(2)
+	bulk[5] = t.db.Yoga.Create().SetNameKor("하타 기초").SetLevel(2).SetYogaGroupID(2)
+	bulk[6] = t.db.Yoga.Create().SetNameKor("빈야사 플로우").SetLevel(2).SetYogaGroupID(3)
+	bulk[7] = t.db.Yoga.Create().SetNameKor("빈야사 기초").SetLevel(1).SetYogaGroupID(3)
+	err := t.db.Yoga.CreateBulk(bulk...).Exec(context.Background())
+	fmt.Println(err)
+}

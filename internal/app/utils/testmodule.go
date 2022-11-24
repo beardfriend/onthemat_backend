@@ -93,6 +93,7 @@ type TestResponse[T any] struct {
 
 func MakeRespWithDataForTest[T any](body io.ReadCloser) TestResponse[T] {
 	bodyBytes, _ := io.ReadAll(body)
+	defer body.Close()
 	var result TestResponse[T]
 	json.Unmarshal(bodyBytes, &result)
 	return result
