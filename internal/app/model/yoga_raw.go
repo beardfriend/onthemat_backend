@@ -20,7 +20,9 @@ func (YogaRaw) Annotations() []schema.Annotation {
 
 func (YogaRaw) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("user_id").Optional(),
+		field.Int("academy_id").Optional(),
+
+		field.Int("teacher_id").Optional(),
 
 		field.String("name").
 			Comment("요가 이름"),
@@ -32,8 +34,15 @@ func (YogaRaw) Fields() []ent.Field {
 
 func (YogaRaw) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("user", User.Type).
-			Ref("yoga_raw").Unique().Field("user_id"),
+		edge.From("academy", Academy.Type).
+			Ref("yogaRaw").
+			Unique().
+			Field("academy_id"),
+
+		edge.From("teacher", Teacher.Type).
+			Ref("yogaRaw").
+			Unique().
+			Field("teacher_id"),
 	}
 }
 

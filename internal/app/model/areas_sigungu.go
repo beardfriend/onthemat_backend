@@ -20,6 +20,8 @@ func (AreaSiGungu) Annotations() []schema.Annotation {
 
 func (AreaSiGungu) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("area_sido_id"),
+
 		field.String("name").
 			Comment("시군구 이름"),
 
@@ -39,10 +41,14 @@ func (AreaSiGungu) Fields() []ent.Field {
 
 func (AreaSiGungu) Edges() []ent.Edge {
 	return []ent.Edge{
+		// Many To One
 		edge.From("sido", AreaSiDo.Type).
 			Ref("sigungu").
-			Unique(),
+			Required().
+			Unique().
+			Field("area_sido_id"),
 
-		edge.To("academy", Academy.Type),
+		edge.To("academy", Academy.Type).
+			Unique(),
 	}
 }

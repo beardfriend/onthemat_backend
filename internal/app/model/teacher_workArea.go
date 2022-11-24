@@ -21,7 +21,6 @@ func (TeacherWorkArea) Annotations() []schema.Annotation {
 func (TeacherWorkArea) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("teacher_id").
-			Optional().
 			Comment("foreignKey"),
 
 		field.String("location").
@@ -44,6 +43,8 @@ func (TeacherWorkArea) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("Teacher", Teacher.Type).
 			Ref("workArea").
-			Unique().Field("teacher_id"),
+			Unique().
+			Required().
+			Field("teacher_id"),
 	}
 }

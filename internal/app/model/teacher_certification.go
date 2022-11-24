@@ -21,7 +21,6 @@ func (TeacherCertification) Annotations() []schema.Annotation {
 func (TeacherCertification) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("teacher_id").
-			Optional().
 			Comment("foreignKey"),
 
 		field.String("agencyName").
@@ -52,6 +51,7 @@ func (TeacherCertification) Edges() []ent.Edge {
 		edge.From("Teacher", Teacher.Type).
 			Ref("certification").
 			Unique().
+			Required().
 			Field("teacher_id"),
 	}
 }

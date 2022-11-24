@@ -21,6 +21,8 @@ func (Teacher) Annotations() []schema.Annotation {
 
 func (Teacher) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("user_id").Comment("foreignKey"),
+
 		field.String("name").SchemaType(map[string]string{
 			dialect.Postgres: "varchar(10)",
 		}).
@@ -46,10 +48,18 @@ func (Teacher) Mixin() []ent.Mixin {
 func (Teacher) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("user", User.Type).
-			Ref("Teacher").Unique().Required(),
+			Ref("Teacher").
+			Unique().
+			Required().
+			Field("user_id"),
 
 		edge.From("recruitment_instead", RecruitmentInstead.Type).
 			Ref("applicant"),
+
+		// 다루는 요가
+		edge.To("yoga", Yoga.Type),
+
+		edge.To("yogaRaw", YogaRaw.Type),
 
 		// 자격증
 		edge.To("certification", TeacherCertification.Type).

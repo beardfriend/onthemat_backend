@@ -20,6 +20,8 @@ func (Recruitment) Annotations() []schema.Annotation {
 
 func (Recruitment) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("academy_id"),
+
 		field.Bool("isFinish").
 			Default(false).
 			Comment("채용 종료 여부"),
@@ -28,13 +30,17 @@ func (Recruitment) Fields() []ent.Field {
 
 func (Recruitment) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("instead", RecruitmentInstead.Type).
+		edge.To("recruitmentInstead", RecruitmentInstead.Type).
 			Annotations(entsql.Annotation{
 				OnDelete: entsql.Cascade,
 			}),
 
+		edge.To("yoga", Yoga.Type),
+
 		edge.From("writer", Academy.Type).
 			Ref("recruitment").
-			Unique(),
+			Unique().
+			Required().
+			Field("academy_id"),
 	}
 }

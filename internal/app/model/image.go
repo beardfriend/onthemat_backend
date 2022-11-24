@@ -20,6 +20,8 @@ func (Image) Annotations() []schema.Annotation {
 
 func (Image) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("user_id"),
+
 		field.String("path").
 			Comment("이미지 주소"),
 
@@ -48,6 +50,8 @@ func (Image) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("user", User.Type).
 			Ref("Image").
-			Unique(),
+			Unique().
+			Required().
+			Field("user_id"),
 	}
 }

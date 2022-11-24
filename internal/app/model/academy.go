@@ -21,6 +21,10 @@ func (Academy) Annotations() []schema.Annotation {
 
 func (Academy) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("user_id").Comment("foreignKey"),
+
+		field.Int("sigungu_id").Comment("foreignKey"),
+
 		field.String("name").SchemaType(map[string]string{
 			dialect.Postgres: "varchar(30)",
 		}).
@@ -58,13 +62,27 @@ func (Academy) Mixin() []ent.Mixin {
 
 func (Academy) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("sigungu", AreaSiGungu.Type).
-			Ref("academy").
-			Unique(),
+		// 다루는 요가
+		edge.To("yoga", Yoga.Type),
 
-		edge.To("recruitment", Recruitment.Type),
+		edge.To("yogaRaw", YogaRaw.Type),
+
+		edge.To("recruitment", Recruitment.Type).
+			Annotations(
+				entsql.Annotation{
+					OnDelete: entsql.Cascade,
+				}),
 
 		edge.From("user", User.Type).
-			Ref("Academy").Unique().Required(),
+			Ref("Academy").
+			Unique().
+			Required().
+			Field("user_id"),
+
+		edge.From("area_sigungu", AreaSiGungu.Type).
+			Ref("academy").
+			Unique().
+			Required().
+			Field("sigungu_id"),
 	}
 }

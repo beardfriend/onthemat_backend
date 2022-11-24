@@ -25,7 +25,7 @@ type ClassContent struct {
 
 func (TeacherWorkExperience) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("teacher_id").Optional(),
+		field.Int("teacher_id"),
 
 		field.String("academyName").
 			Comment("근무지 이름"),
@@ -58,6 +58,8 @@ func (TeacherWorkExperience) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("Teacher", Teacher.Type).
 			Ref("workExperience").
-			Unique().Field("teacher_id"),
+			Unique().
+			Required().
+			Field("teacher_id"),
 	}
 }

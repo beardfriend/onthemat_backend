@@ -20,6 +20,8 @@ func (Yoga) Annotations() []schema.Annotation {
 
 func (Yoga) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("yoga_group_id"),
+
 		field.String("name_kor").
 			Comment("요가 이름 한국어"),
 
@@ -39,12 +41,20 @@ func (Yoga) Fields() []ent.Field {
 
 func (Yoga) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("user", User.Type).
-			Ref("yoga"),
-
 		edge.From("yoga_group", YogaGroup.Type).
 			Ref("yoga").
-			Unique(),
+			Unique().
+			Required().
+			Field("yoga_group_id"),
+
+		edge.From("academy", Academy.Type).
+			Ref("yoga"),
+
+		edge.From("teacher", Teacher.Type).
+			Ref("yoga"),
+
+		edge.From("recruitmentInstead", RecruitmentInstead.Type).
+			Ref("yoga"),
 	}
 }
 

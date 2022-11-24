@@ -20,8 +20,7 @@ func (RecruitmentInstead) Annotations() []schema.Annotation {
 
 func (RecruitmentInstead) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("yogaSort").
-			Comment("요가 종류"),
+		field.Int("recruitment_id"),
 
 		field.String("minCareer").
 			Comment("최소 경력"),
@@ -40,9 +39,15 @@ func (RecruitmentInstead) Fields() []ent.Field {
 func (RecruitmentInstead) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("recuritment", Recruitment.Type).
-			Ref("instead").
-			Unique(),
+			Ref("recruitmentInstead").
+			Unique().
+			Required().
+			Field("recruitment_id"),
 
-		edge.To("applicant", Teacher.Type),
+		edge.To("applicant", Teacher.Type).
+			StorageKey(edge.Table("rinstead_academy"), edge.Columns("r_instead_id", "academy_id")),
+
+		edge.To("yoga", Yoga.Type).
+			StorageKey(edge.Table("rinstead_yoga"), edge.Columns("r_instead_id", "yoga_id")),
 	}
 }

@@ -34,6 +34,7 @@ func (AreaSiDo) Fields() []ent.Field {
 
 func (AreaSiDo) Edges() []ent.Edge {
 	return []ent.Edge{
+		// One to Many
 		edge.To("sigungu", AreaSiGungu.Type),
 	}
 }
