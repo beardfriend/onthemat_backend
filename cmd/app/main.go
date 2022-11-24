@@ -82,7 +82,7 @@ func main() {
 	// usecase
 	authUseCase := usecase.NewAuthUseCase(tokenModule, userRepo, authSvc, authStore, c)
 	userUsecase := usecase.NewUserUseCase(userRepo)
-	academyUsecase := usecase.NewAcademyUsecase(academyRepo, academySvc, userRepo, areaRepo)
+	academyUsecase := usecase.NewAcademyUsecase(academyRepo, academySvc, userRepo, yogaRepo, areaRepo)
 	uploadUsecase := usecase.NewUploadUsecase(imageRepo, s3)
 	yogaUsecase := usecase.NewYogaUsecase(yogaRepo)
 

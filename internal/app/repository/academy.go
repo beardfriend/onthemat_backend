@@ -4,23 +4,29 @@ import (
 	"context"
 	"errors"
 
-	"onthemat/internal/app/common"
 	"onthemat/internal/app/model"
 	"onthemat/internal/app/utils"
 
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/academy"
 	"onthemat/pkg/ent/areasigungu"
-	"onthemat/pkg/ent/predicate"
+	"onthemat/pkg/ent/user"
+	"onthemat/pkg/ent/yoga"
 	"onthemat/pkg/entx"
 )
 
 type AcademyRepository interface {
-	Create(ctx context.Context, academy *ent.Academy, userId int) error
-	Update(ctx context.Context, academy *ent.Academy, userId int) error
+	Create(ctx context.Context, d *ent.Academy, yogaIDs *[]int) error
+	Update(ctx context.Context, aca *ent.Academy, userId int, id int) error
 	Get(ctx context.Context, userId int) (*ent.Academy, error)
-	List(ctx context.Context, p *common.ListParams) ([]*ent.Academy, error)
-	Total(ctx context.Context, p *common.TotalParams) (int, error)
+	List(ctx context.Context,
+		pgModule *utils.Pagination,
+		yogaIDs *[]int, sigunguID *int, academyName *string,
+		orderCol *string, orderType *string) (result []*ent.Academy, err error)
+
+	Total(ctx context.Context, yogaIDs *[]int, sigunguID *int, academyName *string) (result int, err error)
+	UseYoga(ctx context.Context, yogaIds []int, userID int) error
+	UnUseYoga(ctx context.Context, yogaIds []int, userID int) error
 }
 
 type academyRepository struct {
@@ -38,19 +44,34 @@ func NewAcademyRepository(db *ent.Client) AcademyRepository {
 	}
 }
 
-func (repo *academyRepository) Create(ctx context.Context, academy *ent.Academy, userId int) error {
+func (repo *academyRepository) Create(ctx context.Context, d *ent.Academy, yogaIDs *[]int) error {
 	return entx.WithTx(ctx, repo.db, func(tx *ent.Tx) (err error) {
-		if err = repo.db.Academy.Create().
-			SetNillableAddressDetail(academy.AddressDetail).
-			SetName(academy.Name).
-			SetBusinessCode(academy.BusinessCode).
-			SetCallNumber(academy.CallNumber).
-			SetAddressRoad(academy.AddressRoad).
-			SetUserID(userId).SetSigunguID(academy.Edges.Sigungu.ID).Exec(ctx); err != nil {
+		err = repo.db.Academy.Create().
+			SetNillableAddressDetail(d.AddressDetail).
+			SetName(d.Name).
+			SetBusinessCode(d.BusinessCode).
+			SetCallNumber(d.CallNumber).
+			SetAddressRoad(d.AddressRoad).
+			SetUserID(d.UserID).SetSigunguID(d.SigunguID).Exec(ctx)
+		if err != nil {
 			return
 		}
 
-		if err = repo.db.User.UpdateOneID(userId).SetType(model.AcademyType).Exec(ctx); err != nil {
+		if yogaIDs != nil {
+			err = tx.Academy.Update().Where(
+				academy.UserIDEQ(d.Edges.User.ID),
+			).AddYogaIDs(*yogaIDs...).Exec(ctx)
+
+			if err != nil {
+				return
+			}
+		}
+
+		err = repo.db.User.Update().
+			SetType(model.AcademyType).
+			Where(user.IDEQ(d.Edges.User.ID)).
+			Exec(ctx)
+		if err != nil {
 			return
 		}
 
@@ -58,13 +79,66 @@ func (repo *academyRepository) Create(ctx context.Context, academy *ent.Academy,
 	})
 }
 
-func (repo *academyRepository) Update(ctx context.Context, aca *ent.Academy, userId int) error {
-	return repo.db.Academy.UpdateOneID(userId).
-		SetName(aca.Name).
-		SetCallNumber(aca.CallNumber).
-		SetAddressRoad(aca.AddressRoad).
-		SetSigunguID(aca.Edges.Sigungu.ID).
-		Exec(ctx)
+func (repo *academyRepository) Patch(ctx context.Context, aca *ent.Academy, yogaIDs []*int, userId int, id int) error {
+	return entx.WithTx(ctx, repo.db, func(tx *ent.Tx) (err error) {
+		if yogaIDs != nil {
+			err = tx.Academy.Update().Where(
+				academy.IDEQ(aca.ID),
+			).ClearYoga().Exec(ctx)
+			if err != nil {
+				return
+			}
+
+			tx.Academy.Update().Where(
+				academy.IDEQ(aca.ID),
+			).AddYoga(aca.Edges.Yoga...).Exec(ctx)
+			if err != nil {
+				return
+			}
+		}
+
+		if aca != nil {
+			err = tx.Academy.UpdateOneID(userId).SetName(aca.Name).
+				SetCallNumber(aca.CallNumber).
+				SetAddressRoad(aca.AddressRoad).
+				SetSigunguID(aca.SigunguID).
+				Exec(ctx)
+			if err != nil {
+				return
+			}
+		}
+
+		return
+	})
+}
+
+func (repo *academyRepository) Update(ctx context.Context, aca *ent.Academy, userId int, id int) error {
+	return entx.WithTx(ctx, repo.db, func(tx *ent.Tx) (err error) {
+		err = tx.Academy.UpdateOneID(userId).SetName(aca.Name).
+			SetCallNumber(aca.CallNumber).
+			SetAddressRoad(aca.AddressRoad).
+			SetSigunguID(aca.SigunguID).
+			Exec(ctx)
+		if err != nil {
+			return
+		}
+
+		err = tx.Academy.Update().Where(
+			academy.IDEQ(aca.ID),
+		).ClearYoga().Exec(ctx)
+		if err != nil {
+			return
+		}
+
+		tx.Academy.Update().Where(
+			academy.IDEQ(aca.ID),
+		).AddYoga(aca.Edges.Yoga...).Exec(ctx)
+		if err != nil {
+			return
+		}
+
+		return
+	})
 }
 
 func (repo *academyRepository) Get(ctx context.Context, userId int) (*ent.Academy, error) {
@@ -78,99 +152,115 @@ func (repo *academyRepository) Get(ctx context.Context, userId int) (*ent.Academ
 			academy.FieldAddressDetail,
 			academy.FieldCreatedAt,
 			academy.FieldUpdatedAt,
-			academy.SigunguColumn,
-		).WithSigungu().
+			academy.FieldSigunguID,
+		).
+		WithAreaSigungu(
+			func(asgq *ent.AreaSiGunguQuery) {
+				asgq.Select(areasigungu.FieldName)
+			},
+		).
+		WithYoga(
+			func(yq *ent.YogaQuery) {
+				yq.Select(yoga.FieldLevel, yoga.FieldNameKor)
+			},
+		).
 		Where(academy.ID(userId)).
 		Only(ctx)
 }
 
-func (repo *academyRepository) Total(ctx context.Context, p *common.TotalParams) (total int, err error) {
+func (repo *academyRepository) Total(ctx context.Context, yogaIDs *[]int, sigunguID *int, academyName *string) (result int, err error) {
 	clause := repo.db.Academy.Query()
 
-	clause, err = repo.conditionQuery(ctx, p, clause)
-	if err != nil {
-		return
-	}
-	total, err = clause.Count(ctx)
+	clause = repo.conditionQuery(ctx, yogaIDs, sigunguID, academyName, clause)
+	result, err = clause.Count(ctx)
 	return
 }
 
 // TODO :페이지네이션 모듈 생성을 여기서 하지 않고 Usecase에서만 할 수 있도록
-func (repo *academyRepository) List(ctx context.Context, p *common.ListParams) (result []*ent.Academy, err error) {
-	pagination := utils.NewPagination(p.PageNo, p.PageSize)
-
-	clause := repo.db.Academy.
+func (repo *academyRepository) List(ctx context.Context,
+	pgModule *utils.Pagination,
+	yogaIDs *[]int, sigunguID *int, academyName *string,
+	orderCol *string, orderType *string,
+) (result []*ent.Academy, err error) {
+	clause := repo.db.Debug().Academy.
 		Query().
-		Select(
-			academy.FieldID,
-			academy.FieldCallNumber,
-			academy.FieldName,
-			academy.FieldAddressRoad,
-			academy.FieldAddressDetail,
-			academy.FieldCreatedAt,
-			academy.FieldUpdatedAt,
-		).WithSigungu().
-		Limit(pagination.GetLimit()).
-		Offset(pagination.GetOffset())
+		WithAreaSigungu(
+			func(asgq *ent.AreaSiGunguQuery) {
+				asgq.Select(areasigungu.FieldName)
+			},
+		).
+		WithYoga(
+			func(yq *ent.YogaQuery) {
+				yq.Select(yoga.FieldLevel, yoga.FieldNameKor)
+			},
+		).
+		Limit(pgModule.GetLimit()).
+		Offset(pgModule.GetOffset())
 
 	useableOrderCol := map[string]string{
 		"ID":        academy.FieldID,
 		"CREATEDAT": academy.FieldCreatedAt,
 	}
 
-	if p.OrderCol == nil || p.OrderType == nil {
+	if orderCol == nil || orderType == nil {
 		clause.Order(ent.Desc(academy.FieldID))
 	}
 
-	if p.OrderCol != nil && p.OrderType != nil {
-		orderCol := useableOrderCol[*p.OrderCol]
+	if orderCol != nil && orderType != nil {
+		orderCol := useableOrderCol[*orderCol]
 
 		if orderCol == "" {
 			err = errors.New(ErrOrderColumnInvalid)
 			return
 		}
 
-		if *p.OrderType == "ASC" {
+		if *orderType == "ASC" {
 			clause.Order(ent.Asc(orderCol))
 		} else {
 			clause.Order(ent.Desc(orderCol))
 		}
-
 	}
 
-	clause, err = repo.conditionQuery(ctx, &common.TotalParams{
-		SearchKey:   p.SearchKey,
-		SearchValue: p.SearchValue,
-	}, clause)
+	clause = repo.conditionQuery(ctx, yogaIDs, sigunguID, academyName, clause)
 
-	if err != nil {
-		return
-	}
 	result, err = clause.All(ctx)
 	return
 }
 
 func (repo *academyRepository) conditionQuery(
 	ctx context.Context,
-	p *common.TotalParams,
+	yogaIDs *[]int,
+	sigunguID *int,
+	academyName *string,
 	clause *ent.AcademyQuery,
-) (*ent.AcademyQuery, error) {
-	useableSearchCol := map[string]func(v string) predicate.Academy{
-		"NAME": academy.NameContains,
-		"GU": func(v string) predicate.Academy {
-			return academy.HasSigunguWith(areasigungu.NameEQ(v))
-		},
+) *ent.AcademyQuery {
+	if academyName != nil {
+		clause.Where(academy.NameContains(*academyName))
 	}
 
-	if p.SearchKey != nil && p.SearchValue != nil {
-
-		whereFunc := useableSearchCol[*p.SearchKey]
-
-		if whereFunc == nil {
-			return nil, errors.New(ErrSearchColumnInvalid)
-		}
-
-		clause.Where(whereFunc(*p.SearchValue))
+	if sigunguID != nil {
+		clause.Where(academy.HasAreaSigunguWith(areasigungu.IDEQ(*sigunguID)))
 	}
-	return clause, nil
+
+	if yogaIDs != nil {
+		clause.Where(academy.HasYogaWith(yoga.IDIn(*yogaIDs...)))
+	}
+
+	return clause
+}
+
+func (repo *academyRepository) UseYoga(ctx context.Context, yogaIds []int, userID int) error {
+	return repo.db.Academy.
+		Update().
+		Where(
+			academy.UserIDEQ(userID),
+		).AddYogaIDs(yogaIds...).Exec(ctx)
+}
+
+func (repo *academyRepository) UnUseYoga(ctx context.Context, yogaIds []int, userID int) error {
+	return repo.db.Academy.
+		Update().
+		Where(
+			academy.UserIDEQ(userID),
+		).RemoveYogaIDs(yogaIds...).Exec(ctx)
 }

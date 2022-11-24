@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"onthemat/internal/app/common"
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/repository"
 	"onthemat/internal/app/service"
@@ -13,6 +12,7 @@ import (
 
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
+	"onthemat/pkg/ent/academy"
 )
 
 type AcademyUsecase interface {
@@ -24,6 +24,7 @@ type AcademyUsecase interface {
 
 type academyUseCase struct {
 	userRepo    repository.UserRepository
+	yogaRepo    repository.YogaRepository
 	academyRepo repository.AcademyRepository
 	areaRepo    repository.AreaRepository
 	academySvc  service.AcademyService
@@ -33,6 +34,7 @@ func NewAcademyUsecase(
 	academyRepo repository.AcademyRepository,
 	academyService service.AcademyService,
 	userRepo repository.UserRepository,
+	yogaRepo repository.YogaRepository,
 	areaRepo repository.AreaRepository,
 ) *academyUseCase {
 	return &academyUseCase{
@@ -40,11 +42,13 @@ func NewAcademyUsecase(
 		academySvc:  academyService,
 		userRepo:    userRepo,
 		areaRepo:    areaRepo,
+		yogaRepo:    yogaRepo,
 	}
 }
 
-func (u *academyUseCase) Create(ctx context.Context, academy *transport.AcademyCreateRequestBody, userId int) (err error) {
-	if err = u.academySvc.VerifyBusinessMan(academy.BusinessCode); err != nil {
+func (u *academyUseCase) Create(ctx context.Context, req *transport.AcademyCreateRequestBody, userId int) (err error) {
+	info := req.Info
+	if err = u.academySvc.VerifyBusinessMan(info.BusinessCode); err != nil {
 		if err.Error() == service.ErrBussinessCodeInvalid {
 			err = ex.NewBadRequestError(ex.ErrBusinessCodeInvalid, nil)
 			return
@@ -66,7 +70,7 @@ func (u *academyUseCase) Create(ctx context.Context, academy *transport.AcademyC
 		return
 	}
 
-	sigungu, err := u.areaRepo.GetSigunGu(ctx, academy.AddressSigungu)
+	sigungu, err := u.areaRepo.GetSigunGu(ctx, info.AddressSigungu)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			err = ex.NewNotFoundError(ex.ErrAreaNotFound, nil)
@@ -96,11 +100,14 @@ func (u *academyUseCase) Get(ctx context.Context, userId int) (result *ent.Acade
 		}
 		return
 	}
+
 	return
 }
 
 func (u *academyUseCase) Update(ctx context.Context, a *transport.AcademyUpdateRequestBody, userId int) (err error) {
-	sigungu, err := u.areaRepo.GetSigunGu(ctx, a.AddressSigungu)
+	info := a.Info
+
+	sigungu, err := u.areaRepo.GetSigunGu(ctx, info.AddressSigungu)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			err = ex.NewNotFoundError(ex.ErrAreaNotFound, nil)
@@ -108,11 +115,12 @@ func (u *academyUseCase) Update(ctx context.Context, a *transport.AcademyUpdateR
 		}
 		return
 	}
+
 	if err = u.academyRepo.Update(ctx, &ent.Academy{
-		Name:          a.Name,
-		CallNumber:    a.CallNumber,
-		AddressRoad:   a.AddressRoad,
-		AddressDetail: a.AddressDetail,
+		Name:          info.Name,
+		CallNumber:    info.CallNumber,
+		AddressRoad:   info.AddressRoad,
+		AddressDetail: info.AddressDetail,
 		Edges: ent.AcademyEdges{
 			Sigungu: &ent.AreaSiGungu{
 				ID: sigungu.ID,
@@ -130,17 +138,15 @@ func (u *academyUseCase) Update(ctx context.Context, a *transport.AcademyUpdateR
 }
 
 func (u *academyUseCase) List(ctx context.Context, a *request.AcademyListQueries) (result []*ent.Academy, paginationInfo *utils.PagenationInfo, err error) {
+	paginationModule := utils.NewPagination(a.PageNo, a.PageSize)
+
 	if a.OrderCol != nil {
 		*a.OrderCol = strings.ToUpper(*a.OrderCol)
 	}
 
-	// if a.SearchKey != nil {
-	// 	*a.SearchKey = strings.ToUpper(*a.SearchKey)
-	// }
-
 	pginationModule := utils.NewPagination(a.PageNo, a.PageSize)
 
-	total, err := u.academyRepo.Total(ctx, &common.TotalParams{SearchKey: a.SearchKey, SearchValue: a.SearchValue})
+	total, err := u.academyRepo.Total(ctx, a.YogaIDs, a.SigunGuID, a.AcademyName)
 	if err != nil {
 		if err.Error() == repository.ErrOrderColumnInvalid || err.Error() == repository.ErrSearchColumnInvalid {
 			err = ex.NewBadRequestError(ex.ErrColumnInvalid, nil)
@@ -150,17 +156,11 @@ func (u *academyUseCase) List(ctx context.Context, a *request.AcademyListQueries
 	}
 
 	pginationModule.SetTotal(total)
-	result, err = u.academyRepo.List(ctx, &common.ListParams{
-		PageNo:      a.PageNo,
-		PageSize:    a.PageSize,
-		OrderCol:    a.OrderCol,
-		OrderType:   a.OrderType,
-		SearchKey:   a.SearchKey,
-		SearchValue: a.SearchValue,
-	})
+	result, err = u.academyRepo.List(ctx, paginationModule, a.YogaIDs, a.SigunGuID, a.AcademyName, a.OrderCol, a.OrderType)
 	if err != nil {
 		return
 	}
+
 	paginationInfo = pginationModule.GetInfo(len(result))
 	return
 }

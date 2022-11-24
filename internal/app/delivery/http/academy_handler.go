@@ -35,7 +35,7 @@ func NewAcademyHandler(
 	// 학원 등록
 	g.Post("", middleware.Auth, handler.Create)
 	// 학원 정보 수정
-	g.Put("", middleware.Auth, middleware.OnlyAcademy, handler.Update)
+	g.Put("/:id", middleware.Auth, middleware.OnlyAcademy, handler.Update)
 	// 학원 리스트
 	g.Get("/list", handler.List)
 	// 학원 상세조회
@@ -349,130 +349,7 @@ func (h *academyHandler) Detail(c *fiber.Ctx) error {
 @apiParam {String="id,createdat"} [orderKey] 정렬할 키워드 컬럼
 @apiParam {String} [orderValue] 정렬할 키워드 값
 
-@apiSuccessExample Success-Response:
-HTTP/1.1 200
-{
-    "code": 200,
-    "message": "",
-    "result": [
-        {
-            "id": 40,
-            "name": "ferret",
-            "callNumber": "2737940681",
-            "addressRoad": "9850 Street shire",
-            "addressDetail": "126 Ways side, Boise, Alaska 24968",
-            "addressSigun": "Illinois",
-            "addressGu": "60839 Manor mouth",
-            "createdAt": "2022-11-20T10:38:45",
-            "updatedAt": "2022-11-20T10:38:45"
-        },
-        {
-            "id": 39,
-            "name": "jellyfish",
-            "callNumber": "6945933429",
-            "addressRoad": "843 West Isle furt",
-            "addressDetail": "9989 Canyon chester, Greensboro, Montana 43501",
-            "addressSigun": "New Hampshire",
-            "addressGu": "330 Keys side",
-            "createdAt": "2022-11-20T10:38:45",
-            "updatedAt": "2022-11-20T10:38:45"
-        },
-        {
-            "id": 38,
-            "name": "dolphin",
-            "callNumber": "2703587536",
-            "addressRoad": "9496 North Square burgh",
-            "addressDetail": "763 Highway burgh, Fort Worth, Maine 93170",
-            "addressSigun": "Wyoming",
-            "addressGu": "6264 Port Lights view",
-            "createdAt": "2022-11-20T10:38:45",
-            "updatedAt": "2022-11-20T10:38:45"
-        },
-        {
-            "id": 37,
-            "name": "woodchuck",
-            "callNumber": "3862052924",
-            "addressRoad": "2821 South Lock chester",
-            "addressDetail": "1038 Lakes ville, Winston-Salem, Indiana 22575",
-            "addressSigun": "New Hampshire",
-            "addressGu": "17183 North Shores borough",
-            "createdAt": "2022-11-20T10:38:45",
-            "updatedAt": "2022-11-20T10:38:45"
-        },
-        {
-            "id": 36,
-            "name": "impala",
-            "callNumber": "9600933859",
-            "addressRoad": "6064 West Springs mouth",
-            "addressDetail": "7363 North Hills mouth, North Las Vegas, Iowa 80726",
-            "addressSigun": "Illinois",
-            "addressGu": "555 Shoals chester",
-            "createdAt": "2022-11-20T10:38:45",
-            "updatedAt": "2022-11-20T10:38:45"
-        },
-        {
-            "id": 35,
-            "name": "llama",
-            "callNumber": "8676616053",
-            "addressRoad": "514 West Brook shire",
-            "addressDetail": "509 South Rapids land, San Jose, Georgia 16170",
-            "addressSigun": "New Jersey",
-            "addressGu": "659 Manors port",
-            "createdAt": "2022-11-20T10:38:45",
-            "updatedAt": "2022-11-20T10:38:45"
-        },
-        {
-            "id": 34,
-            "name": "hound",
-            "callNumber": "8590701586",
-            "addressRoad": "105 New Square land",
-            "addressDetail": "1428 South Ways land, Hialeah, Pennsylvania 19065",
-            "addressSigun": "Alabama",
-            "addressGu": "86662 Court shire",
-            "createdAt": "2022-11-20T10:38:45",
-            "updatedAt": "2022-11-20T10:38:45"
-        },
-        {
-            "id": 33,
-            "name": "crab",
-            "callNumber": "5716615981",
-            "addressRoad": "1860 South Drives burgh",
-            "addressDetail": "1699 New Squares town, Orlando, Virginia 71449",
-            "addressSigun": "Rhode Island",
-            "addressGu": "46736 North Spur berg",
-            "createdAt": "2022-11-20T10:38:45",
-            "updatedAt": "2022-11-20T10:38:45"
-        },
-        {
-            "id": 32,
-            "name": "yellowjacket",
-            "callNumber": "9511616439",
-            "addressRoad": "95637 East Track bury",
-            "addressDetail": "6830 Islands bury, Orlando, Arizona 16022",
-            "addressSigun": "West Virginia",
-            "addressGu": "69034 North Pike burgh",
-            "createdAt": "2022-11-20T10:38:45",
-            "updatedAt": "2022-11-20T10:38:45"
-        },
-        {
-            "id": 31,
-            "name": "sardine",
-            "callNumber": "2182156515",
-            "addressRoad": "83502 Isle fort",
-            "addressDetail": "61160 Spurs side, Arlington, Oklahoma 34326",
-            "addressSigun": "New Mexico",
-            "addressGu": "189 Port Village chester",
-            "createdAt": "2022-11-20T10:38:45",
-            "updatedAt": "2022-11-20T10:38:45"
-        }
-    ],
-    "pagination": {
-        "PageSize": 10,
-        "PageNo": 1,
-        "PageCount": 4,
-        "RowCount": 10
-    }
-}
+
 
 HTTP/1.1 400 Bad Request
 {

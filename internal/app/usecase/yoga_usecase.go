@@ -21,10 +21,6 @@ type YogaUsecase interface {
 	List(ctx context.Context, groupId int) ([]*ent.Yoga, error)
 	Update(ctx context.Context, req *request.YogaUpdateBody, yogaId int) (err error)
 	Delete(ctx context.Context, yogaId int) error
-
-	CreateRaw(ctx context.Context, req *request.YogaRawCreateBody, userId int) error
-	ListRawByUserId(ctx context.Context, userId int) ([]*ent.YogaRaw, error)
-	DeleteRaw(ctx context.Context, id int, userId int) (rowAffected int, err error)
 }
 
 type yogaUseCase struct {
@@ -129,25 +125,4 @@ func (u *yogaUseCase) Delete(ctx context.Context, yogaId int) error {
 
 func (u *yogaUseCase) List(ctx context.Context, groupId int) ([]*ent.Yoga, error) {
 	return u.yogaRepo.List(ctx, groupId)
-}
-
-// ------------------- Yoga Raw -------------------
-
-func (u *yogaUseCase) CreateRaw(ctx context.Context, req *request.YogaRawCreateBody, userId int) error {
-	return u.yogaRepo.CreateRaw(ctx, &ent.YogaRaw{
-		Name: req.YogaName,
-		Edges: ent.YogaRawEdges{
-			User: &ent.User{
-				ID: userId,
-			},
-		},
-	})
-}
-
-func (u *yogaUseCase) ListRawByUserId(ctx context.Context, userId int) ([]*ent.YogaRaw, error) {
-	return u.yogaRepo.RawListByUserId(ctx, userId)
-}
-
-func (u *yogaUseCase) DeleteRaw(ctx context.Context, id int, userId int) (rowAffected int, err error) {
-	return u.yogaRepo.DeleteRaw(ctx, id, userId)
 }

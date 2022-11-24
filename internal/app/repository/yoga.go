@@ -8,10 +8,8 @@ import (
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/predicate"
-	"onthemat/pkg/ent/user"
 	"onthemat/pkg/ent/yoga"
 	"onthemat/pkg/ent/yogagroup"
-	"onthemat/pkg/ent/yogaraw"
 )
 
 type YogaRepository interface {
@@ -24,9 +22,6 @@ type YogaRepository interface {
 	Update(ctx context.Context, data *ent.Yoga) error
 	Delete(ctx context.Context, id int) error
 	List(ctx context.Context, groupdId int) ([]*ent.Yoga, error)
-	CreateRaw(ctx context.Context, data *ent.YogaRaw) error
-	DeleteRaw(ctx context.Context, raw_yoga_id int, userId int) (int, error)
-	RawListByUserId(ctx context.Context, userId int) ([]*ent.YogaRaw, error)
 }
 
 type yogaRepository struct {
@@ -140,36 +135,5 @@ func (repo *yogaRepository) List(ctx context.Context, groupdId int) ([]*ent.Yoga
 		Where(yogagroup.IDEQ(groupdId)).
 		QueryYoga().
 		Order(ent.Desc(yoga.FieldID)).
-		All(ctx)
-}
-
-// ------------------- Yoga_raw -------------------
-
-func (repo *yogaRepository) CreateRaw(ctx context.Context, data *ent.YogaRaw) error {
-	return repo.db.YogaRaw.Create().
-		SetName(data.Name).
-		SetIsMigrated(false).
-		SetUserID(data.Edges.User.ID).
-		Exec(ctx)
-}
-
-func (repo *yogaRepository) DeleteRaw(ctx context.Context, raw_yoga_id int, userId int) (int, error) {
-	return repo.db.Debug().YogaRaw.Delete().
-		Where(
-			yogaraw.IDEQ(raw_yoga_id),
-			yogaraw.UserIDEQ(userId),
-		).Exec(ctx)
-}
-
-func (repo *yogaRepository) RawListByUserId(ctx context.Context, userId int) ([]*ent.YogaRaw, error) {
-	return repo.db.User.
-		Query().
-		Where(
-			user.IDEQ(userId),
-		).
-		QueryYogaRaw().
-		Where(
-			yogaraw.IsMigratedEQ(false),
-		).
 		All(ctx)
 }

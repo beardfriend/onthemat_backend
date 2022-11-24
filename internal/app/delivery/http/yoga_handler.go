@@ -35,19 +35,23 @@ func NewYogaHandler(
 	}
 	g := router.Group("/yoga")
 
+	// 요가 등록
 	g.Post("/", middleware.Auth, middleware.OnlySuperAdmin, handler.Create)
+	// 요가 수정
 	g.Put("/:id", middleware.Auth, middleware.OnlySuperAdmin, handler.Update)
+	// 요가 삭제
 	g.Delete("/:id", middleware.Auth, middleware.OnlySuperAdmin, handler.Delete)
+	// 그룹아이디 별 요가 리스트 조회
 	g.Get("/list", middleware.Auth, handler.ListByGroupId)
 
+	// 요가 그룹 생성
 	g.Post("/group", middleware.Auth, middleware.OnlySuperAdmin, handler.CreateGroup)
+	// 요가 그룹 수정
 	g.Put("/group/:id", middleware.Auth, middleware.OnlySuperAdmin, handler.UpdateGroup)
+	// 요가 그룹 멀티삭제
 	g.Delete("/groups", middleware.Auth, middleware.OnlySuperAdmin, handler.DeleteGroups)
+	// 요가 그룹 리스트
 	g.Get("/group/list", middleware.Auth, handler.GetGroups)
-
-	g.Post("/raw", middleware.Auth, handler.CreateRaw)
-	g.Delete("/raw/:id", middleware.Auth, handler.DeleteRaw)
-	g.Get("/raw/list", handler.ListRawByUserId)
 }
 
 func (h *yogaHandler) CreateGroup(c *fiber.Ctx) error {
@@ -237,73 +241,6 @@ func (h *yogaHandler) Delete(c *fiber.Ctx) error {
 	}
 
 	if err := h.yogaUsecase.Delete(ctx, reqParam.Id); err != nil {
-		return utils.NewError(c, err)
-	}
-
-	return c.Status(http.StatusOK).JSON(ex.Response{
-		Code:    http.StatusOK,
-		Message: "",
-	})
-}
-
-func (h *yogaHandler) CreateRaw(c *fiber.Ctx) error {
-	ctx := c.Context()
-	userId := c.Context().UserValue("user_id").(int)
-
-	reqBody := new(request.YogaRawCreateBody)
-	if err := c.BodyParser(reqBody); err != nil {
-		return c.Status(http.StatusBadRequest).
-			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
-	}
-
-	if err := h.validator.ValidateStruct(reqBody); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
-	}
-
-	if err := h.yogaUsecase.CreateRaw(ctx, reqBody, userId); err != nil {
-		return utils.NewError(c, err)
-	}
-
-	return c.Status(http.StatusCreated).JSON(ex.Response{
-		Code:    http.StatusCreated,
-		Message: "",
-	})
-}
-
-func (h *yogaHandler) ListRawByUserId(c *fiber.Ctx) error {
-	ctx := c.Context()
-
-	reqQuery := new(request.YogaRawListQuery)
-
-	if err := c.QueryParser(reqQuery); err != nil {
-		return c.Status(http.StatusBadRequest).
-			JSON(ex.NewHttpError(ex.ErrQueryStringMissing, nil))
-	}
-
-	data, err := h.yogaUsecase.ListRawByUserId(ctx, reqQuery.UserId)
-	if err != nil {
-		return utils.NewError(c, err)
-	}
-	resp := response.NewYogaRawListResponse(data)
-
-	return c.Status(http.StatusOK).JSON(ex.ResponseWithData{
-		Code:    http.StatusOK,
-		Message: "",
-		Result:  resp,
-	})
-}
-
-func (h *yogaHandler) DeleteRaw(c *fiber.Ctx) error {
-	ctx := c.Context()
-	userId := c.Context().UserValue("user_id").(int)
-
-	reqParam := new(request.YogaDeleteRawParam)
-	if err := c.ParamsParser(reqParam); err != nil {
-		return c.Status(http.StatusBadRequest).
-			JSON(ex.NewHttpError(ex.ErrParamsMissing, nil))
-	}
-
-	if _, err := h.yogaUsecase.DeleteRaw(ctx, reqParam.Id, userId); err != nil {
 		return utils.NewError(c, err)
 	}
 

@@ -1,19 +1,19 @@
 package http
 
 import (
+	_ "database/sql"
 	"net/http"
 
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/delivery/middlewares"
 	"onthemat/internal/app/transport"
-	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/usecase"
 	"onthemat/internal/app/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-type userHandler struct {
+type UserHandler struct {
 	UserUseCase usecase.UserUseCase
 	Router      fiber.Router
 	Middleware  middlewares.MiddleWare
@@ -24,14 +24,13 @@ func NewUserHandler(
 	userUseCase usecase.UserUseCase,
 	router fiber.Router,
 ) {
-	handler := &userHandler{
+	handler := &UserHandler{
 		UserUseCase: userUseCase,
 		Middleware:  middleware,
 	}
 	g := router.Group("/user")
 	// 유저 정보 조회
 	g.Get("/me", middleware.Auth, handler.GetMe)
-	g.Post("/yoga", middleware.Auth, handler.AddYoga)
 }
 
 // 유저 정보 조회
@@ -68,10 +67,12 @@ HTTP/1.1 500 Internal Server Error
     "details": null
 }
 */
-func (h *userHandler) GetMe(c *fiber.Ctx) error {
+
+func (h *UserHandler) GetMe(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	u, err := h.UserUseCase.GetMe(ctx, c.Context().UserValue("user_id").(int))
+	userId := c.Context().UserValue("user_id").(int)
+	u, err := h.UserUseCase.GetMe(ctx, userId)
 	if err != nil {
 		return utils.NewError(c, err)
 	}
@@ -81,27 +82,5 @@ func (h *userHandler) GetMe(c *fiber.Ctx) error {
 		Code:    200,
 		Message: "",
 		Result:  resp,
-	})
-}
-
-func (h *userHandler) AddYoga(c *fiber.Ctx) error {
-	ctx := c.Context()
-	userId := c.Context().UserValue("user_id").(int)
-
-	reqBody := new(request.AddYogaBody)
-
-	if err := c.BodyParser(reqBody); err != nil {
-		return c.Status(http.StatusBadRequest).
-			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
-	}
-
-	err := h.UserUseCase.AddYoga(ctx, userId, reqBody.Ids)
-	if err != nil {
-		return utils.NewError(c, err)
-	}
-
-	return c.Status(http.StatusCreated).JSON(ex.ResponseWithData{
-		Code:    http.StatusCreated,
-		Message: "",
 	})
 }

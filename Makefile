@@ -4,6 +4,9 @@ generate:
 run:
 	go run ./cmd/app/main.go
 
+seed:
+	go run ./cmd/seeding/main.go
+
 swag:
 	swag init -g ./cmd/app/main.go
 	

@@ -49,27 +49,6 @@ func (ts *UserUsecaseTestSuite) TestGetMe() {
 	})
 }
 
-func (ts *UserUsecaseTestSuite) TestAddYoga() {
-	ts.Run("성공", func() {
-		ts.mockUserRepo.On("AddYoga", mock.Anything, mock.Anything, mock.Anything).
-			Return(nil).Once()
-
-		ids := []int{1, 2}
-		err := ts.userUsecase.AddYoga(context.Background(), 1, ids)
-		ts.NoError(err)
-	})
-
-	ts.Run("Bad Request", func() {
-		ts.mockUserRepo.On("AddYoga", mock.Anything, mock.Anything, mock.Anything).
-			Return(&ent.ConstraintError{}).Once()
-
-		ids := []int{1, 2}
-		err := ts.userUsecase.AddYoga(context.Background(), 1, ids)
-		errorStruct := err.(common.HttpError)
-		ts.Equal(400, errorStruct.ErrHttpCode)
-	})
-}
-
 func TestUserUsecaseTestSuite(t *testing.T) {
 	suite.Run(t, new(UserUsecaseTestSuite))
 }

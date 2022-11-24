@@ -1,9 +1,7 @@
 package service
 
 import (
-	"fmt"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -15,14 +13,4 @@ func TestHashPassword(t *testing.T) {
 	diffHahsString := authService.HashPassword("diffpassword", "secret")
 	assert.NotEqual(t, diffHahsString, hashString)
 	assert.Equal(t, hashString, hashString2)
-}
-
-func TestCheckEmailExpiredForVerify(t *testing.T) {
-	as := NewAuthService(nil, nil, nil, nil)
-	time.Now().Add(-time.Hour * 24)
-	i := as.IsExpiredEmailForVerify()
-	assert.Equal(t, i, false)
-	fmt.Println(time.Now().Format(time.RFC3339))
-	d := as.IsExpiredEmailForVerify("2022-11-15T13:04:05+09:00")
-	assert.Equal(t, d, true)
 }

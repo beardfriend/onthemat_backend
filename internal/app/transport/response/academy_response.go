@@ -14,6 +14,7 @@ type AcademyDetailRepsonse struct {
 	AddressRoad   string               `json:"addressRoad"`
 	AddressDetail *string              `json:"addressDetail"`
 	AddressSigun  *string              `json:"addressSigun"`
+	Yoga          []yoga               `json:"yoga"`
 	CreatedAt     transport.TimeString `json:"createdAt"`
 	UpdatedAt     transport.TimeString `json:"updatedAt"`
 }
@@ -25,8 +26,14 @@ type AcademyListResponse struct {
 	AddressRoad   string               `json:"addressRoad"`
 	AddressDetail *string              `json:"addressDetail"`
 	AddressSigun  *string              `json:"addressSigun"`
+	Yoga          []yoga               `json:"yoga"`
 	CreatedAt     transport.TimeString `json:"createdAt"`
 	UpdatedAt     transport.TimeString `json:"updatedAt"`
+}
+
+type yoga struct {
+	ID      int    `json:"id"`
+	NameKor string `json:"nameKor"`
 }
 
 func NewAcademyListResponse(model []*ent.Academy) []*AcademyListResponse {
@@ -34,8 +41,14 @@ func NewAcademyListResponse(model []*ent.Academy) []*AcademyListResponse {
 	for _, v := range model {
 		resp := new(AcademyListResponse)
 		copier.Copy(&resp, v)
-		if v.Edges.Sigungu != nil {
-			resp.AddressSigun = &v.Edges.Sigungu.Name
+		if v.Edges.AreaSigungu != nil {
+			resp.AddressSigun = &v.Edges.AreaSigungu.Name
+		}
+
+		if len(v.Edges.Yoga) > 0 {
+			copier.Copy(&resp.Yoga, v.Edges.Yoga)
+		} else {
+			resp.Yoga = make([]yoga, 0)
 		}
 		response = append(response, resp)
 	}
@@ -46,8 +59,16 @@ func NewAcademyListResponse(model []*ent.Academy) []*AcademyListResponse {
 func NewAcademyDetailResponse(model *ent.Academy) *AcademyDetailRepsonse {
 	resp := new(AcademyDetailRepsonse)
 	copier.Copy(&resp, model)
-	if model.Edges.Sigungu != nil {
-		resp.AddressSigun = &model.Edges.Sigungu.Name
+
+	if model.Edges.AreaSigungu != nil {
+		resp.AddressSigun = &model.Edges.AreaSigungu.Name
 	}
+
+	if len(model.Edges.Yoga) > 0 {
+		copier.Copy(&resp.Yoga, model.Edges.Yoga)
+	} else {
+		resp.Yoga = make([]yoga, 0)
+	}
+
 	return resp
 }
