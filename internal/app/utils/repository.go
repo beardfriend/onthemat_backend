@@ -16,10 +16,13 @@ func MakeUseableFieldWithData(data map[string]ent.Value, allowColumns []string) 
 	for _, col := range allowColumns {
 		columnCamelCase := strcase.ToLowerCamel(col)
 		value := data[columnCamelCase]
+
 		if value == nil {
-			if value == "" {
-				result[col] = nil
-			}
+			continue
+		}
+
+		if value == "" {
+			result[col] = nil
 			continue
 		}
 

@@ -85,10 +85,11 @@ func (repo *academyRepository) Patch(ctx context.Context, d *ent.Academy) error 
 	delete(dataForPatch, "id")
 	result := utils.MakeUseableFieldWithData(dataForPatch, academy.Columns)
 
-	clause := repo.db.Academy.Update()
+	clause := repo.db.Debug().Academy.Update()
 	for key, val := range result {
 		if val == nil {
-			clause.Mutation().FieldCleared(key)
+			clause.Mutation().ClearField(key)
+			continue
 		}
 		clause.Mutation().SetField(key, val)
 	}
