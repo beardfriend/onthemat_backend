@@ -21,9 +21,13 @@ func (Academy) Annotations() []schema.Annotation {
 
 func (Academy) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("user_id").Comment("foreignKey"),
+		field.Int("user_id").
+			StructTag(`json:"userId,omitempty"`).
+			Comment("foreignKey"),
 
-		field.Int("sigungu_id").Comment("foreignKey"),
+		field.Int("sigungu_id").
+			StructTag(`json:"sigunguId,omitempty"`).
+			Comment("foreignKey"),
 
 		field.String("name").SchemaType(map[string]string{
 			dialect.Postgres: "varchar(30)",

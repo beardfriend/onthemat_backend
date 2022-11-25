@@ -3,8 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
-	"strconv"
-	"strings"
+	"fmt"
 
 	"onthemat/internal/app/model"
 	"onthemat/internal/app/utils"
@@ -15,9 +14,6 @@ import (
 	"onthemat/pkg/ent/user"
 	"onthemat/pkg/ent/yoga"
 	"onthemat/pkg/entx"
-
-	"github.com/goccy/go-json"
-	"github.com/iancoleman/strcase"
 )
 
 type AcademyRepository interface {
@@ -86,30 +82,17 @@ func (repo *academyRepository) Create(ctx context.Context, d *ent.Academy) error
 }
 
 func (repo *academyRepository) Patch(ctx context.Context, d *ent.Academy) error {
-	var requestData map[string]ent.Value
+	dataForPatch := utils.StructToMap[ent.Value](d)
 
-	s, _ := json.Marshal(d)
-	decoder := json.NewDecoder(strings.NewReader(string(s)))
-	decoder.UseNumber()
-	decoder.Decode(&requestData)
-	delete(requestData, "id")
-	clause := repo.db.Debug().Academy.Update()
-
-	for _, col := range academy.Columns {
-		for key, val := range requestData {
-			if strcase.ToLowerCamel(col) == key && val != nil {
-				// 디코딩 시, 숫자 타입이면 int로 바꿔주는 로직
-				id, ok := val.(json.Number)
-				if ok {
-					d, _ := strconv.Atoi(id.String())
-					val = d
-				}
-
-				if err := clause.Mutation().SetField(col, val); err != nil {
-					return err
-				}
-			}
+	delete(dataForPatch, "id")
+	result := utils.MakeUseableFieldWithData(dataForPatch, academy.Columns)
+	fmt.Println(result)
+	clause := repo.db.Academy.Update()
+	for key, val := range result {
+		if val == nil {
+			clause.Mutation().FieldCleared(key)
 		}
+		clause.Mutation().SetField(key, val)
 	}
 
 	if len(d.Edges.Yoga) > 0 {
