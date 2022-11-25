@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"onthemat/internal/app/model"
 	"onthemat/internal/app/utils"
@@ -83,10 +82,9 @@ func (repo *academyRepository) Create(ctx context.Context, d *ent.Academy) error
 
 func (repo *academyRepository) Patch(ctx context.Context, d *ent.Academy) error {
 	dataForPatch := utils.StructToMap[ent.Value](d)
-
 	delete(dataForPatch, "id")
 	result := utils.MakeUseableFieldWithData(dataForPatch, academy.Columns)
-	fmt.Println(result)
+
 	clause := repo.db.Academy.Update()
 	for key, val := range result {
 		if val == nil {

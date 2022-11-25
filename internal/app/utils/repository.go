@@ -14,22 +14,24 @@ func MakeUseableFieldWithData(data map[string]ent.Value, allowColumns []string) 
 	result = make(map[string]ent.Value, 0)
 
 	for _, col := range allowColumns {
-		if data[strcase.ToLowerCamel(col)] != nil {
-
-			id, ok := data[strcase.ToLowerCamel(col)].(json.Number)
-			if ok {
-				d, _ := strconv.Atoi(id.String())
-				data[strcase.ToLowerCamel(col)] = d
-			}
-
-			data := data[strcase.ToLowerCamel(col)]
-
-			if data == "" {
+		columnCamelCase := strcase.ToLowerCamel(col)
+		value := data[columnCamelCase]
+		if value == nil {
+			if value == "" {
 				result[col] = nil
-			} else {
-				result[col] = data
 			}
+			continue
 		}
+
+		// 숫자 유형이면,
+		if id, ok := value.(json.Number); ok {
+			d, _ := strconv.Atoi(id.String())
+			result[col] = d
+			continue
+		}
+
+		result[col] = value
+
 	}
 	return
 }
