@@ -10,6 +10,7 @@ import (
 	"onthemat/internal/app/transport/response"
 	"onthemat/internal/app/usecase"
 	"onthemat/internal/app/utils"
+	"onthemat/pkg/fiberx"
 	"onthemat/pkg/validatorx"
 
 	"github.com/gofiber/fiber/v2"
@@ -34,8 +35,10 @@ func NewAcademyHandler(
 	g := router.Group("/academy")
 	// 학원 등록
 	g.Post("", middleware.Auth, handler.Create)
+	g.Patch("", handler.Patch)
 	// 학원 정보 수정
 	g.Put("/:id", middleware.Auth, middleware.OnlyAcademy, handler.Update)
+
 	// 학원 리스트
 	g.Get("/list", handler.List)
 	// 학원 상세조회
@@ -132,10 +135,11 @@ func (h *academyHandler) Create(c *fiber.Ctx) error {
 
 	reqBody := new(transport.AcademyCreateRequestBody)
 
-	if err := c.BodyParser(reqBody); err != nil {
+	if err := fiberx.BodyParser(c, reqBody); err != nil {
 		return c.Status(http.StatusBadRequest).
-			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
+			JSON(ex.NewHttpError(ex.ErrJsonMissing, err.Error()))
 	}
+
 	if err := h.Validator.ValidateStruct(reqBody); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
 	}
@@ -388,5 +392,24 @@ func (h *academyHandler) List(c *fiber.Ctx) error {
 		Message:    "",
 		Result:     resp,
 		Pagination: pagination,
+	})
+}
+
+func (h *academyHandler) Patch(c *fiber.Ctx) error {
+	ctx := c.Context()
+
+	reqBody := new(transport.AcademyPatchRequestBody)
+
+	if err := fiberx.BodyParser(c, reqBody); err != nil {
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrJsonMissing, err.Error()))
+	}
+	if err := h.academyUsecase.Patch(ctx, reqBody, 10); err != nil {
+		panic(err)
+	}
+
+	return c.Status(http.StatusCreated).JSON(ex.Response{
+		Code:    http.StatusCreated,
+		Message: "",
 	})
 }

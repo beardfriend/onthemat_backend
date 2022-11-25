@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	ex "onthemat/internal/app/common"
@@ -12,14 +13,13 @@ import (
 
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
-	"onthemat/pkg/ent/academy"
 )
 
 type AcademyUsecase interface {
 	Create(ctx context.Context, academy *transport.AcademyCreateRequestBody, userId int) error
 	Get(ctx context.Context, userId int) (*ent.Academy, error)
-	Update(ctx context.Context, a *transport.AcademyUpdateRequestBody, userId int) error
 	List(ctx context.Context, a *request.AcademyListQueries) ([]*ent.Academy, *utils.PagenationInfo, error)
+	Patch(ctx context.Context, req *transport.AcademyPatchRequestBody, id int) error
 }
 
 type academyUseCase struct {
@@ -36,7 +36,7 @@ func NewAcademyUsecase(
 	userRepo repository.UserRepository,
 	yogaRepo repository.YogaRepository,
 	areaRepo repository.AreaRepository,
-) *academyUseCase {
+) AcademyUsecase {
 	return &academyUseCase{
 		academyRepo: academyRepo,
 		academySvc:  academyService,
@@ -70,32 +70,10 @@ func (u *academyUseCase) Create(ctx context.Context, req *transport.AcademyCreat
 		return
 	}
 
-	sigungu, err := u.areaRepo.GetSigunGu(ctx, info.AddressSigungu)
+	_, err = u.areaRepo.GetSigunGu(ctx, info.AddressSigungu)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			err = ex.NewNotFoundError(ex.ErrAreaNotFound, nil)
-			return
-		}
-		return
-	}
-
-	return u.academyRepo.Create(ctx, &ent.Academy{
-		Name:          academy.Name,
-		BusinessCode:  academy.BusinessCode,
-		CallNumber:    academy.CallNumber,
-		AddressRoad:   academy.AddressRoad,
-		AddressDetail: academy.AddressDetail,
-		Edges: ent.AcademyEdges{
-			Sigungu: &ent.AreaSiGungu{ID: sigungu.ID},
-		},
-	}, userId)
-}
-
-func (u *academyUseCase) Get(ctx context.Context, userId int) (result *ent.Academy, err error) {
-	result, err = u.academyRepo.Get(ctx, userId)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			err = ex.NewNotFoundError(ex.ErrAcademyNotFound, nil)
 			return
 		}
 		return
@@ -104,29 +82,9 @@ func (u *academyUseCase) Get(ctx context.Context, userId int) (result *ent.Acade
 	return
 }
 
-func (u *academyUseCase) Update(ctx context.Context, a *transport.AcademyUpdateRequestBody, userId int) (err error) {
-	info := a.Info
-
-	sigungu, err := u.areaRepo.GetSigunGu(ctx, info.AddressSigungu)
+func (u *academyUseCase) Get(ctx context.Context, userId int) (result *ent.Academy, err error) {
+	result, err = u.academyRepo.Get(ctx, userId)
 	if err != nil {
-		if ent.IsNotFound(err) {
-			err = ex.NewNotFoundError(ex.ErrAreaNotFound, nil)
-			return
-		}
-		return
-	}
-
-	if err = u.academyRepo.Update(ctx, &ent.Academy{
-		Name:          info.Name,
-		CallNumber:    info.CallNumber,
-		AddressRoad:   info.AddressRoad,
-		AddressDetail: info.AddressDetail,
-		Edges: ent.AcademyEdges{
-			Sigungu: &ent.AreaSiGungu{
-				ID: sigungu.ID,
-			},
-		},
-	}, userId); err != nil {
 		if ent.IsNotFound(err) {
 			err = ex.NewNotFoundError(ex.ErrAcademyNotFound, nil)
 			return
@@ -163,4 +121,25 @@ func (u *academyUseCase) List(ctx context.Context, a *request.AcademyListQueries
 
 	paginationInfo = pginationModule.GetInfo(len(result))
 	return
+}
+
+func (u *academyUseCase) Patch(ctx context.Context, req *transport.AcademyPatchRequestBody, id int) error {
+	aInfo := req.Info
+	d := &ent.Academy{
+		ID:            id,
+		Name:          aInfo.Name,
+		CallNumber:    aInfo.CallNumber,
+		AddressRoad:   aInfo.AddressRoad,
+		AddressDetail: &aInfo.AddressDetail,
+		SigunguID:     aInfo.SigunguId,
+	}
+
+	for _, v := range req.YogaIDs {
+		d.Edges.Yoga = append(d.Edges.Yoga, &ent.Yoga{
+			ID: v,
+		})
+	}
+	err := u.academyRepo.Patch(ctx, d)
+	fmt.Println(err)
+	return err
 }

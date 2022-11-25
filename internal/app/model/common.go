@@ -20,11 +20,12 @@ func (DefaultTimeMixin) Fields() []ent.Field {
 		field.Time("createdAt").
 			Immutable().SchemaType(map[string]string{
 			dialect.Postgres: "timestamp",
-		}).
+		}).Nillable().
 			Default(time.Now),
 
 		field.Time("updatedAt").
 			Default(time.Now).
+			Nillable().
 			Immutable().SchemaType(map[string]string{
 			dialect.Postgres: "timestamp",
 		}).

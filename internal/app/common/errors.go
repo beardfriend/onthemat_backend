@@ -258,7 +258,6 @@ func NewUnprocessableEntityError(ErrorCode int, details interface{}) HttpErr {
 
 // New Internal Server Error
 func NewInternalServerError() HttpErr {
-	// TODO : loging
 	return HttpError{
 		ErrCode:    ErrInternalError,
 		ErrMessage: ErrorText(ErrInternalError),
@@ -297,7 +296,7 @@ func NewInvalidInputError(errs []*validatorx.ErrorResponse) HttpError {
 
 	for _, field := range errs {
 		errors = append(errors, map[string]interface{}{
-			field.FailedFieldTagName: field.Tag,
+			field.FailedField: field.Tag,
 		})
 	}
 

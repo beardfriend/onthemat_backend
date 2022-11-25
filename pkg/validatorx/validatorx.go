@@ -118,13 +118,14 @@ func (v *validator) ValidateStruct(request interface{}) []*ErrorResponse {
 	var errors []*ErrorResponse
 
 	err := v.validator.Struct(request)
-	// err := v.validator.Struct(request)
 	if err != nil {
 		for _, err := range err.(goValidator.ValidationErrors) {
 			var element ErrorResponse
 
+			ff := strings.Index(err.Namespace(), ".")
+
 			element.FailedFieldTagName = err.Field()
-			element.FailedField = err.StructNamespace()
+			element.FailedField = err.Namespace()[ff+1:]
 			element.Tag = err.Tag()
 			element.Value = err.Param()
 			errors = append(errors, &element)

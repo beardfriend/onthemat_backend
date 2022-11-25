@@ -13,8 +13,10 @@ require (
 	github.com/brianvoe/gofakeit/v6 v6.19.0
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/go-playground/validator/v10 v10.11.1
+	github.com/goccy/go-json v0.9.11
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/google/uuid v1.3.0
+	github.com/iancoleman/strcase v0.2.0
 	github.com/jinzhu/copier v0.3.5
 	github.com/joho/godotenv v1.4.0
 	github.com/lib/pq v1.10.7

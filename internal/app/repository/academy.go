@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"errors"
+	"strconv"
+	"strings"
 
 	"onthemat/internal/app/model"
 	"onthemat/internal/app/utils"
@@ -13,10 +15,13 @@ import (
 	"onthemat/pkg/ent/user"
 	"onthemat/pkg/ent/yoga"
 	"onthemat/pkg/entx"
+
+	"github.com/goccy/go-json"
+	"github.com/iancoleman/strcase"
 )
 
 type AcademyRepository interface {
-	Create(ctx context.Context, d *ent.Academy, yogaIDs *[]int) error
+	Create(ctx context.Context, d *ent.Academy) error
 	Update(ctx context.Context, aca *ent.Academy, userId int, id int) error
 	Get(ctx context.Context, userId int) (*ent.Academy, error)
 	List(ctx context.Context,
@@ -25,8 +30,7 @@ type AcademyRepository interface {
 		orderCol *string, orderType *string) (result []*ent.Academy, err error)
 
 	Total(ctx context.Context, yogaIDs *[]int, sigunguID *int, academyName *string) (result int, err error)
-	UseYoga(ctx context.Context, yogaIds []int, userID int) error
-	UnUseYoga(ctx context.Context, yogaIds []int, userID int) error
+	Patch(ctx context.Context, d *ent.Academy) error
 }
 
 type academyRepository struct {
@@ -44,7 +48,7 @@ func NewAcademyRepository(db *ent.Client) AcademyRepository {
 	}
 }
 
-func (repo *academyRepository) Create(ctx context.Context, d *ent.Academy, yogaIDs *[]int) error {
+func (repo *academyRepository) Create(ctx context.Context, d *ent.Academy) error {
 	return entx.WithTx(ctx, repo.db, func(tx *ent.Tx) (err error) {
 		err = repo.db.Academy.Create().
 			SetNillableAddressDetail(d.AddressDetail).
@@ -52,15 +56,17 @@ func (repo *academyRepository) Create(ctx context.Context, d *ent.Academy, yogaI
 			SetBusinessCode(d.BusinessCode).
 			SetCallNumber(d.CallNumber).
 			SetAddressRoad(d.AddressRoad).
-			SetUserID(d.UserID).SetSigunguID(d.SigunguID).Exec(ctx)
+			SetUserID(d.UserID).
+			SetSigunguID(d.SigunguID).
+			Exec(ctx)
 		if err != nil {
 			return
 		}
 
-		if yogaIDs != nil {
+		if len(d.Edges.Yoga) > 0 {
 			err = tx.Academy.Update().Where(
-				academy.UserIDEQ(d.Edges.User.ID),
-			).AddYogaIDs(*yogaIDs...).Exec(ctx)
+				academy.UserIDEQ(d.UserID),
+			).AddYoga(d.Edges.Yoga...).Exec(ctx)
 
 			if err != nil {
 				return
@@ -69,7 +75,7 @@ func (repo *academyRepository) Create(ctx context.Context, d *ent.Academy, yogaI
 
 		err = repo.db.User.Update().
 			SetType(model.AcademyType).
-			Where(user.IDEQ(d.Edges.User.ID)).
+			Where(user.IDEQ(d.UserID)).
 			Exec(ctx)
 		if err != nil {
 			return
@@ -79,37 +85,38 @@ func (repo *academyRepository) Create(ctx context.Context, d *ent.Academy, yogaI
 	})
 }
 
-func (repo *academyRepository) Patch(ctx context.Context, aca *ent.Academy, yogaIDs []*int, userId int, id int) error {
-	return entx.WithTx(ctx, repo.db, func(tx *ent.Tx) (err error) {
-		if yogaIDs != nil {
-			err = tx.Academy.Update().Where(
-				academy.IDEQ(aca.ID),
-			).ClearYoga().Exec(ctx)
-			if err != nil {
-				return
-			}
+func (repo *academyRepository) Patch(ctx context.Context, d *ent.Academy) error {
+	var requestData map[string]ent.Value
 
-			tx.Academy.Update().Where(
-				academy.IDEQ(aca.ID),
-			).AddYoga(aca.Edges.Yoga...).Exec(ctx)
-			if err != nil {
-				return
-			}
-		}
+	s, _ := json.Marshal(d)
+	decoder := json.NewDecoder(strings.NewReader(string(s)))
+	decoder.UseNumber()
+	decoder.Decode(&requestData)
+	delete(requestData, "id")
+	clause := repo.db.Debug().Academy.Update()
 
-		if aca != nil {
-			err = tx.Academy.UpdateOneID(userId).SetName(aca.Name).
-				SetCallNumber(aca.CallNumber).
-				SetAddressRoad(aca.AddressRoad).
-				SetSigunguID(aca.SigunguID).
-				Exec(ctx)
-			if err != nil {
-				return
+	for _, col := range academy.Columns {
+		for key, val := range requestData {
+			if strcase.ToLowerCamel(col) == key && val != nil {
+				// 디코딩 시, 숫자 타입이면 int로 바꿔주는 로직
+				id, ok := val.(json.Number)
+				if ok {
+					d, _ := strconv.Atoi(id.String())
+					val = d
+				}
+
+				if err := clause.Mutation().SetField(col, val); err != nil {
+					return err
+				}
 			}
 		}
+	}
 
-		return
-	})
+	if len(d.Edges.Yoga) > 0 {
+		clause.ClearYoga().AddYoga(d.Edges.Yoga...)
+	}
+
+	return clause.Where(academy.IDEQ(d.ID)).Exec(ctx)
 }
 
 func (repo *academyRepository) Update(ctx context.Context, aca *ent.Academy, userId int, id int) error {

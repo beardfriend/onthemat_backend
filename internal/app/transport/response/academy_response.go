@@ -13,7 +13,7 @@ type AcademyDetailRepsonse struct {
 	CallNumber    string               `json:"callNumber"`
 	AddressRoad   string               `json:"addressRoad"`
 	AddressDetail *string              `json:"addressDetail"`
-	AddressSigun  *string              `json:"addressSigun"`
+	AddressSigun  string               `json:"addressSigun"`
 	Yoga          []yoga               `json:"yoga"`
 	CreatedAt     transport.TimeString `json:"createdAt"`
 	UpdatedAt     transport.TimeString `json:"updatedAt"`
@@ -25,7 +25,7 @@ type AcademyListResponse struct {
 	CallNumber    string               `json:"callNumber"`
 	AddressRoad   string               `json:"addressRoad"`
 	AddressDetail *string              `json:"addressDetail"`
-	AddressSigun  *string              `json:"addressSigun"`
+	AddressSigun  string               `json:"addressSigun"`
 	Yoga          []yoga               `json:"yoga"`
 	CreatedAt     transport.TimeString `json:"createdAt"`
 	UpdatedAt     transport.TimeString `json:"updatedAt"`
@@ -41,9 +41,8 @@ func NewAcademyListResponse(model []*ent.Academy) []*AcademyListResponse {
 	for _, v := range model {
 		resp := new(AcademyListResponse)
 		copier.Copy(&resp, v)
-		if v.Edges.AreaSigungu != nil {
-			resp.AddressSigun = &v.Edges.AreaSigungu.Name
-		}
+
+		resp.AddressSigun = v.Edges.AreaSigungu.Name
 
 		if len(v.Edges.Yoga) > 0 {
 			copier.Copy(&resp.Yoga, v.Edges.Yoga)
@@ -56,16 +55,23 @@ func NewAcademyListResponse(model []*ent.Academy) []*AcademyListResponse {
 	return response
 }
 
-func NewAcademyDetailResponse(model *ent.Academy) *AcademyDetailRepsonse {
-	resp := new(AcademyDetailRepsonse)
-	copier.Copy(&resp, model)
-
-	if model.Edges.AreaSigungu != nil {
-		resp.AddressSigun = &model.Edges.AreaSigungu.Name
+func NewAcademyDetailResponse(m *ent.Academy) *AcademyDetailRepsonse {
+	resp := &AcademyDetailRepsonse{
+		ID:            m.ID,
+		Name:          m.Name,
+		CallNumber:    m.CallNumber,
+		AddressRoad:   m.AddressRoad,
+		AddressDetail: m.AddressDetail,
+		AddressSigun:  m.Edges.AreaSigungu.Name,
 	}
 
-	if len(model.Edges.Yoga) > 0 {
-		copier.Copy(&resp.Yoga, model.Edges.Yoga)
+	if len(m.Edges.Yoga) > 0 {
+		for _, v := range m.Edges.Yoga {
+			resp.Yoga = append(resp.Yoga, yoga{
+				ID:      v.ID,
+				NameKor: v.NameKor,
+			})
+		}
 	} else {
 		resp.Yoga = make([]yoga, 0)
 	}

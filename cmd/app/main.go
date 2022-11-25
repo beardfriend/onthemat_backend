@@ -22,6 +22,7 @@ import (
 	"onthemat/pkg/openapi"
 	"onthemat/pkg/validatorx"
 
+	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -93,7 +94,10 @@ func main() {
 		infrastructure.ClosePostgres(db)
 	}()
 	// app
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		JSONEncoder: json.Marshal,
+		JSONDecoder: json.Unmarshal,
+	})
 	app.Use(logger.New())
 	app.Use(recover.New())
 	// app.Use(limiter.New(limiter.ConfigDefault))

@@ -64,7 +64,7 @@ func (t *seeding) Academies() {
 			SetAddressRoad(fake.Address().Street).
 			SetBusinessCode(fmt.Sprintf("%d", fake.Number(10000000, 9999999))).
 			SetCallNumber(fake.Contact().Phone).
-			SetName(fake.Animal()).SetUserID(ids[i])
+			SetName(fake.Animal()).SetUserID(ids[i]).SetAreaSigunguID(i + 1)
 		t.db.User.UpdateOneID(ids[i]).SetType(model.AcademyType).Exec(context.Background())
 	}
 	err := t.db.Academy.CreateBulk(bulk...).Exec(context.Background())
