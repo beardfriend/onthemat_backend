@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"onthemat/internal/app/common"
+	"onthemat/internal/app/transport/request"
 
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
@@ -14,16 +15,22 @@ import (
 )
 
 type YogaRepository interface {
+	// test_success
 	CreateGroup(ctx context.Context, data *ent.YogaGroup) error
 	UpdateGroup(ctx context.Context, data *ent.YogaGroup) error
+	PatchGroup(ctx context.Context, data *request.YogaGroupPatchBody, id int) error
 	DeleteGroups(ctx context.Context, ids []int) (int, error)
-	GroupTotal(ctx context.Context, p *common.TotalParams) (count int, err error)
-	GroupList(ctx context.Context, pgModule *utils.Pagination, p *common.ListParams) (result []*ent.YogaGroup, err error)
+
 	Create(ctx context.Context, data *ent.Yoga) error
 	Update(ctx context.Context, data *ent.Yoga) error
+	Patch(ctx context.Context, data *request.YogaPatchBody, id int) error
 	Delete(ctx context.Context, id int) error
+
+	// not yet
+	GroupTotal(ctx context.Context, p *common.TotalParams) (count int, err error)
+	GroupList(ctx context.Context, pgModule *utils.Pagination, p *common.ListParams) (result []*ent.YogaGroup, err error)
+
 	List(ctx context.Context, groupdId int) ([]*ent.Yoga, error)
-	Patch(ctx context.Context, data interface{}, id int) error
 }
 
 type yogaRepository struct {
@@ -42,16 +49,33 @@ func (repo *yogaRepository) CreateGroup(ctx context.Context, data *ent.YogaGroup
 	return repo.db.YogaGroup.Create().
 		SetCategory(data.Category).
 		SetCategoryEng(data.CategoryEng).
-		SetNillableDescription(&data.Description).
+		SetNillableDescription(data.Description).
 		Exec(ctx)
 }
 
 func (repo *yogaRepository) UpdateGroup(ctx context.Context, data *ent.YogaGroup) error {
-	return repo.db.YogaGroup.UpdateOneID(data.ID).
+	clause := repo.db.YogaGroup.Update().Where(yogagroup.IDEQ(data.ID))
+	mu := clause.Mutation()
+
+	if data.Description == nil {
+		mu.ClearDescription()
+	}
+
+	return clause.
 		SetCategory(data.Category).
 		SetCategoryEng(data.CategoryEng).
-		SetNillableDescription(&data.Description).
+		SetNillableDescription(data.Description).
 		Exec(ctx)
+}
+
+func (repo *yogaRepository) PatchGroup(ctx context.Context, data *request.YogaGroupPatchBody, id int) error {
+	updateableData := utils.GetUpdateableData(data, yogagroup.Columns)
+
+	clause := repo.db.YogaGroup.Update().Where(yogagroup.IDEQ(id))
+	for key, val := range updateableData {
+		clause.Mutation().SetField(key, val)
+	}
+	return clause.Exec(ctx)
 }
 
 func (repo *yogaRepository) GroupTotal(ctx context.Context, p *common.TotalParams) (count int, err error) {
@@ -109,15 +133,17 @@ func (repo *yogaRepository) DeleteGroups(ctx context.Context, ids []int) (int, e
 func (repo *yogaRepository) Create(ctx context.Context, data *ent.Yoga) error {
 	return repo.db.Yoga.Create().
 		SetNameKor(data.NameKor).
+		SetNillableNameEng(data.NameEng).
 		SetNillableLevel(data.Level).
 		SetNillableDescription(data.Description).
-		SetYogaGroupID(data.Edges.YogaGroup.ID).
+		SetYogaGroupID(data.YogaGroupID).
 		Exec(ctx)
 }
 
 func (repo *yogaRepository) Update(ctx context.Context, data *ent.Yoga) error {
 	clause := repo.db.Yoga.Update().Where(yoga.IDEQ(data.ID))
 	mu := clause.Mutation()
+
 	if data.Level == nil {
 		mu.ClearLevel()
 	}
@@ -135,11 +161,11 @@ func (repo *yogaRepository) Update(ctx context.Context, data *ent.Yoga) error {
 		SetYogaGroupID(data.YogaGroupID).Exec(ctx)
 }
 
-func (repo *yogaRepository) Patch(ctx context.Context, data interface{}, id int) error {
-	dataForPatch := utils.StructToMap[ent.Value](data)
-	result := utils.MakeUseableFieldWithData(dataForPatch, yoga.Columns)
-	clause := repo.db.Debug().Yoga.Update().Where(yoga.IDEQ(id))
-	for key, val := range result {
+func (repo *yogaRepository) Patch(ctx context.Context, data *request.YogaPatchBody, id int) error {
+	updateableData := utils.GetUpdateableData(data, yoga.Columns)
+
+	clause := repo.db.Yoga.Update().Where(yoga.IDEQ(id))
+	for key, val := range updateableData {
 		clause.Mutation().SetField(key, val)
 	}
 	return clause.Exec(ctx)

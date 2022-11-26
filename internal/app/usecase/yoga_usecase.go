@@ -21,7 +21,7 @@ type YogaUsecase interface {
 	List(ctx context.Context, groupId int) ([]*ent.Yoga, error)
 	Update(ctx context.Context, req *request.YogaUpdateBody, yogaId int) (err error)
 	Delete(ctx context.Context, yogaId int) error
-	Patch(ctx context.Context, req *request.YogaPatcheBody, yogaId int) (err error)
+	Patch(ctx context.Context, req *request.YogaPatchBody, yogaId int) (err error)
 }
 
 type yogaUseCase struct {
@@ -116,7 +116,7 @@ func (u *yogaUseCase) Update(ctx context.Context, req *request.YogaUpdateBody, y
 	})
 }
 
-func (u *yogaUseCase) Patch(ctx context.Context, req *request.YogaPatcheBody, yogaId int) (err error) {
+func (u *yogaUseCase) Patch(ctx context.Context, req *request.YogaPatchBody, yogaId int) (err error) {
 	return u.yogaRepo.Patch(ctx, req, yogaId)
 }
 

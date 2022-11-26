@@ -20,13 +20,16 @@ func (Yoga) Annotations() []schema.Annotation {
 
 func (Yoga) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("yoga_group_id").StructTag(`json:"yogaGroupId"`),
+		field.Int("yoga_group_id").
+			Optional().
+			StructTag(`json:"yogaGroupId"`),
 
 		field.String("nameKor").
 			Comment("요가 이름 한국어"),
 
 		field.String("nameEng").
-			Optional().Nillable().
+			Optional().
+			Nillable().
 			Comment("요가 이름 영어"),
 
 		field.Int("level").Optional().Nillable(),
@@ -43,7 +46,11 @@ func (Yoga) Edges() []ent.Edge {
 		edge.From("yoga_group", YogaGroup.Type).
 			Ref("yoga").
 			Unique().
-			Required().
+			Annotations(
+				entsql.Annotation{
+					OnDelete: entsql.SetNull,
+				},
+			).
 			Field("yoga_group_id"),
 
 		edge.From("academy", Academy.Type).

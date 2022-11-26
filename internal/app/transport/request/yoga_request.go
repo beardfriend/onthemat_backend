@@ -2,15 +2,21 @@ package request
 
 // ------------------- Body -------------------
 type YogaGroupCreateBody struct {
-	Category    string `json:"category" validate:"required"`
-	CategoryEng string `json:"categoryEng"`
-	Description string `json:"description"`
+	Category    string  `json:"category" validate:"required"`
+	CategoryEng string  `json:"categoryEng"`
+	Description *string `json:"description"`
 }
 
 type YogaGroupUpdateBody struct {
-	Category    string `json:"category" validate:"required"`
-	CategoryEng string `json:"categoryEng"`
-	Description string `json:"description"`
+	Category    string  `json:"category" validate:"required"`
+	CategoryEng string  `json:"categoryEng"`
+	Description *string `json:"description"`
+}
+
+type YogaGroupPatchBody struct {
+	Category    *string `json:"category"`
+	CategoryEng *string `json:"categoryEng"`
+	Description *string `json:"description"`
 }
 
 type YogaCreateBody struct {
@@ -29,7 +35,7 @@ type YogaUpdateBody struct {
 	Description *string `json:"description"`
 }
 
-type YogaPatcheBody struct {
+type YogaPatchBody struct {
 	YogaGroupId *int    `json:"yogaGroupId,omitempty" validate:"required"`
 	NameKor     *string `json:"nameKor,omitempty"`
 	NameEng     *string `json:"nameEng"`

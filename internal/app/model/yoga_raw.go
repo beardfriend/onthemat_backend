@@ -28,6 +28,7 @@ func (YogaRaw) Fields() []ent.Field {
 			Comment("요가 이름"),
 
 		field.Bool("is_migrated").
+			Default(false).
 			Comment("정식 그룹에 추가됐는지"),
 	}
 }

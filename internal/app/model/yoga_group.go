@@ -29,6 +29,7 @@ func (YogaGroup) Fields() []ent.Field {
 
 		field.Text("description").
 			Optional().
+			Nillable().
 			Comment("요가에 대한 설명"),
 	}
 }

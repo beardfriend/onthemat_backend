@@ -29,16 +29,22 @@ func (Academy) Fields() []ent.Field {
 			StructTag(`json:"sigunguId,omitempty"`).
 			Comment("foreignKey"),
 
-		field.String("name").SchemaType(map[string]string{
-			dialect.Postgres: "varchar(30)",
-		}).
+		field.String("name").
+			SchemaType(
+				map[string]string{
+					dialect.Postgres: "varchar(30)",
+				},
+			).
 			MaxLen(30).
 			NotEmpty().
 			Comment("학원 이름"),
 
-		field.String("businessCode").SchemaType(map[string]string{
-			dialect.Postgres: "varchar(30)",
-		}).
+		field.String("businessCode").
+			SchemaType(
+				map[string]string{
+					dialect.Postgres: "varchar(30)",
+				},
+			).
 			MaxLen(15).
 			NotEmpty().
 			Comment("사업자 번호"),

@@ -10,9 +10,6 @@ import (
 	"github.com/fatih/structs"
 )
 
-func TestSturcts(t *testing.T) {
-}
-
 func TestStructLibs(t *testing.T) {
 	req := &request.YogaUpdateBody{
 		Level:       Int(2),
@@ -69,14 +66,4 @@ func BenchmarkReflect(b *testing.B) {
 			}
 		}
 	})
-}
-
-func String(s string) *string {
-	result := &s
-	return result
-}
-
-func Int(s int) *int {
-	result := &s
-	return result
 }

@@ -20,7 +20,8 @@ func (AreaSiGungu) Annotations() []schema.Annotation {
 
 func (AreaSiGungu) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("area_sido_id").Optional(),
+		field.Int("area_sido_id").
+			Optional(),
 
 		field.String("name").
 			Comment("시군구 이름"),

@@ -13,8 +13,11 @@ swag:
 docker_postgres_dev:
 	docker-compose -f ./docker-compose.dev.yml --env-file ./configs/.env.dev up -d
 
-docker_postgres_test:
+test_up:
 	docker-compose -f ./docker-compose.test.yml --env-file ./configs/.env.test up -d
+
+test_down:
+	docker rm -f psql_repo_test && docker volume prune -f	
 
 apidoc:
 	apidoc -c apidocs.json -i internal/app/delivery/http -o apidocs

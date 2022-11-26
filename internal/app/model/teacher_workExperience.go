@@ -40,7 +40,8 @@ func (TeacherWorkExperience) Fields() []ent.Field {
 			Comment("근무 종료일"),
 
 		field.Text("description").
-			Optional().Nillable().
+			Optional().
+			Nillable().
 			Comment("기타 설명"),
 
 		field.JSON("classContent", &[]ClassContent{}).

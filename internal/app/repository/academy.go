@@ -25,7 +25,6 @@ type AcademyRepository interface {
 		orderCol *string, orderType *string) (result []*ent.Academy, err error)
 
 	Total(ctx context.Context, yogaIDs *[]int, sigunguID *int, academyName *string) (result int, err error)
-	Patch(ctx context.Context, d *ent.Academy) error
 }
 
 type academyRepository struct {
@@ -78,27 +77,6 @@ func (repo *academyRepository) Create(ctx context.Context, d *ent.Academy) error
 
 		return
 	})
-}
-
-func (repo *academyRepository) Patch(ctx context.Context, d *ent.Academy) error {
-	dataForPatch := utils.StructToMap[ent.Value](d)
-	delete(dataForPatch, "id")
-	result := utils.MakeUseableFieldWithData(dataForPatch, academy.Columns)
-
-	clause := repo.db.Debug().Academy.Update()
-	for key, val := range result {
-		if val == nil {
-			clause.Mutation().ClearField(key)
-			continue
-		}
-		clause.Mutation().SetField(key, val)
-	}
-
-	if len(d.Edges.Yoga) > 0 {
-		clause.ClearYoga().AddYoga(d.Edges.Yoga...)
-	}
-
-	return clause.Where(academy.IDEQ(d.ID)).Exec(ctx)
 }
 
 func (repo *academyRepository) Update(ctx context.Context, aca *ent.Academy, userId int, id int) error {
@@ -236,20 +214,4 @@ func (repo *academyRepository) conditionQuery(
 	}
 
 	return clause
-}
-
-func (repo *academyRepository) UseYoga(ctx context.Context, yogaIds []int, userID int) error {
-	return repo.db.Academy.
-		Update().
-		Where(
-			academy.UserIDEQ(userID),
-		).AddYogaIDs(yogaIds...).Exec(ctx)
-}
-
-func (repo *academyRepository) UnUseYoga(ctx context.Context, yogaIds []int, userID int) error {
-	return repo.db.Academy.
-		Update().
-		Where(
-			academy.UserIDEQ(userID),
-		).RemoveYogaIDs(yogaIds...).Exec(ctx)
 }

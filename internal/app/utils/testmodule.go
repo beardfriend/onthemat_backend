@@ -14,15 +14,20 @@ import (
 )
 
 // ------------------- For Repository -------------------
-func RepoTestInit(t *testing.T) *config.Config {
+func GetTestConfig(t *testing.T) *config.Config {
 	os.Setenv("GO_ENV", "TEST")
 	c := config.NewConfig()
 	if err := c.Load("../../../configs"); err != nil {
 		t.Error(t)
 		return nil
 	}
+	return c
+}
 
-	cmd := exec.Command("make", "docker_postgres_test")
+func RepoTestInit(t *testing.T) *config.Config {
+	c := GetTestConfig(t)
+
+	cmd := exec.Command("make", "test_up")
 	cmd.Dir = c.Onthemat.PWD
 	err := cmd.Run()
 	if err != nil {
@@ -33,12 +38,7 @@ func RepoTestInit(t *testing.T) *config.Config {
 }
 
 func RepoTestClose(t *testing.T) {
-	os.Setenv("GO_ENV", "TEST")
-	c := config.NewConfig()
-	if err := c.Load("../../../configs"); err != nil {
-		t.Error(t)
-		return
-	}
+	c := GetTestConfig(t)
 
 	cmd := exec.Command("docker", "rm", "-f", "psql_repo_test")
 
