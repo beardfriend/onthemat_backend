@@ -49,12 +49,12 @@ type AcademyPatchRequestBody struct {
 	YogaIDs []int         `json:"yogaIDs" `
 }
 type InfoForPatch struct {
-	Name          string `json:"name"`
-	LogoUrl       string `json:"logoUrl" validate:"omitempty,urlStartHttpHttps"`
-	CallNumber    string `json:"callNumber"`
-	AddressRoad   string `json:"addressRoad"`
-	AddressDetail string `json:"addressDetail"`
-	SigunguId     int    `json:"sigunguId"`
+	Name          string  `json:"name"`
+	LogoUrl       string  `json:"logoUrl" validate:"omitempty,urlStartHttpHttps"`
+	CallNumber    string  `json:"callNumber"`
+	AddressRoad   string  `json:"addressRoad"`
+	AddressDetail *string `json:"addressDetail"`
+	SigunguId     int     `json:"sigunguId"`
 }
 
 // ------------------- Response -------------------

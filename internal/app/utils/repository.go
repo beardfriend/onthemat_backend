@@ -21,11 +21,6 @@ func MakeUseableFieldWithData(data map[string]ent.Value, allowColumns []string) 
 			continue
 		}
 
-		if value == "" {
-			result[col] = nil
-			continue
-		}
-
 		// 숫자 유형이면,
 		if id, ok := value.(json.Number); ok {
 			d, _ := strconv.Atoi(id.String())

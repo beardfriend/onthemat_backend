@@ -52,6 +52,21 @@ func NewYogaHandler(
 	g.Delete("/groups", middleware.Auth, middleware.OnlySuperAdmin, handler.DeleteGroups)
 	// 요가 그룹 리스트
 	g.Get("/group/list", middleware.Auth, handler.GetGroups)
+	g.Patch("/test", handler.Patch)
+}
+
+func (h *yogaHandler) Patch(c *fiber.Ctx) error {
+	ctx := c.Context()
+	reqBody := new(request.YogaPatcheBody)
+	if err := c.BodyParser(reqBody); err != nil {
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
+	}
+
+	if err := h.yogaUsecase.Patch(ctx, reqBody, 2); err != nil {
+		return utils.NewError(c, err)
+	}
+	return c.Status(http.StatusCreated).JSON(reqBody)
 }
 
 func (h *yogaHandler) CreateGroup(c *fiber.Ctx) error {

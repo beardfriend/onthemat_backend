@@ -21,6 +21,7 @@ type YogaUsecase interface {
 	List(ctx context.Context, groupId int) ([]*ent.Yoga, error)
 	Update(ctx context.Context, req *request.YogaUpdateBody, yogaId int) (err error)
 	Delete(ctx context.Context, yogaId int) error
+	Patch(ctx context.Context, req *request.YogaPatcheBody, yogaId int) (err error)
 }
 
 type yogaUseCase struct {
@@ -92,8 +93,8 @@ func (u *yogaUseCase) GroupList(ctx context.Context, req *request.YogaGroupListQ
 
 func (u *yogaUseCase) Create(ctx context.Context, req *request.YogaCreateBody) (err error) {
 	return u.yogaRepo.Create(ctx, &ent.Yoga{
-		NameKor:     req.NameKor,
-		NameEng:     req.NameEng,
+		NameKor: req.NameKor,
+
 		Description: req.Description,
 		Level:       req.Level,
 		Edges: ent.YogaEdges{
@@ -107,16 +108,16 @@ func (u *yogaUseCase) Create(ctx context.Context, req *request.YogaCreateBody) (
 func (u *yogaUseCase) Update(ctx context.Context, req *request.YogaUpdateBody, yogaId int) (err error) {
 	return u.yogaRepo.Update(ctx, &ent.Yoga{
 		ID:          yogaId,
+		YogaGroupID: req.YogaGroupId,
 		NameKor:     req.NameKor,
 		NameEng:     req.NameEng,
 		Description: req.Description,
 		Level:       req.Level,
-		Edges: ent.YogaEdges{
-			YogaGroup: &ent.YogaGroup{
-				ID: req.YogaGroupId,
-			},
-		},
 	})
+}
+
+func (u *yogaUseCase) Patch(ctx context.Context, req *request.YogaPatcheBody, yogaId int) (err error) {
+	return u.yogaRepo.Patch(ctx, req, yogaId)
 }
 
 func (u *yogaUseCase) Delete(ctx context.Context, yogaId int) error {

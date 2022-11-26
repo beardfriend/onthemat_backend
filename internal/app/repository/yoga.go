@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"onthemat/internal/app/common"
+
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/predicate"
@@ -22,6 +23,7 @@ type YogaRepository interface {
 	Update(ctx context.Context, data *ent.Yoga) error
 	Delete(ctx context.Context, id int) error
 	List(ctx context.Context, groupdId int) ([]*ent.Yoga, error)
+	Patch(ctx context.Context, data interface{}, id int) error
 }
 
 type yogaRepository struct {
@@ -107,7 +109,6 @@ func (repo *yogaRepository) DeleteGroups(ctx context.Context, ids []int) (int, e
 func (repo *yogaRepository) Create(ctx context.Context, data *ent.Yoga) error {
 	return repo.db.Yoga.Create().
 		SetNameKor(data.NameKor).
-		SetNillableNameEng(data.NameEng).
 		SetNillableLevel(data.Level).
 		SetNillableDescription(data.Description).
 		SetYogaGroupID(data.Edges.YogaGroup.ID).
@@ -115,14 +116,33 @@ func (repo *yogaRepository) Create(ctx context.Context, data *ent.Yoga) error {
 }
 
 func (repo *yogaRepository) Update(ctx context.Context, data *ent.Yoga) error {
-	// 업데이트 쿼리는 전부 WHEre로바꾸기 아니면 select까지 해버림
-	return repo.db.Yoga.Update().Where(yoga.IDEQ(data.ID)).
-		SetNameKor(data.NameKor).
-		SetNillableNameEng(data.NameEng).
+	clause := repo.db.Yoga.Update().Where(yoga.IDEQ(data.ID))
+	mu := clause.Mutation()
+	if data.Level == nil {
+		mu.ClearLevel()
+	}
+	if data.NameEng == nil {
+		mu.ClearNameEng()
+	}
+	if data.Description == nil {
+		mu.ClearDescription()
+	}
+	return clause.
 		SetNillableDescription(data.Description).
 		SetNillableLevel(data.Level).
-		SetYogaGroupID(data.Edges.YogaGroup.ID).
-		Exec(ctx)
+		SetNillableNameEng(data.NameEng).
+		SetNameKor(data.NameKor).
+		SetYogaGroupID(data.YogaGroupID).Exec(ctx)
+}
+
+func (repo *yogaRepository) Patch(ctx context.Context, data interface{}, id int) error {
+	dataForPatch := utils.StructToMap[ent.Value](data)
+	result := utils.MakeUseableFieldWithData(dataForPatch, yoga.Columns)
+	clause := repo.db.Debug().Yoga.Update().Where(yoga.IDEQ(id))
+	for key, val := range result {
+		clause.Mutation().SetField(key, val)
+	}
+	return clause.Exec(ctx)
 }
 
 func (repo *yogaRepository) Delete(ctx context.Context, id int) error {

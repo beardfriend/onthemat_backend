@@ -20,14 +20,13 @@ func (Yoga) Annotations() []schema.Annotation {
 
 func (Yoga) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("yoga_group_id"),
+		field.Int("yoga_group_id").StructTag(`json:"yogaGroupId"`),
 
-		field.String("name_kor").
+		field.String("nameKor").
 			Comment("요가 이름 한국어"),
 
-		field.String("name_eng").
-			Optional().
-			Nillable().
+		field.String("nameEng").
+			Optional().Nillable().
 			Comment("요가 이름 영어"),
 
 		field.Int("level").Optional().Nillable(),

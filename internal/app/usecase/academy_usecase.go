@@ -125,12 +125,13 @@ func (u *academyUseCase) List(ctx context.Context, a *request.AcademyListQueries
 
 func (u *academyUseCase) Patch(ctx context.Context, req *transport.AcademyPatchRequestBody, id int) error {
 	aInfo := req.Info
+
 	d := &ent.Academy{
 		ID:            id,
 		Name:          aInfo.Name,
 		CallNumber:    aInfo.CallNumber,
 		AddressRoad:   aInfo.AddressRoad,
-		AddressDetail: &aInfo.AddressDetail,
+		AddressDetail: aInfo.AddressDetail,
 		SigunguID:     aInfo.SigunguId,
 	}
 

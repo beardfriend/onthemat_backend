@@ -22,11 +22,19 @@ type YogaCreateBody struct {
 }
 
 type YogaUpdateBody struct {
-	YogaGroupId int     `json:"yogaGroupId"`
+	YogaGroupId int     `json:"yogaGroupId" validate:"required"`
 	NameKor     string  `json:"nameKor"`
 	NameEng     *string `json:"nameEng"`
 	Level       *int    `json:"level"`
 	Description *string `json:"description"`
+}
+
+type YogaPatcheBody struct {
+	YogaGroupId *int    `json:"yogaGroupId,omitempty" validate:"required"`
+	NameKor     *string `json:"nameKor,omitempty"`
+	NameEng     *string `json:"nameEng"`
+	Level       *int    `json:"level,omitempty"`
+	Description *string `json:"description,omitempty"`
 }
 
 type YogaGroupsDeleteBody struct {
