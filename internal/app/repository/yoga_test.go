@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
+	"onthemat/internal/app/common"
 	"onthemat/internal/app/config"
 	"onthemat/internal/app/infrastructure"
 	"onthemat/internal/app/transport/request"
@@ -11,6 +13,7 @@ import (
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/yoga"
 
+	fake "github.com/brianvoe/gofakeit/v6"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/suite"
 )
@@ -105,6 +108,32 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			})
 			ts.NoError(err)
 
+		case "TestGroupTotal":
+			err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+				Category:    "인",
+				CategoryEng: "in",
+				Description: utils.String("인 요가입니다."),
+			})
+			ts.NoError(err)
+			err = ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+				Category:    "플라잉",
+				CategoryEng: "flying",
+				Description: utils.String("플라잉 요가입니다."),
+			})
+			ts.NoError(err)
+
+		case "TestGroupList":
+			bulk := make([]*ent.YogaGroupCreate, 20)
+			for i := 0; i < 20; i++ {
+				category := fmt.Sprintf("%s%d", fake.BeerName(), i)
+				bulk[i] = ts.client.YogaGroup.
+					Create().
+					SetCategory(category).
+					SetCategoryEng(fake.BeerHop())
+			}
+			_, err := ts.client.YogaGroup.CreateBulk(bulk...).Save(ts.ctx)
+			ts.NoError(err)
+
 		case "TestCreate":
 			err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
 				Category:    "아쉬탕가",
@@ -159,6 +188,20 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			})
 			ts.NoError(err)
 
+		case "TestList":
+			err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+				Category:    "아쉬탕가",
+				CategoryEng: "ashtanga",
+				Description: utils.String("아쉬탕가 요가입니다."),
+			})
+			ts.NoError(err)
+			bulk := make([]*ent.YogaCreate, 20)
+			for i := 0; i < 20; i++ {
+				bulk[i] = ts.client.Yoga.Create().
+					SetNameKor(fake.Animal()).SetYogaGroupID(1)
+			}
+			_, err = ts.client.Yoga.CreateBulk(bulk...).Save(ts.ctx)
+			ts.NoError(err)
 		}
 	}
 }
@@ -237,6 +280,37 @@ func (ts *YogaRepositoryTestSuite) TestDeleteGroups() {
 	})
 }
 
+func (ts *YogaRepositoryTestSuite) TestGroupTotal() {
+	ts.Run("success", func() {
+		count, err := ts.yogaRepo.GroupTotal(ts.ctx, nil)
+		ts.NoError(err)
+		ts.Equal(2, count)
+	})
+
+	ts.Run("category", func() {
+		count, err := ts.yogaRepo.GroupTotal(ts.ctx, utils.String("인"))
+		ts.NoError(err)
+		ts.Equal(1, count)
+	})
+}
+
+func (ts *YogaRepositoryTestSuite) TestGroupList() {
+	ts.Run("success", func() {
+		pgModule := utils.NewPagination(1, 10)
+		result, err := ts.yogaRepo.GroupList(ts.ctx, pgModule, nil, common.ASC)
+		ts.NoError(err)
+		ts.Equal(10, len(result))
+		ts.Greater(result[1].ID, result[0].ID)
+	})
+
+	ts.Run("query", func() {
+		pgModule := utils.NewPagination(1, 10)
+		result, err := ts.yogaRepo.GroupList(ts.ctx, pgModule, utils.String("0"), common.DESC)
+		ts.NoError(err)
+		ts.GreaterOrEqual(len(result), 1)
+	})
+}
+
 func (ts *YogaRepositoryTestSuite) TestCreate() {
 	ts.Run("success", func() {
 		err := ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
@@ -298,6 +372,21 @@ func (ts *YogaRepositoryTestSuite) TestDelete() {
 		res, err := ts.client.YogaGroup.Get(ts.ctx, 1)
 		ts.NoError(err)
 		ts.Equal(1, res.ID)
+	})
+}
+
+func (ts *YogaRepositoryTestSuite) TestList() {
+	ts.Run("success", func() {
+		/*
+			SELECT DISTINCT "yoga"."id", "yoga"."created_at", "yoga"."updated_at", "yoga"."yoga_group_id", "yoga"."name_kor", "yoga"."name_eng", "yoga"."level", "yoga"."description"
+			FROM "yoga"
+			JOIN (SELECT "yoga_group"."id" FROM "yoga_group" WHERE "yoga_group"."id" = $1) AS "t1"
+			ON "yoga"."yoga_group_id" = "t1"."id"
+			ORDER BY "yoga"."id" DESC args=[1]
+		*/
+		result, err := ts.yogaRepo.List(ts.ctx, 1)
+		ts.NoError(err)
+		ts.Equal(20, len(result))
 	})
 }
 

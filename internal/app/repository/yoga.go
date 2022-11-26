@@ -2,34 +2,28 @@ package repository
 
 import (
 	"context"
-	"errors"
 
 	"onthemat/internal/app/common"
 	"onthemat/internal/app/transport/request"
 
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
-	"onthemat/pkg/ent/predicate"
 	"onthemat/pkg/ent/yoga"
 	"onthemat/pkg/ent/yogagroup"
 )
 
 type YogaRepository interface {
-	// test_success
 	CreateGroup(ctx context.Context, data *ent.YogaGroup) error
 	UpdateGroup(ctx context.Context, data *ent.YogaGroup) error
 	PatchGroup(ctx context.Context, data *request.YogaGroupPatchBody, id int) error
 	DeleteGroups(ctx context.Context, ids []int) (int, error)
+	GroupTotal(ctx context.Context, category *string) (count int, err error)
+	GroupList(ctx context.Context, pgModule *utils.Pagination, category *string, sorts common.Sorts) (result []*ent.YogaGroup, err error)
 
 	Create(ctx context.Context, data *ent.Yoga) error
 	Update(ctx context.Context, data *ent.Yoga) error
 	Patch(ctx context.Context, data *request.YogaPatchBody, id int) error
 	Delete(ctx context.Context, id int) error
-
-	// not yet
-	GroupTotal(ctx context.Context, p *common.TotalParams) (count int, err error)
-	GroupList(ctx context.Context, pgModule *utils.Pagination, p *common.ListParams) (result []*ent.YogaGroup, err error)
-
 	List(ctx context.Context, groupdId int) ([]*ent.Yoga, error)
 }
 
@@ -78,50 +72,37 @@ func (repo *yogaRepository) PatchGroup(ctx context.Context, data *request.YogaGr
 	return clause.Exec(ctx)
 }
 
-func (repo *yogaRepository) GroupTotal(ctx context.Context, p *common.TotalParams) (count int, err error) {
+func (repo *yogaRepository) GroupTotal(ctx context.Context, category *string) (count int, err error) {
 	clause := repo.db.YogaGroup.Query()
-	clause, err = repo.groupConditionQuery(p, clause)
-	if err != nil {
-		return
-	}
+	clause = repo.groupConditionQuery(category, clause)
+
 	count, err = clause.Count(ctx)
 	return
 }
 
-func (repo *yogaRepository) GroupList(ctx context.Context, pgModule *utils.Pagination, p *common.ListParams) (result []*ent.YogaGroup, err error) {
+func (repo *yogaRepository) GroupList(ctx context.Context, pgModule *utils.Pagination, category *string, sorts common.Sorts) (result []*ent.YogaGroup, err error) {
 	clause := repo.db.YogaGroup.Query().
 		Limit(pgModule.GetLimit()).
 		Offset(pgModule.GetOffset())
 
-	clause, err = repo.groupConditionQuery(&common.TotalParams{
-		SearchKey:   p.SearchKey,
-		SearchValue: p.SearchValue,
-	}, clause)
-	if err != nil {
-		return
+	if sorts == common.ASC {
+		clause = clause.Order(ent.Asc(yogagroup.FieldID))
+	} else {
+		clause = clause.Order(ent.Desc(yogagroup.FieldID))
 	}
+
+	clause = repo.groupConditionQuery(category, clause)
 
 	result, err = clause.All(ctx)
 	return
 }
 
-func (repo *yogaRepository) groupConditionQuery(p *common.TotalParams, clause *ent.YogaGroupQuery) (*ent.YogaGroupQuery, error) {
-	useableSearchCol := map[string]func(v string) predicate.YogaGroup{
-		"NAME": yogagroup.CategoryContains,
+func (repo *yogaRepository) groupConditionQuery(category *string, clause *ent.YogaGroupQuery) *ent.YogaGroupQuery {
+	if category != nil {
+		clause.Where(yogagroup.CategoryContains(*category))
 	}
 
-	if p.SearchKey != nil && p.SearchValue != nil {
-
-		whereFunc := useableSearchCol[*p.SearchKey]
-
-		if whereFunc == nil {
-			return nil, errors.New(ErrSearchColumnInvalid)
-		}
-
-		clause.Where(whereFunc(*p.SearchValue))
-	}
-
-	return clause, nil
+	return clause
 }
 
 func (repo *yogaRepository) DeleteGroups(ctx context.Context, ids []int) (int, error) {
