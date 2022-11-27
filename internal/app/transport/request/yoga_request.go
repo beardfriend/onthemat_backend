@@ -1,5 +1,9 @@
 package request
 
+import (
+	"onthemat/internal/app/utils"
+)
+
 // ------------------- Body -------------------
 type YogaGroupCreateBody struct {
 	Category    string  `json:"category" validate:"required"`
@@ -54,20 +58,18 @@ type YogaRawCreateBody struct {
 // ------------------- Query String -------------------
 
 type YogaGroupListQueries struct {
-	PageNo      int     `query:"pageNo"`
-	PageSize    int     `query:"pageSize"`
-	SearchValue *string `query:"searchValue"`
-	SearchKey   *string `query:"searchKey"`
-	OrderType   *string `query:"orderType"`
-	OrderCol    *string `query:"orderCol"`
+	PageNo    int     `query:"pageNo"`
+	PageSize  int     `query:"pageSize"`
+	Category  *string `query:"category"`
+	OrderType *string `query:"orderType"`
 }
 
 func NewYogaGroupListQueries() *YogaGroupListQueries {
 	return &YogaGroupListQueries{
-		PageNo:      1,
-		PageSize:    10,
-		SearchKey:   nil,
-		SearchValue: nil,
+		PageNo:    1,
+		PageSize:  10,
+		Category:  nil,
+		OrderType: utils.String("DESC"),
 	}
 }
 

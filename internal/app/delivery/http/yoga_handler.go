@@ -57,7 +57,7 @@ func NewYogaHandler(
 
 func (h *yogaHandler) Patch(c *fiber.Ctx) error {
 	ctx := c.Context()
-	reqBody := new(request.YogaPatcheBody)
+	reqBody := new(request.YogaPatchBody)
 	if err := c.BodyParser(reqBody); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))

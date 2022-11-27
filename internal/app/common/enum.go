@@ -1,8 +1,8 @@
 package common
 
-type Sorts int
+type Sorts string
 
 const (
-	DESC Sorts = 1 + iota
-	ASC
+	DESC Sorts = "DESC"
+	ASC        = "ASC"
 )

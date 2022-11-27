@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"onthemat/internal/app/config"
 	"onthemat/internal/app/infrastructure"
+	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
 
@@ -36,11 +36,8 @@ func (ts *AcademyRepositoryTestSuite) SetupSuite() {
 	t := ts.T()
 	ts.ctx = context.Background()
 
-	// 도커 디비 삭제 후 생성
-	utils.RepoTestClose(t)
-	time.Sleep(1 * time.Second)
-	ts.config = utils.RepoTestInit(t)
-	time.Sleep(3 * time.Second)
+	c := utils.GetTestConfig(t)
+	ts.config = c
 	// 포스트그레스 연결
 	ts.client = infrastructure.NewPostgresDB(ts.config)
 
@@ -53,7 +50,6 @@ func (ts *AcademyRepositoryTestSuite) SetupSuite() {
 // 모든 테스트 종료 후 1회
 func (ts *AcademyRepositoryTestSuite) TearDownSuite() {
 	ts.client.Close()
-	utils.RepoTestClose(nil)
 }
 
 // 각 테스트 종료 후 N회
@@ -67,15 +63,83 @@ func (ts *AcademyRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 		switch testName {
 		case "TestCreate":
 			ts.initData()
+			ts.userRepo.Create(ts.ctx, &ent.User{})
+		case "TestUpdate":
+			ts.initData()
+			err := ts.academyRepository.Create(ts.ctx, &ent.Academy{
+				UserID:        1,
+				SigunguID:     1,
+				Name:          "하타요가원",
+				BusinessCode:  "1234",
+				CallNumber:    "010122222222",
+				AddressRoad:   "전체주소",
+				AddressDetail: utils.String("상세주소"),
+				Edges: ent.AcademyEdges{
+					Yoga: []*ent.Yoga{
+						{
+							ID: 1,
+						},
+						{
+							ID: 2,
+						},
+					},
+				},
+			})
+			ts.NoError(err)
+		case "TestGet":
+			ts.initData()
+			err := ts.academyRepository.Create(ts.ctx, &ent.Academy{
+				UserID:        1,
+				SigunguID:     1,
+				Name:          "하타요가원",
+				BusinessCode:  "1234",
+				CallNumber:    "010122222222",
+				AddressRoad:   "전체주소",
+				AddressDetail: utils.String("상세주소"),
+				Edges: ent.AcademyEdges{
+					Yoga: []*ent.Yoga{
+						{
+							ID: 1,
+						},
+						{
+							ID: 2,
+						},
+					},
+				},
+			})
+			ts.NoError(err)
+		case "TestPatch":
+			ts.initData()
+			err := ts.academyRepository.Create(ts.ctx, &ent.Academy{
+				UserID:        1,
+				SigunguID:     1,
+				Name:          "하타요가원",
+				BusinessCode:  "1234",
+				CallNumber:    "010122222222",
+				AddressRoad:   "전체주소",
+				AddressDetail: utils.String("상세주소"),
+				Edges: ent.AcademyEdges{
+					Yoga: []*ent.Yoga{
+						{
+							ID: 1,
+						},
+						{
+							ID: 2,
+						},
+					},
+				},
+			})
+			ts.NoError(err)
 		}
 	}
 }
 
 func (ts *AcademyRepositoryTestSuite) TestCreate() {
-	data := fmt.Sprintf(`
+	ts.Run("with yoga", func() {
+		data := fmt.Sprintf(`
 		{
-			"user_id": %d,
-			"sigungu_id": 1,
+			"userId": %d,
+			"sigunguId": 1,
 			"name": "name",
 			"businessCode": "1138621886",
 			"callNumber": "01064135418",
@@ -84,7 +148,7 @@ func (ts *AcademyRepositoryTestSuite) TestCreate() {
 		}
 	`, ts.create.userID)
 
-	yogaData := `
+		yogaData := `
 		[
 			{
 				"ID": 1
@@ -93,13 +157,71 @@ func (ts *AcademyRepositoryTestSuite) TestCreate() {
 				"ID": 2
 			}
 		]
-		
+
 	`
-	academy := &ent.Academy{}
-	json.Unmarshal([]byte(data), academy)
-	json.Unmarshal([]byte(yogaData), &academy.Edges.Yoga)
-	err := ts.academyRepository.Create(ts.ctx, academy)
+		academy := &ent.Academy{}
+		json.Unmarshal([]byte(data), academy)
+		json.Unmarshal([]byte(yogaData), &academy.Edges.Yoga)
+		err := ts.academyRepository.Create(ts.ctx, academy)
+		ts.NoError(err)
+	})
+
+	ts.Run("without yoga", func() {
+		err := ts.academyRepository.Create(ts.ctx, &ent.Academy{
+			UserID:        2,
+			SigunguID:     1,
+			Name:          "하타요가원",
+			BusinessCode:  "1234",
+			CallNumber:    "010122222222",
+			AddressRoad:   "전체주소",
+			AddressDetail: utils.String("상세주소"),
+		})
+		ts.NoError(err)
+	})
+}
+
+func (ts *AcademyRepositoryTestSuite) TestUpdate() {
+	ts.Run("success", func() {
+		err := ts.academyRepository.Update(ts.ctx, &ent.Academy{
+			ID:            1,
+			UserID:        1,
+			SigunguID:     2,
+			Name:          "바꾸고",
+			BusinessCode:  "1234",
+			CallNumber:    "010122222222",
+			AddressRoad:   "전체주소",
+			AddressDetail: nil,
+		})
+		ts.NoError(err)
+
+		academy, _ := ts.client.Academy.Get(ts.ctx, 1)
+		ts.Equal("바꾸고", academy.Name)
+		ts.Equal(0, len(academy.Edges.Yoga))
+		ts.Nil(academy.AddressDetail)
+	})
+}
+
+func (ts *AcademyRepositoryTestSuite) TestPatch() {
+	err := ts.academyRepository.Patch(ts.ctx, &request.AcademyPatchBody{
+		Info: &request.AcademyPatchInfo{
+			Name: utils.String("학원이름"),
+		},
+	}, 1, 1)
+	academy, _ := ts.client.Academy.Get(ts.ctx, 1)
+	ts.Equal("학원이름", academy.Name)
+	ts.Equal("010122222222", academy.CallNumber)
 	ts.NoError(err)
+}
+
+func (ts *AcademyRepositoryTestSuite) TestGet() {
+	ts.Run("success", func() {
+		academy, err := ts.academyRepository.Get(ts.ctx, 1)
+		ts.NoError(err)
+		fmt.Println(academy)
+	})
+}
+
+func (ts *AcademyRepositoryTestSuite) TestList() {
 }
 
 func TestAcademyRepositoryTestSuite(t *testing.T) {

@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 
+	"onthemat/internal/app/common"
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/repository"
 	r "onthemat/internal/app/repository"
@@ -68,7 +69,7 @@ func (u *yogaUseCase) UpdateGroup(ctx context.Context, req *request.YogaGroupUpd
 func (u *yogaUseCase) GroupList(ctx context.Context, req *request.YogaGroupListQueries) (result []*ent.YogaGroup, pagination *utils.PagenationInfo, err error) {
 	pgModule := utils.NewPagination(req.PageNo, req.PageSize)
 
-	total, err := u.yogaRepo.GroupTotal(ctx, &ex.TotalParams{SearchKey: req.SearchKey, SearchValue: req.SearchValue})
+	total, err := u.yogaRepo.GroupTotal(ctx, req.Category)
 	if err != nil {
 		if err.Error() == repository.ErrOrderColumnInvalid || err.Error() == repository.ErrSearchColumnInvalid {
 			err = ex.NewBadRequestError(ex.ErrColumnInvalid, nil)
@@ -77,10 +78,13 @@ func (u *yogaUseCase) GroupList(ctx context.Context, req *request.YogaGroupListQ
 		return
 	}
 	pgModule.SetTotal(total)
-	result, err = u.yogaRepo.GroupList(ctx, pgModule, &ex.ListParams{
-		SearchKey:   req.SearchKey,
-		SearchValue: req.SearchValue,
-	})
+
+	orderType := common.DESC
+	if req.OrderType != nil && *req.OrderType == common.ASC {
+		orderType = common.ASC
+	}
+
+	result, err = u.yogaRepo.GroupList(ctx, pgModule, req.Category, orderType)
 	if err != nil {
 		return
 	}

@@ -33,7 +33,7 @@ type InfoForCreate struct {
 
 type AcademyUpdateRequestBody struct {
 	Info    info  `json:"info" validate:"required,dive,required"`
-	YogaIDs []int `json:"yogaIDs" validate:"dive,required"`
+	YogaIDs []int `json:"yogaIds" validate:"dive,required"`
 }
 type info struct {
 	Name           string  `json:"name" validate:"required"`
@@ -42,19 +42,6 @@ type info struct {
 	AddressRoad    string  `json:"addressRoad" validate:"required"`
 	AddressDetail  *string `json:"addressDetail"`
 	AddressSigungu string  `json:"addressSigungu" validate:"required"`
-}
-
-type AcademyPatchRequestBody struct {
-	Info    *InfoForPatch `json:"info" validate:"dive"`
-	YogaIDs []int         `json:"yogaIDs" `
-}
-type InfoForPatch struct {
-	Name          string  `json:"name"`
-	LogoUrl       string  `json:"logoUrl" validate:"omitempty,urlStartHttpHttps"`
-	CallNumber    string  `json:"callNumber"`
-	AddressRoad   string  `json:"addressRoad"`
-	AddressDetail *string `json:"addressDetail"`
-	SigunguId     int     `json:"sigunguId"`
 }
 
 // ------------------- Response -------------------

@@ -2,9 +2,9 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
+	"onthemat/internal/app/common"
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/repository"
 	"onthemat/internal/app/service"
@@ -19,7 +19,6 @@ type AcademyUsecase interface {
 	Create(ctx context.Context, academy *transport.AcademyCreateRequestBody, userId int) error
 	Get(ctx context.Context, userId int) (*ent.Academy, error)
 	List(ctx context.Context, a *request.AcademyListQueries) ([]*ent.Academy, *utils.PagenationInfo, error)
-	Patch(ctx context.Context, req *transport.AcademyPatchRequestBody, id int) error
 }
 
 type academyUseCase struct {
@@ -112,35 +111,17 @@ func (u *academyUseCase) List(ctx context.Context, a *request.AcademyListQueries
 		}
 		return
 	}
+	orderType := common.DESC
+	if a.OrderType != nil && *a.OrderType == string(common.ASC) {
+		orderType = common.ASC
+	}
 
 	pginationModule.SetTotal(total)
-	result, err = u.academyRepo.List(ctx, paginationModule, a.YogaIDs, a.SigunGuID, a.AcademyName, a.OrderCol, a.OrderType)
+	result, err = u.academyRepo.List(ctx, paginationModule, a.YogaIDs, a.SigunGuID, a.AcademyName, a.OrderCol, orderType)
 	if err != nil {
 		return
 	}
 
 	paginationInfo = pginationModule.GetInfo(len(result))
 	return
-}
-
-func (u *academyUseCase) Patch(ctx context.Context, req *transport.AcademyPatchRequestBody, id int) error {
-	aInfo := req.Info
-
-	d := &ent.Academy{
-		ID:            id,
-		Name:          aInfo.Name,
-		CallNumber:    aInfo.CallNumber,
-		AddressRoad:   aInfo.AddressRoad,
-		AddressDetail: aInfo.AddressDetail,
-		SigunguID:     aInfo.SigunguId,
-	}
-
-	for _, v := range req.YogaIDs {
-		d.Edges.Yoga = append(d.Edges.Yoga, &ent.Yoga{
-			ID: v,
-		})
-	}
-	err := u.academyRepo.Patch(ctx, d)
-	fmt.Println(err)
-	return err
 }
