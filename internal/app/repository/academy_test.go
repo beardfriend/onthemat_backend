@@ -3,14 +3,19 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
+	"time"
 
+	"onthemat/internal/app/common"
 	"onthemat/internal/app/config"
 	"onthemat/internal/app/infrastructure"
 	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
+	"onthemat/pkg/ent/user"
 
+	fake "github.com/brianvoe/gofakeit/v6"
 	"github.com/goccy/go-json"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/suite"
@@ -62,9 +67,13 @@ func (ts *AcademyRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 	if suiteName == "AcademyRepositoryTestSuite" {
 		switch testName {
 		case "TestCreate":
+			u, _ := ts.userRepo.Create(ts.ctx, &ent.User{})
+			ts.create.userID = u.ID
 			ts.initData()
 			ts.userRepo.Create(ts.ctx, &ent.User{})
 		case "TestUpdate":
+			u, _ := ts.userRepo.Create(ts.ctx, &ent.User{})
+			ts.create.userID = u.ID
 			ts.initData()
 			err := ts.academyRepository.Create(ts.ctx, &ent.Academy{
 				UserID:        1,
@@ -87,6 +96,8 @@ func (ts *AcademyRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			})
 			ts.NoError(err)
 		case "TestGet":
+			u, _ := ts.userRepo.Create(ts.ctx, &ent.User{})
+			ts.create.userID = u.ID
 			ts.initData()
 			err := ts.academyRepository.Create(ts.ctx, &ent.Academy{
 				UserID:        1,
@@ -109,6 +120,8 @@ func (ts *AcademyRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			})
 			ts.NoError(err)
 		case "TestPatch":
+			u, _ := ts.userRepo.Create(ts.ctx, &ent.User{})
+			ts.create.userID = u.ID
 			ts.initData()
 			err := ts.academyRepository.Create(ts.ctx, &ent.Academy{
 				UserID:        1,
@@ -130,6 +143,11 @@ func (ts *AcademyRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 				},
 			})
 			ts.NoError(err)
+
+		case "TestList":
+			ts.initData()
+			ts.initForList()
+
 		}
 	}
 }
@@ -208,6 +226,8 @@ func (ts *AcademyRepositoryTestSuite) TestPatch() {
 		},
 	}, 1, 1)
 	academy, _ := ts.client.Academy.Get(ts.ctx, 1)
+
+	// Validate
 	ts.Equal("학원이름", academy.Name)
 	ts.Equal("010122222222", academy.CallNumber)
 	ts.NoError(err)
@@ -216,22 +236,148 @@ func (ts *AcademyRepositoryTestSuite) TestPatch() {
 func (ts *AcademyRepositoryTestSuite) TestGet() {
 	ts.Run("success", func() {
 		academy, err := ts.academyRepository.Get(ts.ctx, 1)
+
+		// Validate
 		ts.NoError(err)
 		fmt.Println(academy)
 	})
 }
 
 func (ts *AcademyRepositoryTestSuite) TestList() {
+	ts.Run("DESC", func() {
+		pageModule := utils.NewPagination(1, 10)
+		list, err := ts.academyRepository.List(ts.ctx, pageModule, nil, nil, nil, nil, common.DESC)
+
+		// Validate
+		ts.Equal(10, len(list))
+		ts.Greater(list[0].ID, list[1].ID)
+		ts.NoError(err)
+	})
+
+	ts.Run("ASC", func() {
+		pageModule := utils.NewPagination(1, 10)
+		list, err := ts.academyRepository.List(ts.ctx, pageModule, nil, nil, nil, nil, common.ASC)
+
+		// Validate
+		ts.Equal(10, len(list))
+		ts.Greater(list[1].ID, list[0].ID)
+		ts.NoError(err)
+	})
+
+	ts.Run("ASC BY Name", func() {
+		pageModule := utils.NewPagination(1, 5)
+		list, err := ts.academyRepository.List(ts.ctx, pageModule, nil, nil, nil, utils.String("NAME"), common.ASC)
+		nameFirstWordOfListZero := list[0].Name[0]
+		nameFirstWordOfListOne := list[1].Name[0]
+		firstInt, _ := strconv.Atoi(string(nameFirstWordOfListZero))
+		secondInt, _ := strconv.Atoi(string(nameFirstWordOfListOne))
+
+		// Validate
+		ts.GreaterOrEqual(firstInt, secondInt)
+		ts.NoError(err)
+	})
+
+	ts.Run("DESC BY Name", func() {
+		pageModule := utils.NewPagination(1, 5)
+		list, err := ts.academyRepository.List(ts.ctx, pageModule, nil, nil, nil, utils.String("NAME"), common.DESC)
+		nameFirstWordOfListZero := list[0].Name[0]
+		nameFirstWordOfListOne := list[1].Name[0]
+		firstInt, _ := strconv.Atoi(string(nameFirstWordOfListZero))
+		secondInt, _ := strconv.Atoi(string(nameFirstWordOfListOne))
+
+		// Validate
+		ts.GreaterOrEqual(secondInt, firstInt)
+		ts.NoError(err)
+	})
+
+	ts.Run("Limit OFFSET", func() {
+		pageModule := utils.NewPagination(1, 5)
+		list, err := ts.academyRepository.List(ts.ctx, pageModule, nil, nil, nil, nil, common.ASC)
+
+		// Validate
+		ts.Equal(5, len(list))
+		ts.NoError(err)
+	})
+
+	ts.Run("Limit OFFSET", func() {
+		pageModule := utils.NewPagination(2, 20)
+		list, err := ts.academyRepository.List(ts.ctx, pageModule, nil, nil, nil, nil, common.ASC)
+
+		// Validate
+		ts.Equal(0, len(list))
+		ts.NoError(err)
+	})
+
+	ts.Run("Search By Yoga", func() {
+		pageModule := utils.NewPagination(1, 10)
+		yogaIDs := []int{2, 3}
+		list, err := ts.academyRepository.List(ts.ctx, pageModule, &yogaIDs, nil, nil, nil, common.ASC)
+
+		for _, v := range list {
+			flag := false
+			for _, id := range yogaIDs {
+				if id == v.Edges.Yoga[0].ID {
+					flag = true
+					continue
+				}
+			}
+			if !flag {
+				ts.Fail("fail")
+			}
+		}
+		// Validate
+		ts.NoError(err)
+	})
 }
 
 func TestAcademyRepositoryTestSuite(t *testing.T) {
 	suite.Run(t, new(AcademyRepositoryTestSuite))
 }
 
-func (ts *AcademyRepositoryTestSuite) initData() {
-	u, _ := ts.userRepo.Create(ts.ctx, &ent.User{})
-	ts.create.userID = u.ID
+func (ts *AcademyRepositoryTestSuite) initForList() {
+	bulk := make([]*ent.UserCreate, 40)
 
+	for i := 0; i < 40; i++ {
+		bulk[i] = ts.client.User.Create().
+			SetEmail(fake.Email()).
+			SetIsEmailVerified(true).
+			SetNickname(fake.Animal()).
+			SetPhoneNum(fake.Phone()).
+			SetTermAgreeAt(time.Now())
+	}
+	err := ts.client.User.CreateBulk(bulk...).Exec(context.Background())
+	ts.NoError(err)
+	bulkForAcademy := make([]*ent.AcademyCreate, 20)
+
+	ids, _ := ts.client.User.Query().Where(user.TypeIsNil()).Limit(20).IDs(context.Background())
+
+	for i := 0; i < len(ids); i++ {
+		sigunguID := 1
+		if i%2 == 0 {
+			sigunguID = 2
+		}
+
+		yogaid := i + 1
+		if i > 7 {
+			yogaid = 1
+		}
+		var yogaIDs []int
+
+		yogaIDs = append(yogaIDs, yogaid)
+
+		bulkForAcademy[i] = ts.client.Academy.Create().
+			SetAddressDetail(fake.Address().Address).
+			SetAddressRoad(fake.Address().Street).
+			SetBusinessCode(fmt.Sprintf("%d", fake.Number(10000000, 9999999))).
+			SetCallNumber(fake.Contact().Phone).
+			SetName(fake.Animal()).SetUserID(ids[i]).SetSigunguID(sigunguID).AddYogaIDs(yogaIDs...)
+	}
+	err = ts.client.Academy.CreateBulk(bulkForAcademy...).Exec(context.Background())
+
+	ts.NoError(err)
+}
+
+func (ts *AcademyRepositoryTestSuite) initData() {
 	var sigungu []*ent.AreaSiGungu
 	sigungu = append(sigungu, &ent.AreaSiGungu{
 		Name:    "종로구",

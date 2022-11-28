@@ -157,7 +157,6 @@ func (repo *academyRepository) Total(ctx context.Context, yogaIDs *[]int, sigung
 	return
 }
 
-// TODO :페이지네이션 모듈 생성을 여기서 하지 않고 Usecase에서만 할 수 있도록
 func (repo *academyRepository) List(ctx context.Context,
 	pgModule *utils.Pagination,
 	yogaIDs *[]int, sigunguID *int, academyName *string,
