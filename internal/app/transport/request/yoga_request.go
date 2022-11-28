@@ -24,8 +24,8 @@ type YogaGroupPatchBody struct {
 }
 
 type YogaCreateBody struct {
-	YogaGroupId int     `json:"yogaGroupId"`
-	NameKor     string  `json:"nameKor"`
+	YogaGroupId int     `json:"yogaGroupId" validate:"required"`
+	NameKor     string  `json:"nameKor" validate:"required"`
 	NameEng     *string `json:"nameEng"`
 	Level       *int    `json:"level"`
 	Description *string `json:"description"`
@@ -84,6 +84,10 @@ type YogaRawListQuery struct {
 // ------------------- Params -------------------
 
 type YogaUpdateParam struct {
+	Id int `params:"id"`
+}
+
+type YogaPatchParam struct {
 	Id int `params:"id"`
 }
 

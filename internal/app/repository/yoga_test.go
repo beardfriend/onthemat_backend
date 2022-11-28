@@ -343,6 +343,15 @@ func (ts *YogaRepositoryTestSuite) TestUpdate() {
 		ts.Equal(1, *res.Level)
 		ts.Nil(res.NameEng)
 	})
+
+	ts.Run("없는 아이디", func() {
+		err := ts.yogaRepo.Update(ts.ctx, &ent.Yoga{
+			ID:          3,
+			Level:       utils.Int(1),
+			YogaGroupID: 1,
+		})
+		ts.NoError(err)
+	})
 }
 
 func (ts *YogaRepositoryTestSuite) TestPatch() {

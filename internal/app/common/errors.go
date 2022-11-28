@@ -42,6 +42,7 @@ const (
 	ErrYogaGroupAlreadyExist    = 4005
 	ErrYogaAlreadyRegisted      = 4006
 	ErrYogaDoseNotExist         = 4007
+	ErrYogaGroupDoesNotExist    = 4008
 
 	// 5000 ~ NotFound
 	ErrUserNotFound      = 5001
@@ -116,6 +117,8 @@ func ErrorText(code int) string {
 		return "이미 요가종류가 등록됐습니다."
 	case ErrYogaDoseNotExist:
 		return "존재하지 않는 유형의 요가입니다."
+	case ErrYogaGroupDoesNotExist:
+		return "존재하지 않는 요가 그룹입니다."
 
 	// 5000 ~
 	case ErrUserNotFound:
