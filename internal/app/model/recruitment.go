@@ -35,8 +35,6 @@ func (Recruitment) Edges() []ent.Edge {
 				OnDelete: entsql.Cascade,
 			}),
 
-		edge.To("yoga", Yoga.Type),
-
 		edge.From("writer", Academy.Type).
 			Ref("recruitment").
 			Unique().
