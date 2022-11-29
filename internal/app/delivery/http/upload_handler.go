@@ -47,7 +47,7 @@ func NewUploadHandler(
 @apiParam {String="profile,logo"} purpose 업로드 이후 사용할 목적
 @apiSuccess (201) {Number} code 201
 @apiSuccess (201) {String} message ""
-@apiError ValidateError <code>400</code> code: 2000~
+@apiError ValidationError <code>400</code> code: 2xxx
 @apiError ImageExtensionUnavailable <code>400</code> code: 3003
 @apiError FormDataKeyUnavailable <code>400</code> code: 3004
 @apiError InternalServerError <code>500</code> code: 500

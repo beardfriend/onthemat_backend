@@ -14,7 +14,7 @@ const (
 
 	// Unprocessable
 
-	// 벨리데이션 에러 2000  ~ BadReqeust
+	// ValidationError 2000  ~ BadReqeust
 	ErrReqeustsInvalid = 2000
 	ErrPasswordInvalid = 2001
 	ErrEmailInvalid    = 2002

@@ -75,7 +75,7 @@ func NewYogaHandler(
 @apiSuccess (201) {Number} code 201
 @apiSuccess (201) {String} message ""
 @apiError JsonMissing <code>400</code> code: 3000
-@apiError ValidateError <code>400</code> code: 2000~
+@apiError ValidationError <code>400</code> code: 2xxx
 @apiError YogaGroupDoesNotExist <code>409</code> code: 4008
 @apiError InternalServerError <code>500</code> code: 500
 */
@@ -120,7 +120,7 @@ func (h *yogaHandler) Create(c *fiber.Ctx) error {
 @apiSuccess (201) {String} message ""
 @apiError JsonMissing <code>400</code> code: 3000
 @apiError ParamsMissing <code>400</code> code: 3002
-@apiError ValidateError <code>400</code> code: 2000~
+@apiError ValidationError <code>400</code> code: 2xxx
 @apiError YogaGroupDoesNotExist <code>409 Conflict</code> code: 4008
 @apiError InternalServerError <code>500</code> code: 500
 */
@@ -171,7 +171,7 @@ func (h *yogaHandler) Update(c *fiber.Ctx) error {
 @apiSuccess (201) {String} message ""
 @apiError JsonMissing <code>400</code> code: 3000
 @apiError ParamsMissing <code>400</code> code: 3002
-@apiError ValidateError <code>400</code> code: 2000~
+@apiError ValidationError <code>400</code> code: 2xxx
 @apiError YogaGroupDoesNotExist <code>409</code> code: 4008
 @apiError InternalServerError <code>500</code> code: 500
 */
@@ -296,7 +296,7 @@ func (h *yogaHandler) ListByGroupId(c *fiber.Ctx) error {
 @apiSuccess (201) {Number} code 201
 @apiSuccess (201) {String} message ""
 @apiError JsonMissing <code>400</code> code: 3000
-@apiError ValidateErrors <code>400</code> code: 2000~
+@apiError ValidationErrors <code>400</code> code: 2xxx
 @apiError ErrYogaGroupAlreadyExist <code>409</code> code: 4008
 @apiError InternalServerError <code>500</code> code: 500
 */
@@ -340,7 +340,7 @@ func (h *yogaHandler) CreateGroup(c *fiber.Ctx) error {
 @apiSuccess (201) {String} message ""
 @apiError JsonMissing <code>400</code> code: 3000
 @apiError ParamsMissing <code>400</code> code: 3002
-@apiError ValidateErrors <code>400</code> code: 2000~
+@apiError ValidationErrors <code>400</code> code: 2xxx
 @apiError InternalServerError <code>500</code> code: 500
 */
 func (h *yogaHandler) UpdateGroup(c *fiber.Ctx) error {
@@ -387,7 +387,7 @@ func (h *yogaHandler) UpdateGroup(c *fiber.Ctx) error {
 @apiSuccess (201) {String} message ""
 @apiError JsonMissing <code>400</code> code: 3000
 @apiError ParamsMissing <code>400</code> code: 3002
-@apiError ValidateErrors <code>400</code> code: 2000~
+@apiError ValidationErrors <code>400</code> code: 2xxx
 @apiError InternalServerError <code>500</code> code: 500
 */
 func (h *yogaHandler) PatchGroup(c *fiber.Ctx) error {
