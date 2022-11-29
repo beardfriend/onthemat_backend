@@ -210,10 +210,10 @@ func (repo *yogaRepository) DeleteAndCreateRaws(ctx context.Context, d []*ent.Yo
 		bulk := make([]*ent.YogaRawCreate, len(d))
 
 		for i, v := range d {
-			bulk[i] = repo.db.YogaRaw.Create().SetNillableAcademyID(v.AcademyID).SetNillableTeacherID(v.TeacherID).SetName(v.Name)
+			bulk[i] = tx.YogaRaw.Create().SetNillableAcademyID(v.AcademyID).SetNillableTeacherID(v.TeacherID).SetName(v.Name)
 		}
 
-		return repo.db.YogaRaw.CreateBulk(bulk...).Exec(ctx)
+		return tx.YogaRaw.CreateBulk(bulk...).Exec(ctx)
 	})
 }
 

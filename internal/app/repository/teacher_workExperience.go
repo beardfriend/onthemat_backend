@@ -29,11 +29,9 @@ func NewTeacherWorkExperience(db *ent.Client) TeacherWorkExperience {
 func (repo *teacherWorkExperience) Create(ctx context.Context, value *ent.TeacherWorkExperience, teacherId int) error {
 	return repo.db.TeacherWorkExperience.Create().
 		SetAcademyName(value.AcademyName).
-		SetImageURL(value.ImageURL).
 		SetWorkStartAt(value.WorkStartAt).
-		SetWorkEndAt(value.WorkEndAt).
+		SetNillableWorkEndAt(value.WorkEndAt).
 		SetNillableDescription(value.Description).
-		SetClassContent(value.ClassContent).
 		SetTeacherID(teacherId).
 		Exec(ctx)
 }
@@ -51,11 +49,9 @@ func (repo *teacherWorkExperience) Update(ctx context.Context, value *ent.Teache
 	return repo.db.TeacherWorkExperience.
 		Update().
 		SetAcademyName(value.AcademyName).
-		SetImageURL(value.ImageURL).
 		SetWorkStartAt(value.WorkStartAt).
-		SetWorkEndAt(value.WorkEndAt).
+		SetNillableWorkEndAt(value.WorkEndAt).
 		SetNillableDescription(value.Description).
-		SetClassContent(value.ClassContent).
 		SetTeacherID(value.ID).
 		Exec(ctx)
 }
@@ -71,11 +67,10 @@ func (repo *teacherWorkExperience) CreateMany(ctx context.Context, value []*ent.
 	for i, v := range value {
 		bulk[i] = repo.db.TeacherWorkExperience.Create().
 			SetAcademyName(v.AcademyName).
-			SetImageURL(v.ImageURL).
 			SetWorkStartAt(v.WorkStartAt).
-			SetWorkEndAt(v.WorkEndAt).
+			SetNillableWorkEndAt(v.WorkEndAt).
 			SetNillableDescription(v.Description).
-			SetClassContent(v.ClassContent).SetTeacherID(teacherId)
+			SetTeacherID(teacherId)
 	}
 
 	return repo.db.TeacherWorkExperience.CreateBulk(bulk...).Exec(ctx)

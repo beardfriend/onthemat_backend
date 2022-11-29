@@ -12,6 +12,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.29.4
 	github.com/brianvoe/gofakeit/v6 v6.19.0
 	github.com/caarlos0/env/v6 v6.10.1
+	github.com/fatih/structs v1.1.0
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/goccy/go-json v0.9.11
 	github.com/golang-jwt/jwt/v4 v4.4.2
@@ -43,7 +44,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.13.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.17.5 // indirect
 	github.com/aws/smithy-go v1.13.4 // indirect
-	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
@@ -68,7 +68,6 @@ require (
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
-	gopkg.in/guregu/null.v4 v4.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"time"
 
 	"onthemat/internal/app/common"
 	ex "onthemat/internal/app/common"
@@ -25,9 +26,9 @@ type YogaUsecase interface {
 	Delete(ctx context.Context, yogaId int) error
 	Patch(ctx context.Context, req *request.YogaPatchBody, yogaId int) (err error)
 
-	CreateRaws(ctx context.Context, names []string, userId int, userType model.UserType) error
-	UpdateRaws(ctx context.Context, names []string, userId int, userType model.UserType) error
-	DeleteRawAll(ctx context.Context, userId int, userType model.UserType) (err error)
+	CreateRaws(ctx context.Context, names []string, userId int, userType string) error
+	UpdateRaws(ctx context.Context, names []string, userId int, userType string) error
+	DeleteRawAll(ctx context.Context, userId int, userType string) (err error)
 }
 
 type yogaUseCase struct {
@@ -167,46 +168,73 @@ func (u *yogaUseCase) List(ctx context.Context, groupId int) ([]*ent.Yoga, error
 
 // ------------------- YogaRaw -------------------
 
-func (u *yogaUseCase) CreateRaws(ctx context.Context, names []string, userId int, userType model.UserType) (err error) {
-	var academyId int
-	var teacherId int
-	if userType == model.AcademyType {
-		academyId, err = u.academyRepo.GetOnlyIdByUserId(ctx, userId)
-	} else if userType == model.TeacherType {
-		teacherId, err = u.teacherRepo.GetOnlyIdByUserId(ctx, userId)
+func (u *yogaUseCase) CreateRaws(ctx context.Context, names []string, userId int, userType string) (err error) {
+	var academyId *int
+	var teacherId *int
+	if userType == *model.AcademyType.ToString() {
+		id, err := u.academyRepo.GetOnlyIdByUserId(ctx, userId)
+		if err != nil {
+			return err
+		}
+		academyId = &id
+	} else if userType == *model.TeacherType.ToString() {
+		id, err := u.teacherRepo.GetOnlyIdByUserId(ctx, userId)
+		if err != nil {
+			return err
+		}
+		teacherId = &id
 	}
 
-	data := make([]*ent.YogaRaw, len(names))
+	data := make([]*ent.YogaRaw, 0)
 	for _, v := range names {
-		data = append(data, &ent.YogaRaw{Name: v, AcademyID: &academyId, TeacherID: &teacherId})
+		data = append(data, &ent.YogaRaw{Name: v, AcademyID: academyId, TeacherID: teacherId})
 	}
 	return u.yogaRepo.CreateRaws(ctx, data)
 }
 
-func (u *yogaUseCase) UpdateRaws(ctx context.Context, names []string, userId int, userType model.UserType) (err error) {
-	var academyId int
-	var teacherId int
-	if userType == model.AcademyType {
-		academyId, err = u.academyRepo.GetOnlyIdByUserId(ctx, userId)
-	} else if userType == model.TeacherType {
-		teacherId, err = u.teacherRepo.GetOnlyIdByUserId(ctx, userId)
+func (u *yogaUseCase) UpdateRaws(ctx context.Context, names []string, userId int, userType string) (err error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*2)
+	defer cancel()
+
+	var academyId *int
+	var teacherId *int
+	if userType == *model.AcademyType.ToString() {
+		id, err := u.academyRepo.GetOnlyIdByUserId(ctx, userId)
+		if err != nil {
+			return err
+		}
+		academyId = &id
+	} else if userType == *model.TeacherType.ToString() {
+		id, err := u.teacherRepo.GetOnlyIdByUserId(ctx, userId)
+		if err != nil {
+			return err
+		}
+		teacherId = &id
 	}
 
-	data := make([]*ent.YogaRaw, len(names))
+	data := make([]*ent.YogaRaw, 0)
 	for _, v := range names {
-		data = append(data, &ent.YogaRaw{Name: v, AcademyID: &academyId, TeacherID: &teacherId})
+		data = append(data, &ent.YogaRaw{Name: v, AcademyID: academyId, TeacherID: teacherId})
 	}
-	return u.yogaRepo.DeleteAndCreateRaws(ctx, data, &academyId, &teacherId)
+	return u.yogaRepo.DeleteAndCreateRaws(ctx, data, academyId, teacherId)
 }
 
-func (u *yogaUseCase) DeleteRawAll(ctx context.Context, userId int, userType model.UserType) (err error) {
-	var academyId int
-	var teacherId int
-	if userType == model.AcademyType {
-		academyId, err = u.academyRepo.GetOnlyIdByUserId(ctx, userId)
-	} else if userType == model.TeacherType {
-		teacherId, err = u.teacherRepo.GetOnlyIdByUserId(ctx, userId)
+func (u *yogaUseCase) DeleteRawAll(ctx context.Context, userId int, userType string) (err error) {
+	var academyId *int
+	var teacherId *int
+	if userType == *model.AcademyType.ToString() {
+		id, err := u.academyRepo.GetOnlyIdByUserId(ctx, userId)
+		if err != nil {
+			return err
+		}
+		academyId = &id
+	} else if userType == *model.TeacherType.ToString() {
+		id, err := u.teacherRepo.GetOnlyIdByUserId(ctx, userId)
+		if err != nil {
+			return err
+		}
+		teacherId = &id
 	}
 
-	return u.yogaRepo.DeleteRawsByTeacherIdOrAcademyId(ctx, &academyId, &teacherId)
+	return u.yogaRepo.DeleteRawsByTeacherIdOrAcademyId(ctx, academyId, teacherId)
 }

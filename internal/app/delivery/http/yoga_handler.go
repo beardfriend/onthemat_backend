@@ -5,7 +5,6 @@ import (
 
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/delivery/middlewares"
-	"onthemat/internal/app/model"
 	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/transport/response"
 	"onthemat/internal/app/usecase"
@@ -36,6 +35,23 @@ func NewYogaHandler(
 		router:      router,
 	}
 	g := router.Group("/yoga")
+	// 요가 그룹 생성
+	g.Post("/group", middleware.Auth, middleware.OnlySuperAdmin, handler.CreateGroup)
+	// 요가 그룹 수정
+	g.Put("/group/:id", middleware.Auth, middleware.OnlySuperAdmin, handler.UpdateGroup)
+	// 요가 그룹 부분 수정
+	g.Patch("/group/:id", middleware.Auth, middleware.OnlySuperAdmin, handler.PatchGroup)
+	// 요가 그룹 멀티삭제
+	g.Delete("/group/:ids", middleware.Auth, middleware.OnlySuperAdmin, handler.DeleteGroup)
+	// 요가 그룹 리스트
+	g.Get("/groups", middleware.Auth, handler.GetGroups)
+
+	// 요가 Raws 생성
+	g.Post("/raws", middleware.Auth, handler.CreateRaws)
+	// 요가 Raws 수정
+	g.Put("/raws", middleware.Auth, handler.UpdateRaws)
+	// 요가 Raws 삭제
+	g.Delete("/raws", middleware.Auth, handler.DeleteRaws)
 
 	// 요가 등록
 	g.Post("/", middleware.Auth, middleware.OnlySuperAdmin, handler.Create)
@@ -47,23 +63,6 @@ func NewYogaHandler(
 	g.Delete("/:id", middleware.Auth, middleware.OnlySuperAdmin, handler.Delete)
 	// 그룹아이디 별 요가 리스트 조회
 	g.Get("/list", middleware.Auth, handler.ListByGroupId)
-
-	// 요가 그룹 생성
-	g.Post("/group", middleware.Auth, middleware.OnlySuperAdmin, handler.CreateGroup)
-	// 요가 그룹 수정
-	g.Put("/group/:id", middleware.Auth, middleware.OnlySuperAdmin, handler.UpdateGroup)
-	// 요가 그룹 부분 수정
-	g.Patch("/group/:id", middleware.Auth, middleware.OnlySuperAdmin, handler.PatchGroup)
-	// 요가 그룹 멀티삭제
-	g.Delete("/group/:ids", middleware.Auth, middleware.OnlySuperAdmin, handler.DeleteGroup)
-	// 요가 그룹 리스트
-	g.Get("/groups", middleware.Auth, handler.GetGroups)
-	// 요가 Raws 생성
-	g.Post("/raws", middleware.Auth)
-	// 요가 Raws 수정
-	g.Put("/raws", middleware.Auth)
-	// 요가 Raws 삭제
-	g.Delete("/raws", middleware.Auth)
 }
 
 // 요가 생성
@@ -527,7 +526,7 @@ func (h *yogaHandler) CreateRaws(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	userId := ctx.UserValue("user_id").(int)
-	userType := ctx.UserValue("user_type").(model.UserType)
+	userType := ctx.UserValue("user_type").(string)
 
 	b := new(request.YogaRawsCreateBody)
 	if err := c.BodyParser(b); err != nil {
@@ -563,7 +562,7 @@ func (h *yogaHandler) UpdateRaws(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	userId := ctx.UserValue("user_id").(int)
-	userType := ctx.UserValue("user_type").(model.UserType)
+	userType := ctx.UserValue("user_type").(string)
 
 	b := new(request.YogaRawsUpdateBody)
 	if err := c.BodyParser(b); err != nil {
@@ -598,7 +597,7 @@ func (h *yogaHandler) DeleteRaws(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	userId := ctx.UserValue("user_id").(int)
-	userType := ctx.UserValue("user_type").(model.UserType)
+	userType := ctx.UserValue("user_type").(string)
 
 	if err := h.yogaUsecase.DeleteRawAll(ctx, userId, userType); err != nil {
 		return utils.NewError(c, err)

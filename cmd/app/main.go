@@ -74,6 +74,7 @@ func main() {
 	academyRepo := repository.NewAcademyRepository(db)
 	areaRepo := repository.NewAreaRepository(db)
 	yogaRepo := repository.NewYogaRepository(db)
+	teacherRepo := repository.NewTeacherRepository(db)
 
 	// service
 	authSvc := service.NewAuthService(k, g, n, emailM)
@@ -85,7 +86,7 @@ func main() {
 	userUsecase := usecase.NewUserUseCase(userRepo)
 	academyUsecase := usecase.NewAcademyUsecase(academyRepo, academySvc, userRepo, yogaRepo, areaRepo)
 	uploadUsecase := usecase.NewUploadUsecase(imageRepo, s3)
-	yogaUsecase := usecase.NewYogaUsecase(yogaRepo)
+	yogaUsecase := usecase.NewYogaUsecase(yogaRepo, academyRepo, teacherRepo)
 
 	// middleware
 	middleWare := middlewares.NewMiddelwWare(authSvc, tokenModule)

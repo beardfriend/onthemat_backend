@@ -19,11 +19,6 @@ func (TeacherWorkExperience) Annotations() []schema.Annotation {
 	}
 }
 
-type ClassContent struct {
-	YogaId      int `json:"yogaId"`
-	RunningTime int `json:"runningTime"`
-}
-
 func (TeacherWorkExperience) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("teacher_id"),
