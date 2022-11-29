@@ -5,7 +5,6 @@ import (
 
 	"onthemat/internal/app/common"
 	ex "onthemat/internal/app/common"
-	"onthemat/internal/app/repository"
 	r "onthemat/internal/app/repository"
 	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/utils"
@@ -76,10 +75,6 @@ func (u *yogaUseCase) GroupList(ctx context.Context, req *request.YogaGroupListQ
 
 	total, err := u.yogaRepo.GroupTotal(ctx, req.Category)
 	if err != nil {
-		if err.Error() == repository.ErrOrderColumnInvalid || err.Error() == repository.ErrSearchColumnInvalid {
-			err = ex.NewBadRequestError(ex.ErrColumnInvalid, nil)
-			return
-		}
 		return
 	}
 	pgModule.SetTotal(total)

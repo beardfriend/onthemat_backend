@@ -1,4 +1,4 @@
-package utils
+package utils_test
 
 import (
 	"fmt"
@@ -6,14 +6,15 @@ import (
 	"testing"
 
 	"onthemat/internal/app/transport/request"
+	"onthemat/internal/app/utils"
 
 	"github.com/fatih/structs"
 )
 
 func TestStructLibs(t *testing.T) {
 	req := &request.YogaUpdateBody{
-		Level:       Int(2),
-		Description: String("description"),
+		Level:       utils.Int(2),
+		Description: utils.String("description"),
 	}
 	s := structs.New(req)
 	for _, v := range s.Fields() {
@@ -30,8 +31,8 @@ func BenchmarkReflect(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			req := &request.YogaUpdateBody{
 				NameKor:     "kor",
-				Level:       Int(2),
-				Description: String("description"),
+				Level:       utils.Int(2),
+				Description: utils.String("description"),
 			}
 
 			var nilableFields []string
@@ -53,8 +54,8 @@ func BenchmarkReflect(b *testing.B) {
 	b.Run("lib", func(b *testing.B) {
 		req := &request.YogaUpdateBody{
 			NameKor:     "kor",
-			Level:       Int(2),
-			Description: String("description"),
+			Level:       utils.Int(2),
+			Description: utils.String("description"),
 		}
 		s := structs.New(req)
 		for _, v := range s.Fields() {

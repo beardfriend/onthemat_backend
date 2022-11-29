@@ -221,7 +221,7 @@ func (ts *AcademyRepositoryTestSuite) TestUpdate() {
 
 func (ts *AcademyRepositoryTestSuite) TestPatch() {
 	err := ts.academyRepository.Patch(ts.ctx, &request.AcademyPatchBody{
-		Info: &request.AcademyPatchInfo{
+		Info: &request.AcademyInfoForPatch{
 			Name: utils.String("학원이름"),
 		},
 	}, 1, 1)

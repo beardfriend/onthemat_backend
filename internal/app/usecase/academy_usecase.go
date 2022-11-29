@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"onthemat/internal/app/common"
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/repository"
 	"onthemat/internal/app/service"
@@ -71,16 +70,19 @@ func (u *academyUseCase) Create(ctx context.Context, req *request.AcademyCreateB
 	}
 
 	var yoga []*ent.Yoga
-	for _, v := range req.YogaIDs {
-		y := new(ent.Yoga)
-		y.ID = v
-		yoga = append(yoga, y)
+	if req.YogaIDs != nil {
+		for _, v := range *req.YogaIDs {
+			y := new(ent.Yoga)
+			y.ID = v
+			yoga = append(yoga, y)
+		}
 	}
 
 	err = u.academyRepo.Create(ctx, &ent.Academy{
 		UserID:        userId,
 		SigunguID:     info.SigunguID,
 		Name:          info.Name,
+		BusinessCode:  info.BusinessCode,
 		CallNumber:    info.CallNumber,
 		AddressRoad:   info.AddressRoad,
 		AddressDetail: info.AddressDetail,
@@ -113,12 +115,13 @@ func (u *academyUseCase) Update(ctx context.Context, req *request.AcademyUpdateB
 	info := req.Info
 
 	var yoga []*ent.Yoga
-	for _, v := range req.YogaIDs {
-		y := new(ent.Yoga)
-		y.ID = v
-		yoga = append(yoga, y)
+	if req.YogaIDs != nil {
+		for _, v := range *req.YogaIDs {
+			y := new(ent.Yoga)
+			y.ID = v
+			yoga = append(yoga, y)
+		}
 	}
-
 	err = u.academyRepo.Update(ctx, &ent.Academy{
 		ID:            id,
 		UserID:        userId,
@@ -180,15 +183,11 @@ func (u *academyUseCase) List(ctx context.Context, a *request.AcademyListQueries
 
 	total, err := u.academyRepo.Total(ctx, a.YogaIDs, a.SigunGuID, a.AcademyName)
 	if err != nil {
-		if err.Error() == repository.ErrOrderColumnInvalid || err.Error() == repository.ErrSearchColumnInvalid {
-			err = ex.NewBadRequestError(ex.ErrColumnInvalid, nil)
-			return
-		}
 		return
 	}
-	orderType := common.DESC
-	if a.OrderType != nil && *a.OrderType == string(common.ASC) {
-		orderType = common.ASC
+	orderType := ex.DESC
+	if a.OrderType != nil && *a.OrderType == string(ex.ASC) {
+		orderType = ex.ASC
 	}
 
 	pginationModule.SetTotal(total)

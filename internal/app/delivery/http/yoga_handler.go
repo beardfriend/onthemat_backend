@@ -206,7 +206,7 @@ func (h *yogaHandler) Patch(c *fiber.Ctx) error {
 
 // 요가 삭제
 /**
-@api {delet} /yoga/:id 요가 삭제
+@api {delete} /yoga/:id 요가 삭제
 @apiName deleteYoga
 @apiVersion 1.0.0
 @apiGroup yoga
@@ -240,7 +240,7 @@ func (h *yogaHandler) Delete(c *fiber.Ctx) error {
 
 // 요가 리스트 조회
 /**
-@api {delet} /yoga/list 요가 리스트 조회
+@api {get} /yoga/list 요가 리스트 조회
 @apiName listYoga
 @apiVersion 1.0.0
 @apiGroup yoga
@@ -454,7 +454,7 @@ func (h *yogaHandler) DeleteGroup(c *fiber.Ctx) error {
 
 // 요가 그룹 리스트 조회
 /**
-@api {delet} /yoga/groups 요가 그룹 리스트 조회
+@api {get} /yoga/groups 요가 그룹 리스트 조회
 @apiName listYogaGroup
 @apiVersion 1.0.0
 @apiGroup yogaGroup

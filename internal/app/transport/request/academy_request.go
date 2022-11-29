@@ -1,10 +1,12 @@
 package request
 
+import "onthemat/internal/app/utils"
+
 // ------------------- Create -------------------
 
 type AcademyCreateBody struct {
 	Info    AcademyInfoForCreate `json:"info" validate:"required,dive,required"`
-	YogaIDs []int                `json:"yogaIDs" validate:"dive,required"`
+	YogaIDs *[]int               `json:"yogaIDs"`
 }
 
 type AcademyInfoForCreate struct {
@@ -21,7 +23,7 @@ type AcademyInfoForCreate struct {
 
 type AcademyUpdateBody struct {
 	Info    AcademyInfoForUpdate `json:"info" validate:"required,dive,required"`
-	YogaIDs []int                `json:"yogaIds" validate:"dive,required"`
+	YogaIDs *[]int               `json:"yogaIds"`
 }
 
 type AcademyInfoForUpdate struct {
@@ -67,10 +69,10 @@ type AcademyListQueries struct {
 	PageNo      int     `query:"pageNo"`
 	PageSize    int     `query:"pageSize"`
 	AcademyName *string `query:"academyName"`
-	YogaIDs     *[]int  `query:"yogaIDs"`
-	SigunGuID   *int    `query:"sigunguID"`
-	OrderType   *string `query:"orderType"`
-	OrderCol    *string `query:"orderCol"`
+	YogaIDs     *[]int  `query:"yogaIds"`
+	SigunGuID   *int    `query:"sigunguId"`
+	OrderType   *string `query:"orderType" validate:"omitempty,oneof=DESC ASC"`
+	OrderCol    *string `query:"orderCol" validate:"omitempty,oneof=NAME ID"`
 }
 
 func NewAcademyListQueries() *AcademyListQueries {
@@ -80,7 +82,7 @@ func NewAcademyListQueries() *AcademyListQueries {
 		AcademyName: nil,
 		YogaIDs:     nil,
 		SigunGuID:   nil,
-		OrderType:   nil,
-		OrderCol:    nil,
+		OrderType:   utils.String("DESC"),
+		OrderCol:    utils.String("ID"),
 	}
 }

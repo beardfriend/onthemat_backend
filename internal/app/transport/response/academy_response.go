@@ -7,28 +7,16 @@ import (
 	"github.com/jinzhu/copier"
 )
 
-type AcademyDetailRepsonse struct {
-	ID            int                  `json:"id"`
-	Name          string               `json:"name"`
-	CallNumber    string               `json:"callNumber"`
-	AddressRoad   string               `json:"addressRoad"`
-	AddressDetail *string              `json:"addressDetail"`
-	AddressSigun  string               `json:"addressSigun"`
-	Yoga          []yoga               `json:"yoga"`
-	CreatedAt     transport.TimeString `json:"createdAt"`
-	UpdatedAt     transport.TimeString `json:"updatedAt"`
-}
-
-type AcademyListResponse struct {
-	ID            int                  `json:"id"`
-	Name          string               `json:"name"`
-	CallNumber    string               `json:"callNumber"`
-	AddressRoad   string               `json:"addressRoad"`
-	AddressDetail *string              `json:"addressDetail"`
-	AddressSigun  string               `json:"addressSigun"`
-	Yoga          []yoga               `json:"yoga"`
-	CreatedAt     transport.TimeString `json:"createdAt"`
-	UpdatedAt     transport.TimeString `json:"updatedAt"`
+type AcademyRepsonse struct {
+	ID             int                  `json:"id"`
+	Name           string               `json:"name"`
+	CallNumber     string               `json:"callNumber"`
+	AddressRoad    string               `json:"addressRoad"`
+	AddressDetail  *string              `json:"addressDetail"`
+	AddressSigungu string               `json:"addressSigun"`
+	Yoga           []yoga               `json:"yoga"`
+	CreatedAt      transport.TimeString `json:"createdAt"`
+	UpdatedAt      transport.TimeString `json:"updatedAt"`
 }
 
 type yoga struct {
@@ -36,13 +24,13 @@ type yoga struct {
 	NameKor string `json:"nameKor"`
 }
 
-func NewAcademyListResponse(model []*ent.Academy) []*AcademyListResponse {
-	response := make([]*AcademyListResponse, 0)
+func NewAcademyListResponse(model []*ent.Academy) []*AcademyRepsonse {
+	response := make([]*AcademyRepsonse, 0)
 	for _, v := range model {
-		resp := new(AcademyListResponse)
+		resp := new(AcademyRepsonse)
 		copier.Copy(&resp, v)
 
-		resp.AddressSigun = v.Edges.AreaSigungu.Name
+		resp.AddressSigungu = v.Edges.AreaSigungu.Name
 
 		if len(v.Edges.Yoga) > 0 {
 			copier.Copy(&resp.Yoga, v.Edges.Yoga)
@@ -55,16 +43,16 @@ func NewAcademyListResponse(model []*ent.Academy) []*AcademyListResponse {
 	return response
 }
 
-func NewAcademyDetailResponse(m *ent.Academy) *AcademyDetailRepsonse {
-	resp := &AcademyDetailRepsonse{
-		ID:            m.ID,
-		Name:          m.Name,
-		CallNumber:    m.CallNumber,
-		AddressRoad:   m.AddressRoad,
-		AddressDetail: m.AddressDetail,
-		AddressSigun:  m.Edges.AreaSigungu.Name,
-		CreatedAt:     transport.TimeString(*m.CreatedAt),
-		UpdatedAt:     transport.TimeString(*m.UpdatedAt),
+func NewAcademyDetailResponse(m *ent.Academy) *AcademyRepsonse {
+	resp := &AcademyRepsonse{
+		ID:             m.ID,
+		Name:           m.Name,
+		CallNumber:     m.CallNumber,
+		AddressRoad:    m.AddressRoad,
+		AddressDetail:  m.AddressDetail,
+		AddressSigungu: m.Edges.AreaSigungu.Name,
+		CreatedAt:      transport.TimeString(*m.CreatedAt),
+		UpdatedAt:      transport.TimeString(*m.UpdatedAt),
 	}
 
 	if len(m.Edges.Yoga) > 0 {

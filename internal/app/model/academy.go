@@ -35,7 +35,6 @@ func (Academy) Fields() []ent.Field {
 					dialect.Postgres: "varchar(30)",
 				},
 			).
-			MaxLen(30).
 			NotEmpty().
 			Comment("학원 이름"),
 
@@ -45,7 +44,6 @@ func (Academy) Fields() []ent.Field {
 					dialect.Postgres: "varchar(30)",
 				},
 			).
-			MaxLen(15).
 			NotEmpty().
 			Comment("사업자 번호"),
 

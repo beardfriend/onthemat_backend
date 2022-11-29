@@ -34,11 +34,6 @@ type academyRepository struct {
 	db *ent.Client
 }
 
-const (
-	ErrSearchColumnInvalid = "유효하지 않은 Column입니다"
-	ErrOrderColumnInvalid  = "유효하지 않은 Column입니다"
-)
-
 func NewAcademyRepository(db *ent.Client) AcademyRepository {
 	return &academyRepository{
 		db: db,
