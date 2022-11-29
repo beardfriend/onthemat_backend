@@ -2,6 +2,7 @@ package model
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
@@ -19,8 +20,8 @@ func (TeacherWorkExperience) Annotations() []schema.Annotation {
 }
 
 type ClassContent struct {
-	YogaSort    string `json:"yogaSort"`
-	RunningTime int    `json:"runningTime"`
+	YogaId      int `json:"yogaId"`
+	RunningTime int `json:"runningTime"`
 }
 
 func (TeacherWorkExperience) Fields() []ent.Field {
@@ -30,22 +31,28 @@ func (TeacherWorkExperience) Fields() []ent.Field {
 		field.String("academyName").
 			Comment("근무지 이름"),
 
-		field.String("image_url").
-			Comment("자격증 사진"),
-
 		field.Time("workStartAt").
+			SchemaType(
+				map[string]string{
+					dialect.Postgres: "timestamp",
+				},
+			).
 			Comment("근무 시작일"),
 
 		field.Time("workEndAt").
+			SchemaType(
+				map[string]string{
+					dialect.Postgres: "timestamp",
+				},
+			).
+			Optional().
+			Nillable().
 			Comment("근무 종료일"),
 
 		field.Text("description").
 			Optional().
 			Nillable().
 			Comment("기타 설명"),
-
-		field.JSON("classContent", &[]ClassContent{}).
-			Comment("수업 내용"),
 	}
 }
 

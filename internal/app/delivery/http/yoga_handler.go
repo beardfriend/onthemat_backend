@@ -5,6 +5,7 @@ import (
 
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/delivery/middlewares"
+	"onthemat/internal/app/model"
 	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/transport/response"
 	"onthemat/internal/app/usecase"
@@ -57,6 +58,12 @@ func NewYogaHandler(
 	g.Delete("/group/:ids", middleware.Auth, middleware.OnlySuperAdmin, handler.DeleteGroup)
 	// 요가 그룹 리스트
 	g.Get("/groups", middleware.Auth, handler.GetGroups)
+	// 요가 Raws 생성
+	g.Post("/raws", middleware.Auth)
+	// 요가 Raws 수정
+	g.Put("/raws", middleware.Auth)
+	// 요가 Raws 삭제
+	g.Delete("/raws", middleware.Auth)
 }
 
 // 요가 생성
@@ -82,17 +89,17 @@ func NewYogaHandler(
 func (h *yogaHandler) Create(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	reqBody := new(request.YogaCreateBody)
-	if err := fiberx.BodyParser(c, reqBody); err != nil {
+	b := new(request.YogaCreateBody)
+	if err := fiberx.BodyParser(c, b); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrJsonMissing, err.Error()))
 	}
 
-	if err := h.validator.ValidateStruct(reqBody); err != nil {
+	if err := h.validator.ValidateStruct(b); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
 	}
 
-	if err := h.yogaUsecase.Create(ctx, reqBody); err != nil {
+	if err := h.yogaUsecase.Create(ctx, b); err != nil {
 		return utils.NewError(c, err)
 	}
 
@@ -127,23 +134,23 @@ func (h *yogaHandler) Create(c *fiber.Ctx) error {
 func (h *yogaHandler) Update(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	reqBody := new(request.YogaUpdateBody)
-	if err := c.BodyParser(reqBody); err != nil {
+	b := new(request.YogaUpdateBody)
+	if err := c.BodyParser(b); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
 	}
 
-	if err := h.validator.ValidateStruct(reqBody); err != nil {
+	if err := h.validator.ValidateStruct(b); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
 	}
 
-	reqParam := new(request.YogaUpdateParam)
-	if err := c.ParamsParser(reqParam); err != nil {
+	p := new(request.YogaUpdateParam)
+	if err := c.ParamsParser(p); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrParamsMissing, err.Error()))
 	}
 
-	if err := h.yogaUsecase.Update(ctx, reqBody, reqParam.Id); err != nil {
+	if err := h.yogaUsecase.Update(ctx, b, p.Id); err != nil {
 		return utils.NewError(c, err)
 	}
 
@@ -178,23 +185,23 @@ func (h *yogaHandler) Update(c *fiber.Ctx) error {
 func (h *yogaHandler) Patch(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	reqBody := new(request.YogaPatchBody)
-	if err := c.BodyParser(reqBody); err != nil {
+	b := new(request.YogaPatchBody)
+	if err := c.BodyParser(b); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
 	}
 
-	if err := h.validator.ValidateStruct(reqBody); err != nil {
+	if err := h.validator.ValidateStruct(b); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
 	}
 
-	reqParam := new(request.YogaPatchParam)
-	if err := c.ParamsParser(reqParam); err != nil {
+	p := new(request.YogaPatchParam)
+	if err := c.ParamsParser(p); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrParamsMissing, err.Error()))
 	}
 
-	if err := h.yogaUsecase.Patch(ctx, reqBody, reqParam.Id); err != nil {
+	if err := h.yogaUsecase.Patch(ctx, b, p.Id); err != nil {
 		return utils.NewError(c, err)
 	}
 
@@ -222,13 +229,13 @@ func (h *yogaHandler) Patch(c *fiber.Ctx) error {
 func (h *yogaHandler) Delete(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	reqParam := new(request.YogaDeleteParam)
-	if err := c.ParamsParser(reqParam); err != nil {
+	p := new(request.YogaDeleteParam)
+	if err := c.ParamsParser(p); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrParamsMissing, nil))
 	}
 
-	if err := h.yogaUsecase.Delete(ctx, reqParam.Id); err != nil {
+	if err := h.yogaUsecase.Delete(ctx, p.Id); err != nil {
 		return utils.NewError(c, err)
 	}
 
@@ -262,13 +269,13 @@ func (h *yogaHandler) Delete(c *fiber.Ctx) error {
 */
 func (h *yogaHandler) ListByGroupId(c *fiber.Ctx) error {
 	ctx := c.Context()
-	reqQuery := new(request.YogaListQuery)
+	b := new(request.YogaListQuery)
 
-	if err := c.QueryParser(reqQuery); err != nil {
+	if err := c.QueryParser(b); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrQueryStringMissing, nil))
 	}
-	data, err := h.yogaUsecase.List(ctx, reqQuery.GroupId)
+	data, err := h.yogaUsecase.List(ctx, b.GroupId)
 	if err != nil {
 		return utils.NewError(c, err)
 	}
@@ -303,18 +310,18 @@ func (h *yogaHandler) ListByGroupId(c *fiber.Ctx) error {
 func (h *yogaHandler) CreateGroup(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	reqBody := new(request.YogaGroupCreateBody)
+	b := new(request.YogaGroupCreateBody)
 
-	if err := c.BodyParser(reqBody); err != nil {
+	if err := c.BodyParser(b); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
 	}
 
-	if err := h.validator.ValidateStruct(reqBody); err != nil {
+	if err := h.validator.ValidateStruct(b); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
 	}
 
-	if err := h.yogaUsecase.CreateGroup(ctx, reqBody); err != nil {
+	if err := h.yogaUsecase.CreateGroup(ctx, b); err != nil {
 		return utils.NewError(c, err)
 	}
 
@@ -346,22 +353,22 @@ func (h *yogaHandler) CreateGroup(c *fiber.Ctx) error {
 func (h *yogaHandler) UpdateGroup(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	reqBody := new(request.YogaGroupUpdateBody)
-	if err := c.BodyParser(reqBody); err != nil {
+	b := new(request.YogaGroupUpdateBody)
+	if err := c.BodyParser(b); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
 	}
-	if err := h.validator.ValidateStruct(reqBody); err != nil {
+	if err := h.validator.ValidateStruct(b); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
 	}
 
-	reqParam := new(request.YogaUpdateParam)
-	if err := c.ParamsParser(reqParam); err != nil {
+	p := new(request.YogaUpdateParam)
+	if err := c.ParamsParser(p); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrParamsMissing, err.Error()))
 	}
 
-	if err := h.yogaUsecase.UpdateGroup(ctx, reqBody, reqParam.Id); err != nil {
+	if err := h.yogaUsecase.UpdateGroup(ctx, b, p.Id); err != nil {
 		return utils.NewError(c, err)
 	}
 
@@ -393,22 +400,22 @@ func (h *yogaHandler) UpdateGroup(c *fiber.Ctx) error {
 func (h *yogaHandler) PatchGroup(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	reqBody := new(request.YogaGroupPatchBody)
-	if err := c.BodyParser(reqBody); err != nil {
+	b := new(request.YogaGroupPatchBody)
+	if err := c.BodyParser(b); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
 	}
-	if err := h.validator.ValidateStruct(reqBody); err != nil {
+	if err := h.validator.ValidateStruct(b); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
 	}
 
-	reqParam := new(request.YogaGroupPatchParam)
-	if err := c.ParamsParser(reqParam); err != nil {
+	p := new(request.YogaGroupPatchParam)
+	if err := c.ParamsParser(p); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrParamsMissing, err.Error()))
 	}
 
-	if err := h.yogaUsecase.PatchGroup(ctx, reqBody, reqParam.Id); err != nil {
+	if err := h.yogaUsecase.PatchGroup(ctx, b, p.Id); err != nil {
 		return utils.NewError(c, err)
 	}
 
@@ -435,13 +442,13 @@ func (h *yogaHandler) PatchGroup(c *fiber.Ctx) error {
 func (h *yogaHandler) DeleteGroup(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	reqParam := new(request.YogaGroupDeleteParam)
-	if err := c.ParamsParser(reqParam); err != nil {
+	p := new(request.YogaGroupDeleteParam)
+	if err := c.ParamsParser(p); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
 	}
 
-	_, err := h.yogaUsecase.DeleteGroup(ctx, reqParam.Ids)
+	_, err := h.yogaUsecase.DeleteGroup(ctx, p.Ids)
 	if err != nil {
 		return utils.NewError(c, err)
 	}
@@ -499,5 +506,106 @@ func (h *yogaHandler) GetGroups(c *fiber.Ctx) error {
 		Message:    "",
 		Result:     resp,
 		Pagination: paginationInfo,
+	})
+}
+
+// 요가 Raws 생성
+/**
+@api {post} /yoga/raws 요가 Raws 생성
+@apiName createYogaRaws
+@apiVersion 1.0.0
+@apiGroup yogaRaws
+@apiDescription 요가 Raws 생성
+@apiHeader Authorization accessToken (Bearer)
+@apiBody {String} name 요가 이름
+@apiSuccess (201) {Number} code 201
+@apiSuccess (201) {String} message ""
+@apiError JsonMissing <code>400</code> code: 3000
+@apiError InternalServerError <code>500</code> code: 500
+*/
+func (h *yogaHandler) CreateRaws(c *fiber.Ctx) error {
+	ctx := c.Context()
+
+	userId := ctx.UserValue("user_id").(int)
+	userType := ctx.UserValue("user_type").(model.UserType)
+
+	b := new(request.YogaRawsCreateBody)
+	if err := c.BodyParser(b); err != nil {
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
+	}
+
+	if err := h.yogaUsecase.CreateRaws(ctx, b.Names, userId, userType); err != nil {
+		return utils.NewError(c, err)
+	}
+
+	return c.Status(http.StatusCreated).JSON(ex.Response{
+		Code:    http.StatusCreated,
+		Message: "",
+	})
+}
+
+// 요가 Raws 업데이트
+/**
+@api {put} /yoga/raws 요가 Raws 업데이트
+@apiName updateYogaRaws
+@apiVersion 1.0.0
+@apiGroup yogaRaws
+@apiDescription 요가 Raws 업데이트
+@apiHeader Authorization accessToken (Bearer)
+@apiBody {String} name 요가 이름
+@apiSuccess (201) {Number} code 201
+@apiSuccess (201) {String} message ""
+@apiError JsonMissing <code>400</code> code: 3000
+@apiError InternalServerError <code>500</code> code: 500
+*/
+func (h *yogaHandler) UpdateRaws(c *fiber.Ctx) error {
+	ctx := c.Context()
+
+	userId := ctx.UserValue("user_id").(int)
+	userType := ctx.UserValue("user_type").(model.UserType)
+
+	b := new(request.YogaRawsUpdateBody)
+	if err := c.BodyParser(b); err != nil {
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
+	}
+
+	if err := h.yogaUsecase.UpdateRaws(ctx, b.Names, userId, userType); err != nil {
+		return utils.NewError(c, err)
+	}
+
+	return c.Status(http.StatusCreated).JSON(ex.Response{
+		Code:    http.StatusCreated,
+		Message: "",
+	})
+}
+
+// 요가 Raws 삭제
+/**
+@api {delete} /yoga/raws 요가 Raws 삭제
+@apiName deleteYogaRaws
+@apiVersion 1.0.0
+@apiGroup yogaRaws
+@apiDescription 요가 Raws 삭제
+@apiHeader Authorization accessToken (Bearer)
+@apiBody {String} name 요가 이름
+@apiSuccess (200) {Number} code 200
+@apiSuccess (200) {String} message ""
+@apiError InternalServerError <code>500</code> code: 500
+*/
+func (h *yogaHandler) DeleteRaws(c *fiber.Ctx) error {
+	ctx := c.Context()
+
+	userId := ctx.UserValue("user_id").(int)
+	userType := ctx.UserValue("user_type").(model.UserType)
+
+	if err := h.yogaUsecase.DeleteRawAll(ctx, userId, userType); err != nil {
+		return utils.NewError(c, err)
+	}
+
+	return c.Status(http.StatusOK).JSON(ex.Response{
+		Code:    http.StatusOK,
+		Message: "",
 	})
 }

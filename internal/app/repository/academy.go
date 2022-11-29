@@ -14,6 +14,7 @@ import (
 	"onthemat/pkg/ent/predicate"
 	"onthemat/pkg/ent/user"
 	"onthemat/pkg/ent/yoga"
+	"onthemat/pkg/ent/yogaraw"
 	"onthemat/pkg/entx"
 )
 
@@ -28,6 +29,9 @@ type AcademyRepository interface {
 		orderCol *string, orderType common.Sorts) (result []*ent.Academy, err error)
 
 	Total(ctx context.Context, yogaIDs *[]int, sigunguID *int, academyName *string) (result int, err error)
+
+	//
+	GetOnlyIdByUserId(ctx context.Context, userId int) (id int, err error)
 }
 
 type academyRepository struct {
@@ -53,6 +57,10 @@ func (repo *academyRepository) Create(ctx context.Context, d *ent.Academy) (err 
 
 		if len(d.Edges.Yoga) > 0 {
 			clause.AddYoga(d.Edges.Yoga...)
+		}
+
+		if len(d.Edges.YogaRaw) > 0 {
+			clause.AddYogaRaw(d.Edges.YogaRaw...)
 		}
 
 		if err = clause.Exec(ctx); err != nil {
@@ -140,8 +148,17 @@ func (repo *academyRepository) Get(ctx context.Context, id int) (*ent.Academy, e
 				yq.Select(yoga.FieldLevel, yoga.FieldNameKor)
 			},
 		).
+		WithYogaRaw(
+			func(yrq *ent.YogaRawQuery) {
+				yrq.Select(yogaraw.FieldID, yogaraw.FieldName)
+			},
+		).
 		Where(academy.IDEQ(id)).
 		Only(ctx)
+}
+
+func (repo *academyRepository) GetOnlyIdByUserId(ctx context.Context, userId int) (id int, err error) {
+	return repo.db.Academy.Query().Where(academy.UserIDEQ(userId)).OnlyID(ctx)
 }
 
 func (repo *academyRepository) Total(ctx context.Context, yogaIDs *[]int, sigunguID *int, academyName *string) (result int, err error) {

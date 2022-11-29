@@ -32,7 +32,9 @@ func (Yoga) Fields() []ent.Field {
 			Nillable().
 			Comment("요가 이름 영어"),
 
-		field.Int("level").Optional().Nillable(),
+		field.Int("level").
+			Optional().
+			Nillable(),
 
 		field.Text("description").
 			Optional().

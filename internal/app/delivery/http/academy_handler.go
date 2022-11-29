@@ -142,7 +142,7 @@ func (h *academyHandler) Update(c *fiber.Ctx) error {
 
 	// 소유권체크
 	if userId != reqParam.Id {
-		return c.Status(403).JSON(ex.NewHttpError(ex.ErrOnlyOwnUser, nil))
+		return c.Status(http.StatusForbidden).JSON(ex.NewHttpError(ex.ErrOnlyOwnUser, nil))
 	}
 
 	if err := h.academyUsecase.Update(ctx, reqBody, reqParam.Id, userId); err != nil {

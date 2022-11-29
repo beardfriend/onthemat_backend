@@ -5,15 +5,15 @@ import (
 
 	"onthemat/internal/app/model"
 	"onthemat/pkg/ent"
-
 	"onthemat/pkg/ent/teacher"
+	"onthemat/pkg/ent/user"
 
 	"onthemat/pkg/entx"
 )
 
 type TeacherRepository interface {
-	Create(ctx context.Context, t *ent.Teacher, userId int) error
-	List(ctx context.Context, yogaSorts []*string, areas []*string) ([]*ent.Teacher, error)
+	Create(ctx context.Context, d *ent.Teacher) error
+	GetOnlyIdByUserId(ctx context.Context, userId int) (id int, err error)
 }
 
 type teacherRepository struct {
@@ -26,17 +26,40 @@ func NewTeacherRepository(db *ent.Client) TeacherRepository {
 	}
 }
 
-func (repo *teacherRepository) Create(ctx context.Context, t *ent.Teacher, userId int) error {
+func (repo *teacherRepository) Create(ctx context.Context, d *ent.Teacher) error {
 	return entx.WithTx(ctx, repo.db, func(tx *ent.Tx) (err error) {
-		if err = repo.db.Teacher.Create().
-			SetAge(t.Age).
-			SetName(t.Name).
-			SetUserID(userId).
-			Exec(ctx); err != nil {
+		clause := repo.db.Teacher.Create().
+			SetUserID(d.UserID).
+			SetNillableProfileImageURL(d.ProfileImageURL).
+			SetName(d.Name).
+			SetNillableAge(d.Age).
+			SetNillableIntroduce(d.Introduce)
+
+		if len(d.Edges.Yoga) > 0 {
+			clause.AddYoga(d.Edges.Yoga...)
+		}
+
+		if len(d.Edges.Sigungu) > 0 {
+			clause.AddSigungu(d.Edges.Sigungu...)
+		}
+
+		if len(d.Edges.WorkExperience) > 0 {
+			clause.AddWorkExperience(d.Edges.WorkExperience...)
+		}
+
+		if len(d.Edges.YogaRaw) > 0 {
+			clause.AddYogaRaw(d.Edges.YogaRaw...)
+		}
+
+		if err = clause.Exec(ctx); err != nil {
 			return
 		}
 
-		if err = repo.db.User.UpdateOneID(userId).SetType(model.AcademyType).Exec(ctx); err != nil {
+		err = tx.User.Update().
+			SetType(model.TeacherType).
+			Where(user.IDEQ(d.UserID)).
+			Exec(ctx)
+		if err != nil {
 			return
 		}
 
@@ -44,23 +67,6 @@ func (repo *teacherRepository) Create(ctx context.Context, t *ent.Teacher, userI
 	})
 }
 
-func (repo *teacherRepository) Update(ctx context.Context, t *ent.Teacher, userId int) error {
-	return repo.db.Teacher.Update().
-		SetAge(t.Age).
-		SetName(t.Name).
-		SetIsProfileOpen(t.IsProfileOpen).
-		Where(teacher.IDEQ(userId)).
-		Exec(ctx)
-}
-
-func (repo *teacherRepository) Get(ctx context.Context, userId int) (*ent.Teacher, error) {
-	return repo.db.Teacher.Query().
-		Where(teacher.ID(userId)).
-		Only(ctx)
-}
-
-func (repo *teacherRepository) List(ctx context.Context, yogaSorts []*string, areas []*string) ([]*ent.Teacher, error) {
-	clause := repo.db.Debug().Teacher.Query()
-	// clause = repo.conditionQuery(yogaSorts, areas, clause)
-	return clause.All(ctx)
+func (repo *teacherRepository) GetOnlyIdByUserId(ctx context.Context, userId int) (id int, err error) {
+	return repo.db.Teacher.Query().Where(teacher.UserIDEQ(userId)).OnlyID(ctx)
 }

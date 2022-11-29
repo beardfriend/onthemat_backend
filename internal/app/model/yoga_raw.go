@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
 type YogaRaw struct {
@@ -20,9 +21,13 @@ func (YogaRaw) Annotations() []schema.Annotation {
 
 func (YogaRaw) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("academy_id").Optional(),
+		field.Int("academy_id").
+			Optional().
+			Nillable(),
 
-		field.Int("teacher_id").Optional(),
+		field.Int("teacher_id").
+			Optional().
+			Nillable(),
 
 		field.String("name").
 			Comment("요가 이름"),
@@ -30,6 +35,16 @@ func (YogaRaw) Fields() []ent.Field {
 		field.Bool("is_migrated").
 			Default(false).
 			Comment("정식 그룹에 추가됐는지"),
+	}
+}
+
+func (YogaRaw) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("name", "academy_id").
+			Unique(),
+
+		index.Fields("name", "teacher_id").
+			Unique(),
 	}
 }
 

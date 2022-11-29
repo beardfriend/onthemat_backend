@@ -49,5 +49,8 @@ func (AreaSiGungu) Edges() []ent.Edge {
 			Field("area_sido_id"),
 
 		edge.To("academy", Academy.Type),
+
+		edge.From("teacher", Teacher.Type).
+			Ref("sigungu"),
 	}
 }

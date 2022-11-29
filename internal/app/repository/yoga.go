@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"onthemat/internal/app/common"
 	"onthemat/internal/app/transport/request"
@@ -10,6 +11,8 @@ import (
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/yoga"
 	"onthemat/pkg/ent/yogagroup"
+	"onthemat/pkg/ent/yogaraw"
+	"onthemat/pkg/entx"
 )
 
 type YogaRepository interface {
@@ -25,6 +28,10 @@ type YogaRepository interface {
 	Patch(ctx context.Context, data *request.YogaPatchBody, id int) error
 	Delete(ctx context.Context, id int) error
 	List(ctx context.Context, groupdId int) ([]*ent.Yoga, error)
+
+	CreateRaws(ctx context.Context, d []*ent.YogaRaw) error
+	DeleteAndCreateRaws(ctx context.Context, d []*ent.YogaRaw, academyId, teacherId *int) (err error)
+	DeleteRawsByTeacherIdOrAcademyId(ctx context.Context, academyId, teacherId *int) (err error)
 }
 
 type yogaRepository struct {
@@ -163,4 +170,73 @@ func (repo *yogaRepository) List(ctx context.Context, groupdId int) ([]*ent.Yoga
 		QueryYoga().
 		Order(ent.Desc(yoga.FieldID)).
 		All(ctx)
+}
+
+// ------------------- YogaRaw -------------------
+
+func (repo *yogaRepository) CreateRaws(ctx context.Context, d []*ent.YogaRaw) error {
+	bulk := make([]*ent.YogaRawCreate, len(d))
+
+	for i, v := range d {
+		bulk[i] = repo.db.YogaRaw.Create().SetNillableAcademyID(v.AcademyID).SetNillableTeacherID(v.TeacherID).SetName(v.Name)
+	}
+
+	return repo.db.YogaRaw.CreateBulk(bulk...).Exec(ctx)
+}
+
+func (repo *yogaRepository) DeleteAndCreateRaws(ctx context.Context, d []*ent.YogaRaw, academyId, teacherId *int) (err error) {
+	if academyId == nil && teacherId == nil {
+		err = errors.New("academyId, teacherId 둘 중 하나는 입력해주세요")
+		return
+	}
+
+	if academyId != nil && teacherId != nil {
+		err = errors.New("academyId, teacherId 둘 중 하나만 입력해주세요")
+		return
+	}
+
+	return entx.WithTx(ctx, repo.db, func(tx *ent.Tx) (err error) {
+		clause := tx.YogaRaw.Delete()
+		if academyId != nil {
+			clause.Where(yogaraw.AcademyIDEQ(*academyId))
+		} else if teacherId != nil {
+			clause.Where(yogaraw.TeacherIDEQ(*teacherId))
+		}
+		_, err = clause.Exec(ctx)
+		if err != nil {
+			return
+		}
+
+		bulk := make([]*ent.YogaRawCreate, len(d))
+
+		for i, v := range d {
+			bulk[i] = repo.db.YogaRaw.Create().SetNillableAcademyID(v.AcademyID).SetNillableTeacherID(v.TeacherID).SetName(v.Name)
+		}
+
+		return repo.db.YogaRaw.CreateBulk(bulk...).Exec(ctx)
+	})
+}
+
+func (repo *yogaRepository) DeleteRawsByTeacherIdOrAcademyId(ctx context.Context, academyId, teacherId *int) (err error) {
+	if academyId == nil && teacherId == nil {
+		err = errors.New("academyId, teacherId 둘 중 하나는 입력해주세요")
+		return
+	}
+
+	if academyId != nil && teacherId != nil {
+		err = errors.New("academyId, teacherId 둘 중 하나만 입력해주세요")
+		return
+	}
+
+	clause := repo.db.YogaRaw.Delete()
+	if academyId != nil {
+		clause.Where(yogaraw.AcademyIDEQ(*academyId))
+	} else if teacherId != nil {
+		clause.Where(yogaraw.TeacherIDEQ(*teacherId))
+	}
+	_, err = clause.Exec(ctx)
+	if err != nil {
+		return
+	}
+	return
 }

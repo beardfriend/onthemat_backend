@@ -107,13 +107,13 @@ func NewYogaGroupListQueries() *YogaGroupListQueries {
 
 // ------------------- Yoga Raw -------------------
 
-type YogaRawCreateBody struct {
-	YogaName string `json:"name" validate:"required"`
-}
-type YogaRawListQuery struct {
-	UserId int `query:"userId"`
+// ------------------- Create -------------------
+type YogaRawsCreateBody struct {
+	Names []string `json:"name" validate:"required"`
 }
 
-type YogaDeleteRawParam struct {
-	Id int `params:"id"`
+// ------------------- Update -------------------
+
+type YogaRawsUpdateBody struct {
+	Names []string `json:"name" validate:"required"`
 }

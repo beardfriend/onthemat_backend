@@ -5,6 +5,7 @@ import (
 
 	"onthemat/internal/app/common"
 	ex "onthemat/internal/app/common"
+	"onthemat/internal/app/model"
 	r "onthemat/internal/app/repository"
 	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/utils"
@@ -23,15 +24,23 @@ type YogaUsecase interface {
 	Update(ctx context.Context, req *request.YogaUpdateBody, yogaId int) (err error)
 	Delete(ctx context.Context, yogaId int) error
 	Patch(ctx context.Context, req *request.YogaPatchBody, yogaId int) (err error)
+
+	CreateRaws(ctx context.Context, names []string, userId int, userType model.UserType) error
+	UpdateRaws(ctx context.Context, names []string, userId int, userType model.UserType) error
+	DeleteRawAll(ctx context.Context, userId int, userType model.UserType) (err error)
 }
 
 type yogaUseCase struct {
-	yogaRepo r.YogaRepository
+	yogaRepo    r.YogaRepository
+	academyRepo r.AcademyRepository
+	teacherRepo r.TeacherRepository
 }
 
-func NewYogaUsecase(yogaRepo r.YogaRepository) YogaUsecase {
+func NewYogaUsecase(yogaRepo r.YogaRepository, academyRepo r.AcademyRepository, teacherRepo r.TeacherRepository) YogaUsecase {
 	return &yogaUseCase{
-		yogaRepo: yogaRepo,
+		yogaRepo:    yogaRepo,
+		academyRepo: academyRepo,
+		teacherRepo: teacherRepo,
 	}
 }
 
@@ -154,4 +163,50 @@ func (u *yogaUseCase) Delete(ctx context.Context, yogaId int) error {
 
 func (u *yogaUseCase) List(ctx context.Context, groupId int) ([]*ent.Yoga, error) {
 	return u.yogaRepo.List(ctx, groupId)
+}
+
+// ------------------- YogaRaw -------------------
+
+func (u *yogaUseCase) CreateRaws(ctx context.Context, names []string, userId int, userType model.UserType) (err error) {
+	var academyId int
+	var teacherId int
+	if userType == model.AcademyType {
+		academyId, err = u.academyRepo.GetOnlyIdByUserId(ctx, userId)
+	} else if userType == model.TeacherType {
+		teacherId, err = u.teacherRepo.GetOnlyIdByUserId(ctx, userId)
+	}
+
+	data := make([]*ent.YogaRaw, len(names))
+	for _, v := range names {
+		data = append(data, &ent.YogaRaw{Name: v, AcademyID: &academyId, TeacherID: &teacherId})
+	}
+	return u.yogaRepo.CreateRaws(ctx, data)
+}
+
+func (u *yogaUseCase) UpdateRaws(ctx context.Context, names []string, userId int, userType model.UserType) (err error) {
+	var academyId int
+	var teacherId int
+	if userType == model.AcademyType {
+		academyId, err = u.academyRepo.GetOnlyIdByUserId(ctx, userId)
+	} else if userType == model.TeacherType {
+		teacherId, err = u.teacherRepo.GetOnlyIdByUserId(ctx, userId)
+	}
+
+	data := make([]*ent.YogaRaw, len(names))
+	for _, v := range names {
+		data = append(data, &ent.YogaRaw{Name: v, AcademyID: &academyId, TeacherID: &teacherId})
+	}
+	return u.yogaRepo.DeleteAndCreateRaws(ctx, data, &academyId, &teacherId)
+}
+
+func (u *yogaUseCase) DeleteRawAll(ctx context.Context, userId int, userType model.UserType) (err error) {
+	var academyId int
+	var teacherId int
+	if userType == model.AcademyType {
+		academyId, err = u.academyRepo.GetOnlyIdByUserId(ctx, userId)
+	} else if userType == model.TeacherType {
+		teacherId, err = u.teacherRepo.GetOnlyIdByUserId(ctx, userId)
+	}
+
+	return u.yogaRepo.DeleteRawsByTeacherIdOrAcademyId(ctx, &academyId, &teacherId)
 }
