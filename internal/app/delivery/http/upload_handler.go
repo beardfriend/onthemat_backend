@@ -43,44 +43,14 @@ func NewUploadHandler(
 @apiVersion 1.0.0
 @apiGroup upload
 @apiDescription 이미지를 업로드하는 API
-
-@apiHeader {String} Authorization Bearer 엑세스토큰
+@apiHeader {String} Authorization accessToken (Bearer)
 @apiParam {String="profile,logo"} purpose 업로드 이후 사용할 목적
-
-@apiSuccessExample Success-Response:
-HTTP/1.1 201 Created
-{
-	"code": 201,
-	"message": ""
-}
-@apiErrorExample Error-Response:
-HTTP/1.1 400 Bad Request
-{
-    "code": 2000,
-    "message": "유효하지 않은 요청값들이 존재합니다.",
-    "details": [
-        {
-            "purpose": "oneof"
-        }
-    ]
-}
-{
-    "code": 3004,
-    "message": "폼 데이터 Key를 확인해주세요.",
-    "details": "key name is file"
-}
-{
-    "code": 3003,
-    "message": "이미지 파일이 아닙니다.",
-    "details": null
-}
-
-HTTP/1.1 500 Internal Server Error
-{
-	"code": 500,
-	"message": "일시적인 에러가 발생했습니다.",
-	"details": null
-}
+@apiSuccess (201) {Number} code 201
+@apiSuccess (201) {String} message ""
+@apiError ValidateError <code>400</code> code: 2000~
+@apiError ImageExtensionUnavailable <code>400</code> code: 3003
+@apiError FormDataKeyUnavailable <code>400</code> code: 3004
+@apiError InternalServerError <code>500</code> code: 500
 */
 func (h *uploadHandler) Upload(c *fiber.Ctx) error {
 	ctx := c.Context()

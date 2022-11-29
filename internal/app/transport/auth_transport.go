@@ -1,11 +1,5 @@
 package transport
 
-import (
-	"onthemat/pkg/ent"
-
-	"github.com/jinzhu/copier"
-)
-
 // ------------------- Request -------------------
 
 type SignUpBody struct {
@@ -37,26 +31,4 @@ type VerifyEmailQueries struct {
 	Email    string `query:"email,required" validate:"email"`
 	IssuedAt string `query:"isseudAt,required"`
 	Key      string `query:"key,required"`
-}
-
-// ------------------- Response -------------------
-
-type UserMeResponse struct {
-	ID          int        `json:"id"`
-	Email       *string    `json:"email"`
-	Nickname    *string    `json:"nickname"`
-	SocialName  *string    `json:"social_name"`
-	SocialKey   *string    `json:"social_key"`
-	Type        *string    `json:"type"`
-	PhoneNum    *string    `json:"phone_num"`
-	CreatedAt   TimeString `json:"created_at"`
-	LastLoginAt TimeString `json:"last_login_at"`
-}
-
-func NewUserMeResponse(model *ent.User) *UserMeResponse {
-	resp := new(UserMeResponse)
-	copier.Copy(&resp, model)
-	resp.Type = model.Type.ToString()
-
-	return resp
 }

@@ -11,7 +11,7 @@ type YogaGroupResponse struct {
 	ID          int                  `json:"id"`
 	Category    string               `json:"category"`
 	CategoryEng string               `json:"categoryEng"`
-	Description string               `json:"description"`
+	Description *string              `json:"description"`
 	CreatedAt   transport.TimeString `json:"createdAt"`
 	UpdatedAt   transport.TimeString `json:"updatedAt"`
 }

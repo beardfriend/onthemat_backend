@@ -25,10 +25,8 @@ type AuthUseCase interface {
 	SignUp(ctx context.Context, body *transport.SignUpBody) error
 	Login(ctx context.Context, body *transport.LoginBody) (*LoginResult, error)
 	SocialSignUp(ctx context.Context, body *transport.SocialSignUpBody) error
-	SocialLogin(ctx context.Context, socialName model.SocialType, code string) (*LoginResult, error)
-	KakaoRedirectUrl(ctx context.Context) string
-	NaverRedirectUrl(ctx context.Context) string
-	GoogleRedirectUrl(ctx context.Context) string
+	SocialLogin(ctx context.Context, socialName string, code string) (result *LoginResult, err error)
+	SocialLoginRedirectUrl(ctx context.Context, socialName string) (url string, err error)
 
 	// LogOut
 	// PasswordChange
@@ -65,12 +63,24 @@ func NewAuthUseCase(
 	}
 }
 
-func (a *authUseCase) KakaoRedirectUrl(ctx context.Context) string {
-	return a.authSvc.GetKakaoRedirectUrl()
-}
+func (a *authUseCase) SocialLoginRedirectUrl(ctx context.Context, socialName string) (url string, err error) {
+	if socialName == model.KakaoString {
+		url = a.authSvc.GetKakaoRedirectUrl()
+		return
+	}
 
-func (a *authUseCase) NaverRedirectUrl(ctx context.Context) string {
-	return a.authSvc.GetNaverRedirectUrl()
+	if socialName == model.GoogleString {
+		url = a.authSvc.GetGoogleRedirectUrl()
+		return
+	}
+
+	if socialName == model.NaverString {
+		url = a.authSvc.GetNaverRedirectUrl()
+		return
+
+	}
+	err = errors.New("socialName을 확인해주세요")
+	return
 }
 
 type LoginResult struct {
@@ -131,16 +141,15 @@ func (a *authUseCase) Login(ctx context.Context, body *transport.LoginBody) (res
 	return
 }
 
-func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialType, code string) (result *LoginResult, err error) {
-	socialNameString := socialName.ToString()
-	if socialNameString != &model.GoogleString && socialNameString != &model.KakaoString && socialNameString != &model.NaverString {
-		err = errors.New("입력 값을 확인해주세요")
+func (a *authUseCase) SocialLogin(ctx context.Context, socialName string, code string) (result *LoginResult, err error) {
+	if socialName != model.KakaoString || socialName != model.GoogleString || socialName != model.NaverString {
+		err = errors.New("socialName을 확인해주세요")
 		return
 	}
 
 	user := new(ent.User)
-	// 카카오 로그인
-	if socialNameString == &model.KakaoString {
+
+	if socialName == model.KakaoString {
 		kakaoInfo, errA := a.authSvc.GetKakaoInfo(code)
 		if errA != nil {
 			err = errA
@@ -154,9 +163,7 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialTy
 		user.Nickname = &kakaoInfo.KakaoAccount.Profile.NickName
 		user.SocialName = &model.KakaoSocialType
 
-		// 구글 로그인
-	} else if socialNameString == &model.GoogleString {
-
+	} else if socialName == model.GoogleString {
 		googleInfo, errA := a.authSvc.GetGoogleInfo(code)
 		if errA != nil {
 			err = errA
@@ -169,8 +176,7 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialTy
 		user.Nickname = &googleInfo.Nickname
 		user.SocialName = &model.GoogleSocialType
 
-		// 네이버 로그인
-	} else if socialNameString == &model.NaverString {
+	} else if socialName == model.NaverString {
 
 		naverInfo, errA := a.authSvc.GetNaverInfo(code)
 		if errA != nil {
@@ -181,7 +187,6 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialTy
 		user.SocialKey = &naverInfo.Id
 		user.Email = &naverInfo.Email
 		user.SocialName = &model.NaverSocialType
-
 	}
 
 	// 이미 존재하는 회원인지 확인.
@@ -206,7 +211,7 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialTy
 
 	// 토큰 발행
 	uid := uuid.New().String()
-	refresh, err := a.tokenSvc.GenerateToken(uid, user.ID, *socialNameString, userType, a.config.JWT.RefreshTokenExpired)
+	refresh, err := a.tokenSvc.GenerateToken(uid, user.ID, socialName, userType, a.config.JWT.RefreshTokenExpired)
 	if err != nil {
 		return
 	}
@@ -215,7 +220,7 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialTy
 		return
 	}
 
-	access, err := a.tokenSvc.GenerateToken(uid, user.ID, *socialNameString, userType, a.config.JWT.AccessTokenExpired)
+	access, err := a.tokenSvc.GenerateToken(uid, user.ID, socialName, userType, a.config.JWT.AccessTokenExpired)
 	if err != nil {
 		return
 	}
@@ -227,10 +232,6 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName model.SocialTy
 		RefreshTokenExpiredAt: a.tokenSvc.GetExpiredAt(a.config.JWT.RefreshTokenExpired),
 	}
 	return
-}
-
-func (a *authUseCase) GoogleRedirectUrl(ctx context.Context) string {
-	return a.authSvc.GetGoogleRedirectUrl()
 }
 
 func (a *authUseCase) SocialSignUp(ctx context.Context, body *transport.SocialSignUpBody) (err error) {

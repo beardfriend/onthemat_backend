@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	ex "onthemat/internal/app/common"
-	"onthemat/internal/app/model"
 	"onthemat/internal/app/transport"
+	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/transport/response"
 	"onthemat/internal/app/utils"
 
@@ -30,18 +30,10 @@ func NewAuthHandler(
 		Validator:   validator,
 	}
 	g := router.Group("/auth")
-	// 카카오 리디렉션
-	g.Get("/kakao", handler.Kakao)
-	// 카카오 콜백
-	g.Get("/kakao/callback", handler.KakaoCallBackToken)
-	// 구글 리디렉션
-	g.Get("/google", handler.Google)
-	// 구글 콜백
-	g.Get("/google/callback", handler.GoogleCallBackToken)
-	// 네이버 리디렉션
-	g.Get("/naver", handler.Naver)
-	// 네이버 콜백
-	g.Get("/naver/callback", handler.NaverCallBackToken)
+	// 소셜로그인 리디렉션
+	g.Get("/:socialName/url", handler.SocialUrl)
+	// 소셜로로그인 콜백
+	g.Get("/:socialName/callback", handler.SocialCallback)
 	// 회원가입
 	g.Post("/signup", handler.SignUp)
 	// 로그인
@@ -58,216 +50,78 @@ func NewAuthHandler(
 	g.Get("/token/refresh", handler.Refresh)
 }
 
-// 카카오 리디렉션
+// 소셜로그인 리디렉션
 /**
-@api {get} /auth/kakao 카카오 리디렉션
-@apiName kakao
+@api {get} /auth/:socialName/url 소셜로그인 URL
+@apiName socialLoginRedirection
 @apiVersion 1.0.0
 @apiGroup auth
-@apiDescription 카카오 리디렉션 URL
-
+@apiDescription 소셜로그인 URL
+@apiParam {String="naver,kakao,google"} socialName 소셜 로그인 타입
 @apiSuccessExample Success-Response:
 HTTP/1.1 302 OK
 */
-func (h *authHandler) Kakao(c *fiber.Ctx) error {
+func (h *authHandler) SocialUrl(c *fiber.Ctx) error {
 	ctx := c.Context()
+	reqParam := new(request.SocialUrlParam)
 
-	return c.Redirect(h.AuthUseCase.KakaoRedirectUrl(ctx))
-}
-
-// 카카오 콜백
-/**
-@api {get} /auth/kakao/callback 카카오 로그인 콜백 URL
-@apiName kakaoCallback
-@apiVersion 1.0.0
-@apiGroup auth
-@apiDescription 카카오 Callback
-
-@apiSuccessExample Success-Response:
-HTTP/1.1 200 OK
-{
-	"code": 200,
-	"message": "",
-	"result": {
-		"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVdWlkIjoiNjE5YWUxYTYtN2YyNy00NDZmLTkzZGUtNDBjNjJkM2MwOWU3IiwiVXNlcklkIjowLCJMb2dpblR5cGUiOiJrYWthbyIsIlVzZXJUeXBlIjoiIiwiaXNzIjoib25lVGhlTWF0IiwiZXhwIjoxNjY3ODAzMTAyLCJpYXQiOjE2Njc4MDIyMDJ9.wFaNMotM7E38mM_Rcyk5GlAe7WTUX-zJv9CPGgixpds",
-		"accessTokenexpiredAt": "2022-11-07T15:38:22.270238+09:00",
-		"refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVdWlkIjoiNjE5YWUxYTYtN2YyNy00NDZmLTkzZGUtNDBjNjJkM2MwOWU3IiwiVXNlcklkIjowLCJMb2dpblR5cGUiOiJrYWthbyIsIlVzZXJUeXBlIjoiIiwiaXNzIjoib25lVGhlTWF0IiwiZXhwIjoxNjY5MDExODAyLCJpYXQiOjE2Njc4MDIyMDJ9.mXJ4QM19pHrM_4pNFVF1d1PnCYBLTRR4EaYc70O2N88",
-		"refreshTokenExpiredAt": "2022-11-21T15:23:22.270239+09:00"
+	if err := c.ParamsParser(reqParam); err != nil {
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrParamsMissing, nil))
 	}
-}
-
-@apiErrorExample Error-Response:
-HTTP/1.1 400 Bad Request
-{
-    "code": 3001,
-    "message": "쿼리스트링을 입력해주세요.",
-    "details": null
-}
-
-HTTP/1.1 500 Internal Server Error
-{
-    "code": 500,
-    "message": "일시적인 에러가 발생했습니다.",
-    "details": null
-}
-*/
-func (h *authHandler) KakaoCallBackToken(c *fiber.Ctx) error {
-	ctx := c.Context()
-
-	code := c.Query("code")
-	if code == "" {
-		return c.Status(http.StatusBadRequest).JSON(ex.NewHttpError(ex.ErrQueryStringMissing, nil))
+	if err := h.Validator.ValidateStruct(reqParam); err != nil {
+		return c.
+			Status(http.StatusBadRequest).
+			JSON(ex.NewInvalidInputError(err))
 	}
 
-	data, err := h.AuthUseCase.SocialLogin(ctx, model.KakaoSocialType, code)
+	url, err := h.AuthUseCase.SocialLoginRedirectUrl(ctx, reqParam.SocialName)
 	if err != nil {
 		return utils.NewError(c, err)
 	}
 
-	return c.Status(200).
-		JSON(ex.ResponseWithData{
-			Code:    200,
-			Message: "",
-			Result:  data,
-		})
+	return c.Redirect(url)
 }
 
-// 구글 리디렉션
+// 소셜로그인 콜백
 /**
-@api {get} /auth/google 구글 리디렉션
-@apiName google
+@api {get} /auth/:socialName/callback 소셜 로그인 콜백
+@apiName Socialcallback
 @apiVersion 1.0.0
 @apiGroup auth
-@apiDescription 구글 리디렉션 URL
-
-@apiSuccessExample Success-Response:
-HTTP/1.1 302 OK
+@apiDescription 소셜 Callback
+@apiParam {String="naver,kakao,google"} socialName 소셜 로그인 타입
+@apiSuccess {Number} code 200
+@apiSuccess {String} message ""
+@apiSuccess {Object} result
+@apiSuccess {String} result.accessToken 엑세스 토큰
+@apiSuccess {String} result.accessTokenexpiredAt 엑세스 토큰 만료일시
+@apiSuccess {String} result.refreshToken 리프레쉬 토큰
+@apiSuccess {String} result.refreshTokenExpiredAt 리프레쉬 토큰 만료일시
+@apiError QueryStringMissing <code>400</code> code: 3001
+@apiError InternalServerError <code>500</code> code: 500
 */
-func (h *authHandler) Google(c *fiber.Ctx) error {
+func (h *authHandler) SocialCallback(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	return c.Redirect(h.AuthUseCase.GoogleRedirectUrl(ctx))
-}
-
-// 구글 콜백
-/**
-@api {get} /auth/google/callback 구글 로그인 콜백 URL
-@apiName googleCallback
-@apiVersion 1.0.0
-@apiGroup auth
-@apiDescription 구글 Callback
-
-@apiSuccessExample Success-Response:
-HTTP/1.1 200 OK
-{
-	"code": 200,
-	"message": "",
-	"result": {
-		"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVdWlkIjoiNjE5YWUxYTYtN2YyNy00NDZmLTkzZGUtNDBjNjJkM2MwOWU3IiwiVXNlcklkIjowLCJMb2dpblR5cGUiOiJrYWthbyIsIlVzZXJUeXBlIjoiIiwiaXNzIjoib25lVGhlTWF0IiwiZXhwIjoxNjY3ODAzMTAyLCJpYXQiOjE2Njc4MDIyMDJ9.wFaNMotM7E38mM_Rcyk5GlAe7WTUX-zJv9CPGgixpds",
-		"accessTokenexpiredAt": "2022-11-07T15:38:22.270238+09:00",
-		"refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVdWlkIjoiNjE5YWUxYTYtN2YyNy00NDZmLTkzZGUtNDBjNjJkM2MwOWU3IiwiVXNlcklkIjowLCJMb2dpblR5cGUiOiJrYWthbyIsIlVzZXJUeXBlIjoiIiwiaXNzIjoib25lVGhlTWF0IiwiZXhwIjoxNjY5MDExODAyLCJpYXQiOjE2Njc4MDIyMDJ9.mXJ4QM19pHrM_4pNFVF1d1PnCYBLTRR4EaYc70O2N88",
-		"refreshTokenExpiredAt": "2022-11-21T15:23:22.270239+09:00"
+	reqParam := new(request.SocialCallbackParam)
+	if err := c.ParamsParser(reqParam); err != nil {
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrParamsMissing, nil))
 	}
-}
-
-@apiErrorExample Error-Response:
-HTTP/1.1 400 Bad Request
-{
-    "code": 3001,
-    "message": "쿼리스트링을 입력해주세요.",
-    "details": null
-}
-
-HTTP/1.1 500 Internal Server Error
-{
-    "code": 500,
-    "message": "일시적인 에러가 발생했습니다.",
-    "details": null
-}
-*/
-func (h *authHandler) GoogleCallBackToken(c *fiber.Ctx) error {
-	ctx := c.Context()
+	if err := h.Validator.ValidateStruct(reqParam); err != nil {
+		return c.
+			Status(http.StatusBadRequest).
+			JSON(ex.NewInvalidInputError(err))
+	}
 
 	code := c.Query("code")
 	if code == "" {
-		return c.Status(http.StatusBadRequest).JSON(ex.NewBadRequestError(ex.ErrQueryStringMissing, nil))
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrQueryStringMissing, nil))
 	}
 
-	data, err := h.AuthUseCase.SocialLogin(ctx, model.GoogleSocialType, code)
-	if err != nil {
-		return utils.NewError(c, err)
-	}
-
-	return c.Status(200).
-		JSON(ex.ResponseWithData{
-			Code:    200,
-			Message: "",
-			Result:  data,
-		})
-}
-
-// 네이버 리디렉션
-/**
-@api {get} /auth/naver 네이버 리디렉션
-@apiName naver
-@apiVersion 1.0.0
-@apiGroup auth
-@apiDescription 네이버 리디렉션 URL
-
-@apiSuccessExample Success-Response:
-HTTP/1.1 302 OK
-*/
-func (h *authHandler) Naver(c *fiber.Ctx) error {
-	ctx := c.Context()
-
-	return c.Redirect(h.AuthUseCase.NaverRedirectUrl(ctx))
-}
-
-// 네이버 콜백
-/**
-@api {get} /auth/naver/callback 네이버 로그인 콜백 URL
-@apiName naverCallback
-@apiVersion 1.0.0
-@apiGroup auth
-@apiDescription 네이버 Callback
-
-@apiSuccessExample Success-Response:
-HTTP/1.1 200 OK
-{
-	"code": 200,
-	"message": "",
-	"result": {
-		"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVdWlkIjoiNjE5YWUxYTYtN2YyNy00NDZmLTkzZGUtNDBjNjJkM2MwOWU3IiwiVXNlcklkIjowLCJMb2dpblR5cGUiOiJrYWthbyIsIlVzZXJUeXBlIjoiIiwiaXNzIjoib25lVGhlTWF0IiwiZXhwIjoxNjY3ODAzMTAyLCJpYXQiOjE2Njc4MDIyMDJ9.wFaNMotM7E38mM_Rcyk5GlAe7WTUX-zJv9CPGgixpds",
-		"accessTokenexpiredAt": "2022-11-07T15:38:22.270238+09:00",
-		"refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVdWlkIjoiNjE5YWUxYTYtN2YyNy00NDZmLTkzZGUtNDBjNjJkM2MwOWU3IiwiVXNlcklkIjowLCJMb2dpblR5cGUiOiJrYWthbyIsIlVzZXJUeXBlIjoiIiwiaXNzIjoib25lVGhlTWF0IiwiZXhwIjoxNjY5MDExODAyLCJpYXQiOjE2Njc4MDIyMDJ9.mXJ4QM19pHrM_4pNFVF1d1PnCYBLTRR4EaYc70O2N88",
-		"refreshTokenExpiredAt": "2022-11-21T15:23:22.270239+09:00"
-	}
-}
-
-@apiErrorExample Error-Response:
-HTTP/1.1 400 Bad Request
-{
-    "code": 3001,
-    "message": "쿼리스트링을 입력해주세요.",
-    "details": null
-}
-
-HTTP/1.1 500 Internal Server Error
-{
-    "code": 500,
-    "message": "일시적인 에러가 발생했습니다.",
-    "details": null
-}
-*/
-func (h *authHandler) NaverCallBackToken(c *fiber.Ctx) error {
-	ctx := c.Context()
-
-	code := c.Query("code")
-	if code == "" {
-		return c.Status(http.StatusBadRequest).JSON(ex.NewHttpError(ex.ErrQueryStringMissing, nil))
-	}
-
-	data, err := h.AuthUseCase.SocialLogin(ctx, model.NaverSocialType, code)
+	data, err := h.AuthUseCase.SocialLogin(ctx, reqParam.SocialName, code)
 	if err != nil {
 		return utils.NewError(c, err)
 	}
