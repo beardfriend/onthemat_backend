@@ -45,7 +45,7 @@ func (m *middleWare) OnlySuperAdmin(c *fiber.Ctx) error {
 
 	if userType != "superAdmin" {
 		return c.
-			Status(http.StatusUnauthorized).
+			Status(http.StatusForbidden).
 			JSON(ex.NewHttpError(ex.ErrOnlySuperAdmin, nil))
 	}
 
@@ -57,7 +57,7 @@ func (m *middleWare) OnlyAcademy(c *fiber.Ctx) error {
 
 	if userType != "academy" {
 		return c.
-			Status(http.StatusUnauthorized).
+			Status(http.StatusForbidden).
 			JSON(ex.NewHttpError(ex.ErrOnlyAcademy, nil))
 	}
 
@@ -69,7 +69,7 @@ func (m *middleWare) OnlyTeacher(c *fiber.Ctx) error {
 
 	if userType != "teacher" {
 		return c.
-			Status(http.StatusUnauthorized).
+			Status(http.StatusForbidden).
 			JSON(ex.NewHttpError(ex.ErrOnlyTeacher, nil))
 	}
 

@@ -107,7 +107,7 @@ func (repo *academyRepository) Patch(ctx context.Context, d *request.AcademyPatc
 	info := d.Info
 	updateableData := utils.GetUpdateableData(info, academy.Columns)
 
-	clause := repo.db.Debug().Academy.Update().
+	clause := repo.db.Academy.Update().
 		Where(
 			academy.IDEQ(id),
 			predicate.Academy(user.IDEQ(userId)),

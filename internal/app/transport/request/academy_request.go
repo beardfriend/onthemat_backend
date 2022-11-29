@@ -2,22 +2,63 @@ package request
 
 // ------------------- Create -------------------
 
+type AcademyCreateBody struct {
+	Info    AcademyInfoForCreate `json:"info" validate:"required,dive,required"`
+	YogaIDs []int                `json:"yogaIDs" validate:"dive,required"`
+}
+
+type AcademyInfoForCreate struct {
+	SigunguID     int     `json:"sigunguId" validate:"required"`
+	Name          string  `json:"name" validate:"required"`
+	LogoUrl       string  `json:"logoUrl" validate:"required,urlStartHttpHttps"`
+	CallNumber    string  `json:"callNumber"`
+	BusinessCode  string  `json:"businessCode" validate:"required"`
+	AddressRoad   string  `json:"addressRoad" validate:"required"`
+	AddressDetail *string `json:"addressDetail"`
+}
+
 // ------------------- Update -------------------
+
+type AcademyUpdateBody struct {
+	Info    AcademyInfoForUpdate `json:"info" validate:"required,dive,required"`
+	YogaIDs []int                `json:"yogaIds" validate:"dive,required"`
+}
+
+type AcademyInfoForUpdate struct {
+	SigunguID     int     `json:"sigunguId" validate:"required"`
+	Name          string  `json:"name" validate:"required"`
+	LogoUrl       string  `json:"logoUrl" validate:"required,urlStartHttpHttps"`
+	CallNumber    string  `json:"callNumber"`
+	AddressRoad   string  `json:"addressRoad" validate:"required"`
+	AddressDetail *string `json:"addressDetail"`
+}
+
+type AcademyUpdateParam struct {
+	Id int `params:"id" validate:"required"`
+}
 
 // ------------------- Patch -------------------
 
 type AcademyPatchBody struct {
-	Info    *AcademyPatchInfo `json:"info" validate:"dive"`
-	YogaIDs *[]int            `json:"yogaIds"`
+	Info    *AcademyInfoForPatch `json:"info" validate:"dive"`
+	YogaIDs *[]int               `json:"yogaIds"`
 }
 
-type AcademyPatchInfo struct {
+type AcademyInfoForPatch struct {
 	Name          *string `json:"name"`
 	LogoUrl       *string `json:"logoUrl" validate:"omitempty,urlStartHttpHttps"`
 	CallNumber    *string `json:"callNumber"`
 	AddressRoad   *string `json:"addressRoad"`
 	AddressDetail *string `json:"addressDetail"`
 	SigunguId     *int    `json:"sigunguId"`
+}
+type AcademyPatchParam struct {
+	Id int `params:"id" validate:"required"`
+}
+
+// ------------------- Get -------------------
+type AcademyDetailParam struct {
+	Id int `params:"id" validate:"required,numeric"`
 }
 
 // ------------------- List -------------------
@@ -42,12 +83,4 @@ func NewAcademyListQueries() *AcademyListQueries {
 		OrderType:   nil,
 		OrderCol:    nil,
 	}
-}
-
-type AddYogaBody struct {
-	Ids []int `json:"yogaIDs"`
-}
-
-type DeleteYogaBody struct {
-	Ids []int `json:"yogaIDs"`
 }

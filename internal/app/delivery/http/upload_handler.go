@@ -5,7 +5,7 @@ import (
 
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/delivery/middlewares"
-	"onthemat/internal/app/transport"
+	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/usecase"
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/validatorx"
@@ -57,7 +57,7 @@ func (h *uploadHandler) Upload(c *fiber.Ctx) error {
 
 	userId := ctx.UserValue("user_id").(int)
 
-	reqParams := new(transport.UploadParams)
+	reqParams := new(request.UploadParams)
 	if err := c.ParamsParser(reqParams); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrParamsMissing, nil))

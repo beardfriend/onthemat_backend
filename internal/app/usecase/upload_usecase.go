@@ -10,8 +10,8 @@ import (
 
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/repository"
+	"onthemat/internal/app/transport/request"
 
-	"onthemat/internal/app/transport"
 	"onthemat/pkg/aws"
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/image"
@@ -19,7 +19,7 @@ import (
 )
 
 type UploadUsecase interface {
-	Upload(ctx context.Context, file *multipart.FileHeader, params *transport.UploadParams, userId int) error
+	Upload(ctx context.Context, file *multipart.FileHeader, params *request.UploadParams, userId int) error
 }
 
 type uploadUseCase struct {
@@ -34,7 +34,7 @@ func NewUploadUsecase(imageRepo repository.ImageRepository, s3 aws.S3) UploadUse
 	}
 }
 
-func (u *uploadUseCase) Upload(ctx context.Context, file *multipart.FileHeader, params *transport.UploadParams, userId int) (err error) {
+func (u *uploadUseCase) Upload(ctx context.Context, file *multipart.FileHeader, params *request.UploadParams, userId int) (err error) {
 	fileExt := filepath.Ext(file.Filename)
 
 	isUsable, _ := validatorx.ImageExtensionValidator(fileExt)

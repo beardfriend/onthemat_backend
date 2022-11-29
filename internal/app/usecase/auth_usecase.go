@@ -6,14 +6,13 @@ import (
 	"strconv"
 	"time"
 
-	"onthemat/internal/app/common"
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/config"
 	"onthemat/internal/app/model"
 	"onthemat/internal/app/repository"
 	"onthemat/internal/app/service"
 	"onthemat/internal/app/service/token"
-	"onthemat/internal/app/transport"
+	"onthemat/internal/app/transport/request"
 	"onthemat/pkg/auth/jwt"
 	"onthemat/pkg/auth/store"
 	"onthemat/pkg/ent"
@@ -22,9 +21,9 @@ import (
 )
 
 type AuthUseCase interface {
-	SignUp(ctx context.Context, body *transport.SignUpBody) error
-	Login(ctx context.Context, body *transport.LoginBody) (*LoginResult, error)
-	SocialSignUp(ctx context.Context, body *transport.SocialSignUpBody) error
+	SignUp(ctx context.Context, body *request.AuthSignUpBody) error
+	Login(ctx context.Context, body *request.AuthLoginBody) (*LoginResult, error)
+	SocialSignUp(ctx context.Context, body *request.AuthSocialSignUpBody) error
 	SocialLogin(ctx context.Context, socialName string, code string) (result *LoginResult, err error)
 	SocialLoginRedirectUrl(ctx context.Context, socialName string) (url string, err error)
 
@@ -90,7 +89,7 @@ type LoginResult struct {
 	RefreshTokenExpiredAt time.Time `json:"refreshTokenExpiredAt"`
 }
 
-func (a *authUseCase) Login(ctx context.Context, body *transport.LoginBody) (result *LoginResult, err error) {
+func (a *authUseCase) Login(ctx context.Context, body *request.AuthLoginBody) (result *LoginResult, err error) {
 	hashPassword := a.authSvc.HashPassword(body.Password, a.config.Secret.Password)
 	user, err := a.userRepo.GetByEmailPassword(ctx, &ent.User{
 		Email:    &body.Email,
@@ -105,7 +104,7 @@ func (a *authUseCase) Login(ctx context.Context, body *transport.LoginBody) (res
 	}
 
 	if !user.IsEmailVerified {
-		err = common.NewUnauthorizedError(ex.ErrUserEmailUnauthorization, nil)
+		err = ex.NewUnauthorizedError(ex.ErrUserEmailUnauthorization, nil)
 		return
 	}
 
@@ -234,7 +233,7 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName string, code s
 	return
 }
 
-func (a *authUseCase) SocialSignUp(ctx context.Context, body *transport.SocialSignUpBody) (err error) {
+func (a *authUseCase) SocialSignUp(ctx context.Context, body *request.AuthSocialSignUpBody) (err error) {
 	u, err := a.userRepo.Get(ctx, body.UserID)
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -258,7 +257,7 @@ func (a *authUseCase) SocialSignUp(ctx context.Context, body *transport.SocialSi
 	return
 }
 
-func (a *authUseCase) SignUp(ctx context.Context, body *transport.SignUpBody) (err error) {
+func (a *authUseCase) SignUp(ctx context.Context, body *request.AuthSignUpBody) (err error) {
 	hashPassword := a.authSvc.HashPassword(body.Password, a.config.Secret.Password)
 
 	_, err = a.userRepo.Create(ctx, &ent.User{

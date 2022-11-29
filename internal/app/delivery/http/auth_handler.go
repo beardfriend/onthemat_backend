@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	ex "onthemat/internal/app/common"
-	"onthemat/internal/app/transport"
 	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/transport/response"
 	"onthemat/internal/app/utils"
@@ -63,7 +62,7 @@ HTTP/1.1 302 OK
 */
 func (h *authHandler) SocialUrl(c *fiber.Ctx) error {
 	ctx := c.Context()
-	reqParam := new(request.SocialUrlParam)
+	reqParam := new(request.AuthSocialUrlParam)
 
 	if err := c.ParamsParser(reqParam); err != nil {
 		return c.Status(http.StatusBadRequest).
@@ -104,7 +103,7 @@ func (h *authHandler) SocialUrl(c *fiber.Ctx) error {
 func (h *authHandler) SocialCallback(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	reqParam := new(request.SocialCallbackParam)
+	reqParam := new(request.AuthSocialCallbackParam)
 	if err := c.ParamsParser(reqParam); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrParamsMissing, nil))
@@ -156,7 +155,7 @@ func (h *authHandler) SocialCallback(c *fiber.Ctx) error {
 func (h *authHandler) SignUp(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	body := new(transport.SignUpBody)
+	body := new(request.AuthSignUpBody)
 	if err := c.BodyParser(body); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
@@ -201,7 +200,7 @@ func (h *authHandler) SignUp(c *fiber.Ctx) error {
 func (h *authHandler) SocialSignUp(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	body := new(transport.SocialSignUpBody)
+	body := new(request.AuthSocialSignUpBody)
 	if err := c.BodyParser(body); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrJsonMissing, err.Error()))
@@ -249,7 +248,7 @@ func (h *authHandler) SocialSignUp(c *fiber.Ctx) error {
 func (h *authHandler) Login(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	body := new(transport.LoginBody)
+	body := new(request.AuthLoginBody)
 	if err := c.BodyParser(body); err != nil {
 		return c.Status(http.StatusBadRequest).
 			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
@@ -291,7 +290,7 @@ func (h *authHandler) Login(c *fiber.Ctx) error {
 */
 func (h *authHandler) CheckDuplicatedEmail(c *fiber.Ctx) error {
 	ctx := c.Context()
-	queries := new(transport.CheckDuplicatedEmailQueries)
+	queries := new(request.AuthCheckDuplicatedEmailQuery)
 
 	if err := c.QueryParser(queries); err != nil {
 		return c.Status(http.StatusBadRequest).
@@ -332,7 +331,7 @@ func (h *authHandler) CheckDuplicatedEmail(c *fiber.Ctx) error {
 */
 func (h *authHandler) SendTempPassword(c *fiber.Ctx) error {
 	ctx := c.Context()
-	queries := new(transport.SendTempPasswordQueries)
+	queries := new(request.AuthTempPasswordQuery)
 
 	if err := c.QueryParser(queries); err != nil {
 		return c.Status(http.StatusBadRequest).
@@ -377,7 +376,7 @@ func (h *authHandler) SendTempPassword(c *fiber.Ctx) error {
 */
 func (h *authHandler) VerifiyEmail(c *fiber.Ctx) error {
 	ctx := c.Context()
-	queries := new(transport.VerifyEmailQueries)
+	queries := new(request.AuthVerifyEmailQueries)
 
 	if err := c.QueryParser(queries); err != nil {
 		return c.Status(http.StatusBadRequest).

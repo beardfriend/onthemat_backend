@@ -35,6 +35,7 @@ const (
 	ErrYogaIdsInvliad                       = 3010
 
 	// 4000 ~ Conflict
+	ErrConflict                 = 4000
 	ErrUserEmailAlreadyExist    = 4001
 	ErrUserEmailAlreadyVerfied  = 4002
 	ErrUserTypeAlreadyRegisted  = 4003
@@ -43,6 +44,7 @@ const (
 	ErrYogaAlreadyRegisted      = 4006
 	ErrYogaDoseNotExist         = 4007
 	ErrYogaGroupDoesNotExist    = 4008
+	ErrSigunguDoseNotExist      = 4009
 
 	// 5000 ~ NotFound
 	ErrUserNotFound      = 5001
@@ -58,6 +60,7 @@ const (
 	ErrOnlyAcademy    = 6004
 	ErrOnlyTeacher    = 6005
 	ErrOnlySuperAdmin = 6006
+	ErrOnlyOwnUser    = 6007
 )
 
 func ErrorText(code int) string {
@@ -119,6 +122,8 @@ func ErrorText(code int) string {
 		return "존재하지 않는 유형의 요가입니다."
 	case ErrYogaGroupDoesNotExist:
 		return "존재하지 않는 요가 그룹입니다."
+	case ErrSigunguDoseNotExist:
+		return "존재하지 않는 시군구입니다."
 
 	// 5000 ~
 	case ErrUserNotFound:
@@ -145,6 +150,8 @@ func ErrorText(code int) string {
 		return "선생님으로 등록된 회원만 접근할 수 있습니다."
 	case ErrOnlySuperAdmin:
 		return "슈퍼 관리자로 등록된 회원만 접근할 수 있습니다."
+	case ErrOnlyOwnUser:
+		return "소유권이 없습니다."
 
 	default:
 		return "일시적인 에러가 발생했습니다."

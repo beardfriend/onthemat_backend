@@ -63,6 +63,8 @@ func NewAcademyDetailResponse(m *ent.Academy) *AcademyDetailRepsonse {
 		AddressRoad:   m.AddressRoad,
 		AddressDetail: m.AddressDetail,
 		AddressSigun:  m.Edges.AreaSigungu.Name,
+		CreatedAt:     transport.TimeString(*m.CreatedAt),
+		UpdatedAt:     transport.TimeString(*m.UpdatedAt),
 	}
 
 	if len(m.Edges.Yoga) > 0 {
