@@ -66,3 +66,8 @@ func (repo *teacherWorkExperience) deletesByIds(ctx context.Context, db *ent.Cli
 		twe.IDIn(ids...),
 	)).Exec(ctx)
 }
+
+func (repo *teacherWorkExperience) deletesByTecaherId(ctx context.Context, db *ent.Client, teacherId int) error {
+	_, err := db.TeacherWorkExperience.Delete().Where(twe.TeacherIDEQ(teacherId)).Exec(ctx)
+	return err
+}

@@ -15,6 +15,7 @@ func structToMap[T any](data interface{}) (result map[string]T) {
 	s, _ := json.Marshal(data)
 	decoder := json.NewDecoder(strings.NewReader(string(s)))
 	decoder.UseNumber()
+
 	decoder.Decode(&result)
 	return
 }

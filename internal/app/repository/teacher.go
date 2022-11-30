@@ -4,16 +4,24 @@ import (
 	"context"
 
 	"onthemat/internal/app/model"
+	"onthemat/internal/app/transport"
+	"onthemat/internal/app/transport/request"
+	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/teacher"
+	"onthemat/pkg/ent/teacherworkexperience"
 	"onthemat/pkg/ent/user"
 
 	"onthemat/pkg/entx"
+
+	"github.com/fatih/structs"
+	"github.com/iancoleman/strcase"
 )
 
 type TeacherRepository interface {
 	Create(ctx context.Context, d *ent.Teacher) error
 	Update(ctx context.Context, d *ent.Teacher) (err error)
+	Patch(ctx context.Context, d *request.TeacherPatchBody, id, userId int) (err error)
 	GetOnlyIdByUserId(ctx context.Context, userId int) (id int, err error)
 }
 
@@ -133,7 +141,9 @@ func (repo *teacherRepository) Update(ctx context.Context, d *ent.Teacher) (err 
 			return
 		}
 
-		if len(d.Edges.WorkExperience) > 0 {
+		if d.Edges.WorkExperience == nil {
+			repo.workExp.deletesByTecaherId(ctx, client, d.ID)
+		} else if len(d.Edges.WorkExperience) > 0 {
 			ids, err := repo.workExp.getIdsByTeacherId(ctx, client, d.ID)
 			if err != nil {
 				return err
@@ -300,6 +310,96 @@ func (repo *teacherRepository) Update(ctx context.Context, d *ent.Teacher) (err 
 		}
 
 		return
+	})
+}
+
+func (repo *teacherRepository) Patch(ctx context.Context, d *request.TeacherPatchBody, id, userId int) (err error) {
+	updateableTeacherInfo := utils.GetUpdateableData(d.TeacherInfo, teacher.Columns)
+
+	return entx.WithTx(ctx, repo.db.Debug(), func(tx *ent.Tx) (err error) {
+		client := tx.Client()
+		clauseTeacher := client.Teacher.Update().Where(teacher.IDEQ(id), teacher.UserIDEQ(userId))
+		for key, val := range updateableTeacherInfo {
+			clauseTeacher.Mutation().SetField(key, val)
+		}
+
+		if err := clauseTeacher.Exec(ctx); err != nil {
+			return err
+		}
+
+		if d.WorkExperiences != nil {
+			for _, v := range d.WorkExperiences {
+				s := structs.New(v)
+				if v.Id != nil {
+
+					c := client.TeacherWorkExperience.Update().
+						Where(
+							teacherworkexperience.TeacherIDEQ(id),
+							teacherworkexperience.IDEQ(*v.Id),
+						)
+
+					for _, f := range s.Fields() {
+						switch f.Value().(type) {
+						case *string:
+							ptrValue := f.Value().(*string)
+							if ptrValue != nil {
+								value := *ptrValue
+								c.Mutation().SetField(strcase.ToSnake(f.Name()), value)
+							}
+						case *int:
+							ptrValue := f.Value().(*int)
+							if ptrValue != nil {
+								value := *ptrValue
+								c.Mutation().SetField(strcase.ToSnake(f.Name()), value)
+							}
+						case *transport.TimeString:
+							ptrValue := f.Value().(*transport.TimeString)
+							if ptrValue != nil {
+								value := *ptrValue
+								c.Mutation().SetField(strcase.ToSnake(f.Name()), value)
+							}
+						}
+					}
+
+					err = c.Exec(ctx)
+					if err != nil {
+						return
+					}
+
+				} else {
+					c := client.TeacherWorkExperience.Create().SetTeacherID(id)
+					for _, f := range s.Fields() {
+						switch f.Value().(type) {
+						case *string:
+							ptrValue := f.Value().(*string)
+							if ptrValue != nil {
+								value := *ptrValue
+								c.Mutation().SetField(strcase.ToSnake(f.Name()), value)
+							}
+						case *int:
+							ptrValue := f.Value().(*int)
+							if ptrValue != nil {
+								value := *ptrValue
+								c.Mutation().SetField(strcase.ToSnake(f.Name()), value)
+							}
+						case *transport.TimeString:
+							ptrValue := f.Value().(*transport.TimeString)
+							if ptrValue != nil {
+								value := *ptrValue
+								c.Mutation().SetField(strcase.ToSnake(f.Name()), value)
+							}
+						}
+					}
+					err = c.Exec(ctx)
+					if err != nil {
+						return
+					}
+
+				}
+			}
+		}
+
+		return err
 	})
 }
 

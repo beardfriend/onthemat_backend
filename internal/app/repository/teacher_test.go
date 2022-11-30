@@ -7,6 +7,8 @@ import (
 
 	"onthemat/internal/app/config"
 	"onthemat/internal/app/infrastructure"
+	"onthemat/internal/app/transport"
+	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
 
@@ -76,11 +78,49 @@ func (ts *TeacherRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 				WorkExperience: []*ent.TeacherWorkExperience{
 					{
 						AcademyName: "하타요가원",
-						WorkStartAt: time.Now(),
+						WorkStartAt: transport.TimeString(time.Now()),
 					},
 					{
 						AcademyName: "아쉬탕가요가원",
-						WorkStartAt: time.Now(),
+						WorkStartAt: transport.TimeString(time.Now()),
+					},
+					{
+						AcademyName: "하스",
+						WorkStartAt: transport.TimeString(time.Now()),
+					},
+					{
+						AcademyName: "미무",
+						WorkStartAt: transport.TimeString(time.Now()),
+					},
+				},
+				Certification: []*ent.TeacherCertification{
+					{
+						AgencyName:   "agency",
+						TeacherID:    1,
+						ClassStartAt: time.Now(),
+					},
+					{
+						AgencyName:   "agency2",
+						TeacherID:    1,
+						ClassStartAt: time.Now(),
+					},
+				},
+				YogaRaw: []*ent.YogaRaw{
+					{
+						Name:      "아쉬탕가",
+						TeacherID: utils.Int(1),
+					},
+					{
+						Name:      "하타",
+						TeacherID: utils.Int(1),
+					},
+				},
+				Sigungu: []*ent.AreaSiGungu{
+					{
+						ID: 1,
+					},
+					{
+						ID: 2,
 					},
 				},
 			},
@@ -107,19 +147,19 @@ func (ts *TeacherRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 				WorkExperience: []*ent.TeacherWorkExperience{
 					{
 						AcademyName: "하타요가원",
-						WorkStartAt: time.Now(),
+						WorkStartAt: transport.TimeString(time.Now()),
 					},
 					{
 						AcademyName: "아쉬탕가요가원",
-						WorkStartAt: time.Now(),
+						WorkStartAt: transport.TimeString(time.Now()),
 					},
 					{
 						AcademyName: "하스",
-						WorkStartAt: time.Now(),
+						WorkStartAt: transport.TimeString(time.Now()),
 					},
 					{
 						AcademyName: "미무",
-						WorkStartAt: time.Now(),
+						WorkStartAt: transport.TimeString(time.Now()),
 					},
 				},
 				Certification: []*ent.TeacherCertification{
@@ -169,25 +209,25 @@ func (ts *TeacherRepositoryTestSuite) TestUpdate() {
 					{
 						ID:          1,
 						AcademyName: "변경이름",
-						WorkStartAt: time.Now(),
+						WorkStartAt: transport.TimeString(time.Now()),
 					},
 
 					{
 						ID:          3,
 						AcademyName: "아쉬탕가요가원",
-						WorkStartAt: time.Now(),
+						WorkStartAt: transport.TimeString(time.Now()),
 					},
 
 					{
 						ID:          10,
 						AcademyName: "아쉬탕가요가원",
-						WorkStartAt: time.Now(),
+						WorkStartAt: transport.TimeString(time.Now()),
 					},
 
 					{
 						ID:          11,
 						AcademyName: "아쉬탕가요가원",
-						WorkStartAt: time.Now(),
+						WorkStartAt: transport.TimeString(time.Now()),
 					},
 				},
 				Certification: []*ent.TeacherCertification{
@@ -218,6 +258,38 @@ func (ts *TeacherRepositoryTestSuite) TestUpdate() {
 				},
 			},
 		})
+		ts.NoError(err)
+	})
+}
+
+func (ts *TeacherRepositoryTestSuite) TestPatch() {
+	ts.Run("성공", func() {
+		ti := transport.TimeString(time.Now())
+		err := ts.teacherRepo.Patch(ts.ctx, &request.TeacherPatchBody{
+			WorkExperiences: []*request.WorkExperiencesForPatch{
+				{
+					Id:          utils.Int(1),
+					AcademyName: utils.String("변경이름"),
+					WorkStartAt: &ti,
+				},
+
+				{
+					Id:          utils.Int(3),
+					AcademyName: utils.String("수정"),
+					WorkStartAt: &ti,
+				},
+
+				{
+					AcademyName: utils.String("생성"),
+					WorkStartAt: &ti,
+				},
+
+				{
+					AcademyName: utils.String("생성"),
+					WorkStartAt: &ti,
+				},
+			},
+		}, 1, 1)
 		ts.NoError(err)
 	})
 }
