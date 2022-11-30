@@ -9,7 +9,7 @@ import (
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/teacher"
-	"onthemat/pkg/ent/teacherworkexperience"
+	twe "onthemat/pkg/ent/teacherworkexperience"
 	"onthemat/pkg/ent/user"
 
 	"onthemat/pkg/entx"
@@ -141,48 +141,25 @@ func (repo *teacherRepository) Update(ctx context.Context, d *ent.Teacher) (err 
 			return
 		}
 
-		if d.Edges.WorkExperience == nil {
-			repo.workExp.deletesByTecaherId(ctx, client, d.ID)
-		} else if len(d.Edges.WorkExperience) > 0 {
+		// WorkExperience
+		if len(d.Edges.WorkExperience) > 0 {
 			ids, err := repo.workExp.getIdsByTeacherId(ctx, client, d.ID)
 			if err != nil {
 				return err
 			}
-			updateable := make([]*ent.TeacherWorkExperience, 0)
-			createable := make([]*ent.TeacherWorkExperience, 0)
-			createable = append(createable, d.Edges.WorkExperience...)
-
-			for _, w := range d.Edges.WorkExperience {
-				for _, id := range ids {
-					if w.ID == id {
-						updateable = append(updateable, w)
-						for k, v := range createable {
-							if v.ID == id {
-								createable = append(createable[:k], createable[k+1:]...)
-								break
-							}
-						}
-						for k := 0; k < len(ids); k++ {
-							if ids[k] == id {
-								ids = append(ids[:k], ids[k+1:]...)
-								break
-							}
-						}
-
-						break
-					}
-				}
-			}
-			deleteable := ids
+			requestIds := extractIdsFromWorkExp(d.Edges.WorkExperience)
+			createable, updateable, deleteable := makeDataForCondition(requestIds, ids)
 
 			if len(createable) > 0 {
-				err = repo.workExp.createMany(ctx, client, createable, d.ID)
+				createData := filterWorkExperience(d.Edges.WorkExperience, createable)
+				err = repo.workExp.createMany(ctx, client, createData, d.ID)
 				if err != nil {
 					return err
 				}
 			}
 			if len(updateable) > 0 {
-				err = repo.workExp.updateMany(ctx, client, updateable, d.ID)
+				updateData := filterWorkExperience(d.Edges.WorkExperience, updateable)
+				err = repo.workExp.updateMany(ctx, client, updateData, d.ID)
 				if err != nil {
 					return err
 				}
@@ -194,49 +171,29 @@ func (repo *teacherRepository) Update(ctx context.Context, d *ent.Teacher) (err 
 					return err
 				}
 			}
+		} else {
+			repo.workExp.deletesByTecaherId(ctx, client, d.ID)
 		}
 
+		// Certification
 		if len(d.Edges.Certification) > 0 {
 			ids, err := repo.certifi.getIdsByTeacherId(ctx, client, d.ID)
 			if err != nil {
 				return err
 			}
-			updateable := make([]*ent.TeacherCertification, 0)
-			createable := make([]*ent.TeacherCertification, 0)
-			createable = append(createable, d.Edges.Certification...)
-
-			for _, w := range d.Edges.Certification {
-				for _, id := range ids {
-					if w.ID == id {
-						updateable = append(updateable, w)
-
-						for k, v := range createable {
-							if v.ID == id {
-								createable = append(createable[:k], createable[k+1:]...)
-								break
-							}
-						}
-						for k := 0; k < len(ids); k++ {
-							if ids[k] == id {
-								ids = append(ids[:k], ids[k+1:]...)
-								break
-							}
-						}
-						break
-					}
-				}
-			}
-
-			deleteable := ids
+			requestIds := extractIdsFromCertifi(d.Edges.Certification)
+			createable, updateable, deleteable := makeDataForCondition(requestIds, ids)
 
 			if len(createable) > 0 {
-				err = repo.certifi.createMany(ctx, client, createable, d.ID)
+				createData := filterCertification(d.Edges.Certification, createable)
+				err = repo.certifi.createMany(ctx, client, createData, d.ID)
 				if err != nil {
 					return err
 				}
 			}
 			if len(updateable) > 0 {
-				err = repo.certifi.updateMany(ctx, client, updateable, d.ID)
+				updateData := filterCertification(d.Edges.Certification, updateable)
+				err = repo.certifi.updateMany(ctx, client, updateData, d.ID)
 				if err != nil {
 					return err
 				}
@@ -248,53 +205,35 @@ func (repo *teacherRepository) Update(ctx context.Context, d *ent.Teacher) (err 
 					return err
 				}
 			}
+		} else {
+			// do
 		}
 
+		// YogaRaw
 		if len(d.Edges.YogaRaw) > 0 {
 			ids, err := repo.yoga.getRawIdsByTeacherId(ctx, client, d.ID)
 			if err != nil {
 				return err
 			}
-			updateable := make([]*ent.YogaRaw, 0)
-			createable := make([]*ent.YogaRaw, 0)
-			createable = append(createable, d.Edges.YogaRaw...)
 
-			for _, w := range d.Edges.YogaRaw {
-				for _, id := range ids {
-					if w.ID == id {
-						updateable = append(updateable, w)
+			requestIds := extractIdsFromYogaRaws(d.Edges.YogaRaw)
+			createable, updateable, deleteable := makeDataForCondition(requestIds, ids)
 
-						for k, v := range createable {
-							if v.ID == id {
-								createable = append(createable[:k], createable[k+1:]...)
-								break
-							}
-						}
-						for k := 0; k < len(ids); k++ {
-							if ids[k] == id {
-								ids = append(ids[:k], ids[k+1:]...)
-								break
-							}
-						}
-						break
-					}
-				}
-			}
-
-			deleteable := ids
 			var teacherId *int
 			if d.ID != 0 {
 				teacherId = &d.ID
 			}
-			if len(createable) > 0 {
 
-				err = repo.yoga.createRaws(ctx, client, createable, teacherId, nil)
+			if len(createable) > 0 {
+				createData := filterYogaRaws(d.Edges.YogaRaw, createable)
+				err = repo.yoga.createRaws(ctx, client, createData, teacherId, nil)
 				if err != nil {
 					return err
 				}
 			}
 			if len(updateable) > 0 {
-				err = repo.yoga.updateRaws(ctx, client, updateable, teacherId, nil)
+				updateData := filterYogaRaws(d.Edges.YogaRaw, updateable)
+				err = repo.yoga.updateRaws(ctx, client, updateData, teacherId, nil)
 				if err != nil {
 					return err
 				}
@@ -307,6 +246,8 @@ func (repo *teacherRepository) Update(ctx context.Context, d *ent.Teacher) (err 
 				}
 			}
 
+		} else {
+			// do
 		}
 
 		return
@@ -318,7 +259,10 @@ func (repo *teacherRepository) Patch(ctx context.Context, d *request.TeacherPatc
 
 	return entx.WithTx(ctx, repo.db.Debug(), func(tx *ent.Tx) (err error) {
 		client := tx.Client()
-		clauseTeacher := client.Teacher.Update().Where(teacher.IDEQ(id), teacher.UserIDEQ(userId))
+
+		clauseTeacher := client.Teacher.Update().
+			Where(teacher.IDEQ(id), teacher.UserIDEQ(userId))
+
 		for key, val := range updateableTeacherInfo {
 			clauseTeacher.Mutation().SetField(key, val)
 		}
@@ -332,28 +276,30 @@ func (repo *teacherRepository) Patch(ctx context.Context, d *request.TeacherPatc
 				s := structs.New(v)
 				c := client.TeacherWorkExperience
 				res := getPatchData(s)
+
+				// Update
 				if v.Id != nil {
-					u := c.Update().Where(
-						teacherworkexperience.TeacherIDEQ(id),
-						teacherworkexperience.IDEQ(*v.Id),
-					)
+					u := c.Update().Where(twe.TeacherIDEQ(id), twe.IDEQ(*v.Id))
+
 					for key, val := range res {
 						u.Mutation().SetField(key, val)
 					}
 
-					err = u.Exec(ctx)
-					if err != nil {
+					if err = u.Exec(ctx); err != nil {
 						return
 					}
+
+					// Create
 				} else {
 					cr := c.Create().SetTeacherID(id)
+
 					for key, val := range res {
 						cr.Mutation().SetField(key, val)
 					}
-					err = cr.Exec(ctx)
-					if err != nil {
+					if err = cr.Exec(ctx); err != nil {
 						return
 					}
+
 				}
 
 			}
@@ -395,4 +341,101 @@ func getPatchData(s *structs.Struct) (result map[string]interface{}) {
 
 func (repo *teacherRepository) GetOnlyIdByUserId(ctx context.Context, userId int) (id int, err error) {
 	return repo.db.Teacher.Query().Where(teacher.UserIDEQ(userId)).OnlyID(ctx)
+}
+
+func makeDataForCondition(requestIds []int, existIds []int) (createable []int, updateable []int, deleteable []int) {
+	updateable = Intersection(requestIds, existIds)
+	deleteable = Difference(existIds, requestIds)
+	createable = Difference(requestIds, existIds)
+	return
+}
+
+func Intersection(a, b []int) (c []int) {
+	m := make(map[int]bool)
+
+	for _, item := range a {
+		m[item] = true
+	}
+
+	for _, item := range b {
+		if _, ok := m[item]; ok {
+			c = append(c, item)
+		}
+	}
+	return
+}
+
+func Difference(a, b []int) (diff []int) {
+	m := make(map[int]bool)
+
+	for _, item := range b {
+		m[item] = true
+	}
+
+	for _, item := range a {
+		if _, ok := m[item]; !ok {
+			diff = append(diff, item)
+		}
+	}
+	return
+}
+
+func extractIdsFromWorkExp(val []*ent.TeacherWorkExperience) []int {
+	var result []int
+	for _, s := range val {
+		result = append(result, s.ID)
+	}
+	return result
+}
+
+func filterWorkExperience(val []*ent.TeacherWorkExperience, ids []int) []*ent.TeacherWorkExperience {
+	result := make([]*ent.TeacherWorkExperience, 0)
+	for _, v := range val {
+		for i := range ids {
+			if v.ID == i {
+				result = append(result, v)
+			}
+		}
+	}
+	return result
+}
+
+func extractIdsFromCertifi(val []*ent.TeacherCertification) []int {
+	var result []int
+	for _, s := range val {
+		result = append(result, s.ID)
+	}
+	return result
+}
+
+func filterCertification(val []*ent.TeacherCertification, ids []int) []*ent.TeacherCertification {
+	result := make([]*ent.TeacherCertification, 0)
+	for _, v := range val {
+		for i := range ids {
+			if v.ID == i {
+				result = append(result, v)
+			}
+		}
+	}
+	return result
+}
+
+func extractIdsFromYogaRaws(val []*ent.YogaRaw) []int {
+	var result []int
+	for _, s := range val {
+		result = append(result, s.ID)
+	}
+	return result
+}
+
+func filterYogaRaws(val []*ent.YogaRaw, ids []int) []*ent.YogaRaw {
+	result := make([]*ent.YogaRaw, 0)
+	for _, v := range val {
+		for i := range ids {
+			if v.ID == i {
+				result = append(result, v)
+			}
+		}
+	}
+	return result
 }
