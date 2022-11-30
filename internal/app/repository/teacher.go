@@ -330,77 +330,67 @@ func (repo *teacherRepository) Patch(ctx context.Context, d *request.TeacherPatc
 		if d.WorkExperiences != nil {
 			for _, v := range d.WorkExperiences {
 				s := structs.New(v)
+				c := client.TeacherWorkExperience
+				res := getPatchData(s)
 				if v.Id != nil {
-
-					c := client.TeacherWorkExperience.Update().
-						Where(
-							teacherworkexperience.TeacherIDEQ(id),
-							teacherworkexperience.IDEQ(*v.Id),
-						)
-
-					for _, f := range s.Fields() {
-						switch f.Value().(type) {
-						case *string:
-							ptrValue := f.Value().(*string)
-							if ptrValue != nil {
-								value := *ptrValue
-								c.Mutation().SetField(strcase.ToSnake(f.Name()), value)
-							}
-						case *int:
-							ptrValue := f.Value().(*int)
-							if ptrValue != nil {
-								value := *ptrValue
-								c.Mutation().SetField(strcase.ToSnake(f.Name()), value)
-							}
-						case *transport.TimeString:
-							ptrValue := f.Value().(*transport.TimeString)
-							if ptrValue != nil {
-								value := *ptrValue
-								c.Mutation().SetField(strcase.ToSnake(f.Name()), value)
-							}
-						}
+					u := c.Update().Where(
+						teacherworkexperience.TeacherIDEQ(id),
+						teacherworkexperience.IDEQ(*v.Id),
+					)
+					for key, val := range res {
+						u.Mutation().SetField(key, val)
 					}
 
-					err = c.Exec(ctx)
+					err = u.Exec(ctx)
 					if err != nil {
 						return
 					}
-
 				} else {
-					c := client.TeacherWorkExperience.Create().SetTeacherID(id)
-					for _, f := range s.Fields() {
-						switch f.Value().(type) {
-						case *string:
-							ptrValue := f.Value().(*string)
-							if ptrValue != nil {
-								value := *ptrValue
-								c.Mutation().SetField(strcase.ToSnake(f.Name()), value)
-							}
-						case *int:
-							ptrValue := f.Value().(*int)
-							if ptrValue != nil {
-								value := *ptrValue
-								c.Mutation().SetField(strcase.ToSnake(f.Name()), value)
-							}
-						case *transport.TimeString:
-							ptrValue := f.Value().(*transport.TimeString)
-							if ptrValue != nil {
-								value := *ptrValue
-								c.Mutation().SetField(strcase.ToSnake(f.Name()), value)
-							}
-						}
+					cr := c.Create().SetTeacherID(id)
+					for key, val := range res {
+						cr.Mutation().SetField(key, val)
 					}
-					err = c.Exec(ctx)
+					err = cr.Exec(ctx)
 					if err != nil {
 						return
 					}
-
 				}
+
 			}
 		}
 
 		return err
 	})
+}
+
+func getPatchData(s *structs.Struct) (result map[string]interface{}) {
+	result = make(map[string]interface{}, 0)
+	for _, f := range s.Fields() {
+		switch f.Value().(type) {
+		case *string:
+			ptrValue := f.Value().(*string)
+			if ptrValue != nil {
+				value := *ptrValue
+				result[strcase.ToSnake(f.Name())] = value
+
+			}
+		case *int:
+			ptrValue := f.Value().(*int)
+			if ptrValue != nil {
+				value := *ptrValue
+				result[strcase.ToSnake(f.Name())] = value
+
+			}
+		case *transport.TimeString:
+			ptrValue := f.Value().(*transport.TimeString)
+			if ptrValue != nil {
+				value := *ptrValue
+				result[strcase.ToSnake(f.Name())] = value
+
+			}
+		}
+	}
+	return
 }
 
 func (repo *teacherRepository) GetOnlyIdByUserId(ctx context.Context, userId int) (id int, err error) {
