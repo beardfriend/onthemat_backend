@@ -112,8 +112,8 @@ func (h *academyHandler) Create(c *fiber.Ctx) error {
 @apiBody {String} info.addressRoad 도로명 주소
 @apiBody {String} [info.addressDetail] 상세 주소
 @apiBody {int[]} [yogaIds] 요가 아이디
-@apiSuccess (201) {Number} code 201
-@apiSuccess (201) {String} message ""
+@apiSuccess (200 or 201) {Number} code 200 or 201
+@apiSuccess (200 or 201) {String} message ""
 @apiError JsonMissing <code>400</code> code: 3000
 @apiError ParamsMissing <code>400</code> code: 3002
 @apiError ValidationError <code>400</code> code: 2xxx
@@ -145,12 +145,18 @@ func (h *academyHandler) Update(c *fiber.Ctx) error {
 		return c.Status(http.StatusForbidden).JSON(ex.NewHttpError(ex.ErrOnlyOwnUser, nil))
 	}
 
-	if err := h.academyUsecase.Update(ctx, reqBody, reqParam.Id, userId); err != nil {
+	isUpdated, err := h.academyUsecase.Put(ctx, reqBody, reqParam.Id, userId)
+	if err != nil {
 		return utils.NewError(c, err)
 	}
 
-	return c.Status(http.StatusCreated).JSON(ex.Response{
-		Code:    http.StatusCreated,
+	httpCode := http.StatusOK
+	if !isUpdated {
+		httpCode = http.StatusCreated
+	}
+
+	return c.Status(httpCode).JSON(ex.Response{
+		Code:    httpCode,
 		Message: "",
 	})
 }

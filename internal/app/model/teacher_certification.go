@@ -21,6 +21,8 @@ func (TeacherCertification) Annotations() []schema.Annotation {
 
 func (TeacherCertification) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("id"),
+
 		field.Int("teacher_id").
 			Comment("foreignKey"),
 
@@ -51,6 +53,8 @@ func (TeacherCertification) Fields() []ent.Field {
 			Comment("자격증 수업 종료일"),
 
 		field.Text("description").
+			Optional().
+			Nillable().
 			Comment("기타 설명"),
 	}
 }

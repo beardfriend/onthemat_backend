@@ -20,6 +20,7 @@ type YogaRepository interface {
 	UpdateGroup(ctx context.Context, data *ent.YogaGroup) error
 	PatchGroup(ctx context.Context, data *request.YogaGroupPatchBody, id int) error
 	DeleteGroups(ctx context.Context, ids []int) (int, error)
+	ExistGroup(ctx context.Context, id int) (bool, error)
 	GroupTotal(ctx context.Context, category *string) (count int, err error)
 	GroupList(ctx context.Context, pgModule *utils.Pagination, category *string, sorts common.Sorts) (result []*ent.YogaGroup, err error)
 
@@ -27,6 +28,7 @@ type YogaRepository interface {
 	Update(ctx context.Context, data *ent.Yoga) error
 	Patch(ctx context.Context, data *request.YogaPatchBody, id int) error
 	Delete(ctx context.Context, id int) error
+	Exist(ctx context.Context, id int) (bool, error)
 	List(ctx context.Context, groupdId int) ([]*ent.Yoga, error)
 
 	CreateRaws(ctx context.Context, d []*ent.YogaRaw) error
@@ -44,14 +46,91 @@ func NewYogaRepository(db *ent.Client) YogaRepository {
 	}
 }
 
+// -------------------  FOR Other Repositry Dependency -------------------
+
+func (repo *yogaRepository) createRaws(ctx context.Context, db *ent.Client, d []*ent.YogaRaw, teacherId, academyId *int) error {
+	bulk := make([]*ent.YogaRawCreate, len(d))
+
+	for i, v := range d {
+		clause := db.YogaRaw.Create().
+			SetNillableAcademyID(academyId).
+			SetNillableTeacherID(teacherId).
+			SetName(v.Name)
+		if v.ID != 0 {
+			clause.SetID(v.ID)
+		}
+		bulk[i] = clause
+	}
+
+	return db.YogaRaw.CreateBulk(bulk...).Exec(ctx)
+}
+
+func (repo *yogaRepository) getRawIdsByTeacherId(ctx context.Context, db *ent.Client, teacherId int) ([]int, error) {
+	return db.YogaRaw.Query().
+		Where(yogaraw.TeacherIDEQ(teacherId)).
+		IDs(ctx)
+}
+
+func (repo *yogaRepository) updateRaws(ctx context.Context, db *ent.Client, value []*ent.YogaRaw, teacherId, academyId *int) (err error) {
+	for _, v := range value {
+		clause := db.YogaRaw.Update().
+			SetNillableTeacherID(teacherId).
+			SetNillableAcademyID(academyId).
+			SetName(v.Name)
+
+		mu := clause.Mutation()
+		if v.AcademyID == nil {
+			clause.Where(yogaraw.IDEQ(v.ID), yogaraw.TeacherIDEQ(*teacherId))
+			mu.ClearAcademyID()
+		}
+		if v.TeacherID == nil {
+			clause.Where(yogaraw.IDEQ(v.ID), yogaraw.AcademyIDEQ(*academyId))
+			mu.ClearTeacherID()
+		}
+
+		err = clause.Exec(ctx)
+		if err != nil {
+			return err
+		}
+	}
+	return
+}
+
+func (repo *yogaRepository) deleteRawsByIds(ctx context.Context, db *ent.Client, ids []int, teacherId, academyId *int) (int, error) {
+	clause := db.YogaRaw.Delete()
+
+	if teacherId != nil {
+		clause.Where(yogaraw.And(
+			yogaraw.TeacherIDEQ(*teacherId),
+			yogaraw.IDIn(ids...),
+		))
+	} else if academyId != nil {
+		clause.Where(yogaraw.And(
+			yogaraw.AcademyIDEQ(*academyId),
+			yogaraw.IDIn(ids...),
+		))
+	}
+
+	return clause.Exec(ctx)
+}
+
 // ------------------- Group -------------------
 
+func (repo *yogaRepository) ExistGroup(ctx context.Context, id int) (bool, error) {
+	return repo.db.YogaGroup.Query().Where(yogagroup.IDEQ(id)).Exist(ctx)
+}
+
 func (repo *yogaRepository) CreateGroup(ctx context.Context, data *ent.YogaGroup) error {
-	return repo.db.YogaGroup.Create().
+	clause := repo.db.YogaGroup.Create().
 		SetCategory(data.Category).
 		SetCategoryEng(data.CategoryEng).
-		SetNillableDescription(data.Description).
-		Exec(ctx)
+		SetNillableDescription(data.Description)
+
+	if data.ID != 0 {
+		clause.SetID(data.ID)
+	}
+
+	return clause.Exec(ctx)
 }
 
 func (repo *yogaRepository) UpdateGroup(ctx context.Context, data *ent.YogaGroup) error {
@@ -72,10 +151,14 @@ func (repo *yogaRepository) UpdateGroup(ctx context.Context, data *ent.YogaGroup
 func (repo *yogaRepository) PatchGroup(ctx context.Context, data *request.YogaGroupPatchBody, id int) error {
 	updateableData := utils.GetUpdateableData(data, yogagroup.Columns)
 
-	clause := repo.db.YogaGroup.Update().Where(yogagroup.IDEQ(id))
+	clause := repo.db.YogaGroup.
+		Update().
+		Where(yogagroup.IDEQ(id))
+
 	for key, val := range updateableData {
 		clause.Mutation().SetField(key, val)
 	}
+
 	return clause.Exec(ctx)
 }
 
@@ -119,13 +202,17 @@ func (repo *yogaRepository) DeleteGroups(ctx context.Context, ids []int) (int, e
 // ------------------- Yoga -------------------
 
 func (repo *yogaRepository) Create(ctx context.Context, data *ent.Yoga) error {
-	return repo.db.Yoga.Create().
+	clause := repo.db.Debug().Yoga.Create().
 		SetNameKor(data.NameKor).
 		SetNillableNameEng(data.NameEng).
 		SetNillableLevel(data.Level).
 		SetNillableDescription(data.Description).
-		SetYogaGroupID(data.YogaGroupID).
-		Exec(ctx)
+		SetYogaGroupID(data.YogaGroupID)
+
+	if data.ID != 0 {
+		clause.SetID(data.ID)
+	}
+	return clause.Exec(ctx)
 }
 
 func (repo *yogaRepository) Update(ctx context.Context, data *ent.Yoga) error {
@@ -170,6 +257,10 @@ func (repo *yogaRepository) List(ctx context.Context, groupdId int) ([]*ent.Yoga
 		QueryYoga().
 		Order(ent.Desc(yoga.FieldID)).
 		All(ctx)
+}
+
+func (repo *yogaRepository) Exist(ctx context.Context, id int) (bool, error) {
+	return repo.db.Yoga.Query().Where(yoga.IDEQ(id)).Exist(ctx)
 }
 
 // ------------------- YogaRaw -------------------

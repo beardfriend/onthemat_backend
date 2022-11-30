@@ -21,6 +21,8 @@ func (TeacherWorkExperience) Annotations() []schema.Annotation {
 
 func (TeacherWorkExperience) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("id"),
+
 		field.Int("teacher_id"),
 
 		field.String("academyName").

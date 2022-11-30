@@ -21,6 +21,8 @@ func (YogaRaw) Annotations() []schema.Annotation {
 
 func (YogaRaw) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("id"),
+
 		field.Int("academy_id").
 			Optional().
 			Nillable(),

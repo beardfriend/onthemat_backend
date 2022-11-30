@@ -217,6 +217,34 @@ func (ts *AcademyRepositoryTestSuite) TestUpdate() {
 		ts.Equal(0, len(academy.Edges.Yoga))
 		ts.Nil(academy.AddressDetail)
 	})
+
+	ts.Run("success withYoga", func() {
+		err := ts.academyRepository.Update(ts.ctx, &ent.Academy{
+			ID:            1,
+			UserID:        1,
+			SigunguID:     2,
+			Name:          "바꾸고",
+			BusinessCode:  "1234",
+			CallNumber:    "010122222222",
+			AddressRoad:   "전체주소",
+			AddressDetail: nil,
+			Edges: ent.AcademyEdges{
+				Yoga: []*ent.Yoga{
+					{
+						ID: 1,
+					},
+					{
+						ID: 2,
+					},
+				},
+			},
+		})
+		ts.NoError(err)
+
+		academy, _ := ts.client.Academy.Get(ts.ctx, 1)
+		ts.Equal("바꾸고", academy.Name)
+		ts.Nil(academy.AddressDetail)
+	})
 }
 
 func (ts *AcademyRepositoryTestSuite) TestPatch() {

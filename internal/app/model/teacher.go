@@ -21,10 +21,12 @@ func (Teacher) Annotations() []schema.Annotation {
 
 func (Teacher) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("id"),
+
 		field.Int("user_id").
 			Comment("foreignKey"),
 
-		field.String("profile_image_url").
+		field.String("profileImageUrl").
 			Optional().
 			Nillable().
 			Comment("대표 이미지 주소"),
@@ -78,7 +80,6 @@ func (Teacher) Edges() []ent.Edge {
 
 		// 근무 가능한 지역
 		edge.To("sigungu", AreaSiGungu.Type),
-
 		// 자격증
 		edge.To("certification", TeacherCertification.Type).
 			Annotations(entsql.Annotation{

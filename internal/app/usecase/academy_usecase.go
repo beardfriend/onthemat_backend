@@ -15,7 +15,7 @@ import (
 
 type AcademyUsecase interface {
 	Create(ctx context.Context, academy *request.AcademyCreateBody, userId int) error
-	Update(ctx context.Context, req *request.AcademyUpdateBody, id, userId int) (err error)
+	Put(ctx context.Context, req *request.AcademyUpdateBody, id, userId int) (isUpdated bool, err error)
 	Patch(ctx context.Context, req *request.AcademyPatchBody, id, userId int) (err error)
 	Get(ctx context.Context, userId int) (*ent.Academy, error)
 	List(ctx context.Context, a *request.AcademyListQueries) ([]*ent.Academy, *utils.PagenationInfo, error)
@@ -47,6 +47,8 @@ func NewAcademyUsecase(
 
 func (u *academyUseCase) Create(ctx context.Context, req *request.AcademyCreateBody, userId int) (err error) {
 	info := req.Info
+
+	// BusinessCode Check
 	if err = u.academySvc.VerifyBusinessMan(info.BusinessCode); err != nil {
 		if err.Error() == service.ErrBussinessCodeInvalid {
 			err = ex.NewBadRequestError(ex.ErrBusinessCodeInvalid, nil)
@@ -55,6 +57,7 @@ func (u *academyUseCase) Create(ctx context.Context, req *request.AcademyCreateB
 		return
 	}
 
+	// Already Exisit
 	getUser, err := u.userRepo.Get(ctx, userId)
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -64,21 +67,22 @@ func (u *academyUseCase) Create(ctx context.Context, req *request.AcademyCreateB
 		return
 	}
 
+	// Check User Type
 	if getUser.Type != nil {
 		err = ex.NewConflictError(ex.ErrUserTypeAlreadyRegisted, nil)
 		return
 	}
 
-	var yoga []*ent.Yoga
+	// Todo : 유저 타입 선생님일 경우의 에러
+
+	// Prepare Data
+	yoga := make([]*ent.Yoga, 0)
 	if req.YogaIDs != nil {
 		for _, v := range *req.YogaIDs {
-			y := new(ent.Yoga)
-			y.ID = v
-			yoga = append(yoga, y)
+			yoga = append(yoga, &ent.Yoga{ID: v})
 		}
 	}
-
-	err = u.academyRepo.Create(ctx, &ent.Academy{
+	data := &ent.Academy{
 		UserID:        userId,
 		SigunguID:     info.SigunguID,
 		Name:          info.Name,
@@ -89,7 +93,11 @@ func (u *academyUseCase) Create(ctx context.Context, req *request.AcademyCreateB
 		Edges: ent.AcademyEdges{
 			Yoga: yoga,
 		},
-	})
+	}
+
+	// Do
+	err = u.academyRepo.Create(ctx, data)
+
 	if err != nil {
 		if ent.IsConstraintError(err) {
 			err = foreignKeyConstraintError(err)
@@ -111,18 +119,16 @@ func foreignKeyConstraintError(err error) error {
 	return err
 }
 
-func (u *academyUseCase) Update(ctx context.Context, req *request.AcademyUpdateBody, id, userId int) (err error) {
+func (u *academyUseCase) Put(ctx context.Context, req *request.AcademyUpdateBody, id, userId int) (isUpdated bool, err error) {
+	// Prepare Data
 	info := req.Info
-
-	var yoga []*ent.Yoga
+	yoga := make([]*ent.Yoga, 0)
 	if req.YogaIDs != nil {
 		for _, v := range *req.YogaIDs {
-			y := new(ent.Yoga)
-			y.ID = v
-			yoga = append(yoga, y)
+			yoga = append(yoga, &ent.Yoga{ID: v})
 		}
 	}
-	err = u.academyRepo.Update(ctx, &ent.Academy{
+	data := &ent.Academy{
 		ID:            id,
 		UserID:        userId,
 		SigunguID:     info.SigunguID,
@@ -133,13 +139,26 @@ func (u *academyUseCase) Update(ctx context.Context, req *request.AcademyUpdateB
 		Edges: ent.AcademyEdges{
 			Yoga: yoga,
 		},
-	})
+	}
+
+	// Already Exisit
+	isExist, err := u.academyRepo.Exist(ctx, id)
+	isUpdated = !isExist
+	if err != nil {
+		return
+	}
+
+	// Do
+	if !isExist {
+		err = u.academyRepo.Create(ctx, data)
+	} else {
+		err = u.academyRepo.Update(ctx, data)
+	}
 
 	if err != nil {
 		if ent.IsConstraintError(err) {
 			err = foreignKeyConstraintError(err)
 			return
-
 		}
 		return
 	}

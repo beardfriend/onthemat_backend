@@ -11,7 +11,6 @@ import (
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/academy"
 	"onthemat/pkg/ent/areasigungu"
-	"onthemat/pkg/ent/predicate"
 	"onthemat/pkg/ent/user"
 	"onthemat/pkg/ent/yoga"
 	"onthemat/pkg/ent/yogaraw"
@@ -22,6 +21,7 @@ type AcademyRepository interface {
 	Create(ctx context.Context, d *ent.Academy) error
 	Update(ctx context.Context, d *ent.Academy) error
 	Patch(ctx context.Context, d *request.AcademyPatchBody, id, userId int) error
+	Exist(ctx context.Context, id int) (bool, error)
 	Get(ctx context.Context, id int) (*ent.Academy, error)
 	List(ctx context.Context,
 		pgModule *utils.Pagination,
@@ -63,6 +63,10 @@ func (repo *academyRepository) Create(ctx context.Context, d *ent.Academy) (err 
 			clause.AddYogaRaw(d.Edges.YogaRaw...)
 		}
 
+		if d.ID != 0 {
+			clause.SetID(d.ID)
+		}
+
 		if err = clause.Exec(ctx); err != nil {
 			return
 		}
@@ -79,11 +83,15 @@ func (repo *academyRepository) Create(ctx context.Context, d *ent.Academy) (err 
 	})
 }
 
+func (repo *academyRepository) Exist(ctx context.Context, id int) (bool, error) {
+	return repo.db.Academy.Query().Where(academy.IDEQ(id)).Exist(ctx)
+}
+
 func (repo *academyRepository) Update(ctx context.Context, d *ent.Academy) error {
 	clause := repo.db.Academy.Update().
 		Where(
 			academy.IDEQ(d.ID),
-			predicate.Academy(user.IDEQ(d.UserID)),
+			academy.UserIDEQ(d.UserID),
 		)
 	mu := clause.Mutation()
 
@@ -113,7 +121,7 @@ func (repo *academyRepository) Patch(ctx context.Context, d *request.AcademyPatc
 	clause := repo.db.Academy.Update().
 		Where(
 			academy.IDEQ(id),
-			predicate.Academy(user.IDEQ(userId)),
+			academy.UserIDEQ(userId),
 		)
 	for key, val := range updateableData {
 		clause.Mutation().SetField(key, val)

@@ -21,6 +21,8 @@ func (Academy) Annotations() []schema.Annotation {
 
 func (Academy) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("id"),
+
 		field.Int("user_id").
 			StructTag(`json:"userId,omitempty"`).
 			Comment("foreignKey"),

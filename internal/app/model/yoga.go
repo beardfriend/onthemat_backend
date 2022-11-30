@@ -20,6 +20,8 @@ func (Yoga) Annotations() []schema.Annotation {
 
 func (Yoga) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("id"),
+
 		field.Int("yoga_group_id").
 			Optional().
 			StructTag(`json:"yogaGroupId"`),

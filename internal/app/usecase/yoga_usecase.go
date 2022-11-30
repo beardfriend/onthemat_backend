@@ -16,13 +16,13 @@ import (
 type YogaUsecase interface {
 	CreateGroup(ctx context.Context, req *request.YogaGroupCreateBody) (err error)
 	GroupList(ctx context.Context, req *request.YogaGroupListQueries) (result []*ent.YogaGroup, pagination *utils.PagenationInfo, err error)
-	UpdateGroup(ctx context.Context, req *request.YogaGroupUpdateBody, yogaId int) error
+	PutGroup(ctx context.Context, req *request.YogaGroupUpdateBody, id int) (isUpdated bool, err error)
 	PatchGroup(ctx context.Context, req *request.YogaGroupPatchBody, id int) error
 	DeleteGroup(ctx context.Context, ids []int) (rowAffected int, err error)
 
 	Create(ctx context.Context, req *request.YogaCreateBody) (err error)
 	List(ctx context.Context, groupId int) ([]*ent.Yoga, error)
-	Update(ctx context.Context, req *request.YogaUpdateBody, yogaId int) (err error)
+	Put(ctx context.Context, req *request.YogaUpdateBody, yogaId int) (isUpdated bool, err error)
 	Delete(ctx context.Context, yogaId int) error
 	Patch(ctx context.Context, req *request.YogaPatchBody, yogaId int) (err error)
 
@@ -67,13 +67,28 @@ func (u *yogaUseCase) DeleteGroup(ctx context.Context, ids []int) (rowAffected i
 	return u.yogaRepo.DeleteGroups(ctx, ids)
 }
 
-func (u *yogaUseCase) UpdateGroup(ctx context.Context, req *request.YogaGroupUpdateBody, yogaId int) error {
-	return u.yogaRepo.UpdateGroup(ctx, &ent.YogaGroup{
-		ID:          yogaId,
+func (u *yogaUseCase) PutGroup(ctx context.Context, req *request.YogaGroupUpdateBody, id int) (isUpdated bool, err error) {
+	isExist, err := u.yogaRepo.ExistGroup(ctx, id)
+	isUpdated = !isExist
+
+	if err != nil {
+		return
+	}
+
+	data := &ent.YogaGroup{
+		ID:          id,
 		Category:    req.Category,
 		CategoryEng: req.CategoryEng,
 		Description: req.Description,
-	})
+	}
+
+	if !isExist {
+		err = u.yogaRepo.CreateGroup(ctx, data)
+	} else {
+		err = u.yogaRepo.UpdateGroup(ctx, data)
+	}
+
+	return
 }
 
 func (u *yogaUseCase) PatchGroup(ctx context.Context, req *request.YogaGroupPatchBody, id int) error {
@@ -107,15 +122,11 @@ func (u *yogaUseCase) GroupList(ctx context.Context, req *request.YogaGroupListQ
 
 func (u *yogaUseCase) Create(ctx context.Context, req *request.YogaCreateBody) (err error) {
 	err = u.yogaRepo.Create(ctx, &ent.Yoga{
-		NameKor: req.NameKor,
-
+		NameKor:     req.NameKor,
+		NameEng:     req.NameEng,
 		Description: req.Description,
 		Level:       req.Level,
-		Edges: ent.YogaEdges{
-			YogaGroup: &ent.YogaGroup{
-				ID: req.YogaGroupId,
-			},
-		},
+		YogaGroupID: req.YogaGroupId,
 	})
 	if err != nil {
 		if ent.IsConstraintError(err) {
@@ -127,15 +138,27 @@ func (u *yogaUseCase) Create(ctx context.Context, req *request.YogaCreateBody) (
 	return
 }
 
-func (u *yogaUseCase) Update(ctx context.Context, req *request.YogaUpdateBody, yogaId int) (err error) {
-	err = u.yogaRepo.Update(ctx, &ent.Yoga{
+func (u *yogaUseCase) Put(ctx context.Context, req *request.YogaUpdateBody, yogaId int) (isUpdated bool, err error) {
+	isExist, err := u.yogaRepo.Exist(ctx, yogaId)
+	isUpdated = !isExist
+	if err != nil {
+		return
+	}
+
+	data := &ent.Yoga{
 		ID:          yogaId,
 		YogaGroupID: req.YogaGroupId,
 		NameKor:     req.NameKor,
 		NameEng:     req.NameEng,
 		Description: req.Description,
 		Level:       req.Level,
-	})
+	}
+
+	if !isExist {
+		err = u.yogaRepo.Create(ctx, data)
+	} else {
+		err = u.yogaRepo.Update(ctx, data)
+	}
 	if err != nil {
 		if ent.IsConstraintError(err) {
 			err = ex.NewConflictError(ex.ErrYogaGroupDoesNotExist, nil)

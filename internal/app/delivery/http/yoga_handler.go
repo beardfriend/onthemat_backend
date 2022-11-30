@@ -37,8 +37,8 @@ func NewYogaHandler(
 	g := router.Group("/yoga")
 	// 요가 그룹 생성
 	g.Post("/group", middleware.Auth, middleware.OnlySuperAdmin, handler.CreateGroup)
-	// 요가 그룹 수정
-	g.Put("/group/:id", middleware.Auth, middleware.OnlySuperAdmin, handler.UpdateGroup)
+	// 요가 그룹 업데이트
+	g.Put("/group/:id", middleware.Auth, middleware.OnlySuperAdmin, handler.PutGroup)
 	// 요가 그룹 부분 수정
 	g.Patch("/group/:id", middleware.Auth, middleware.OnlySuperAdmin, handler.PatchGroup)
 	// 요가 그룹 멀티삭제
@@ -48,14 +48,14 @@ func NewYogaHandler(
 
 	// 요가 Raws 생성
 	g.Post("/raws", middleware.Auth, handler.CreateRaws)
-	// 요가 Raws 수정
+	// 요가 Raws 업데이트
 	g.Put("/raws", middleware.Auth, handler.UpdateRaws)
 	// 요가 Raws 삭제
 	g.Delete("/raws", middleware.Auth, handler.DeleteRaws)
 
 	// 요가 등록
 	g.Post("/", middleware.Auth, middleware.OnlySuperAdmin, handler.Create)
-	// 요가 수정
+	// 요가 업데이트
 	g.Put("/:id", middleware.Auth, middleware.OnlySuperAdmin, handler.Update)
 	// 요가 부분 수정
 	g.Patch("/:id", middleware.Auth, middleware.OnlySuperAdmin, handler.Patch)
@@ -122,8 +122,8 @@ func (h *yogaHandler) Create(c *fiber.Ctx) error {
 @apiBody {String} [nameEng] 요가 이름 영어
 @apiBody {Number=1,2,3,4,5} [level] 요가 난이도
 @apiBody {String} [description] 요가에 대한 설명
-@apiSuccess (201) {Number} code 201
-@apiSuccess (201) {String} message ""
+@apiSuccess (200 or 201) {Number} code 200 or 201
+@apiSuccess (200 or 201) {String} message ""
 @apiError JsonMissing <code>400</code> code: 3000
 @apiError ParamsMissing <code>400</code> code: 3002
 @apiError ValidationError <code>400</code> code: 2xxx
@@ -149,12 +149,18 @@ func (h *yogaHandler) Update(c *fiber.Ctx) error {
 			JSON(ex.NewHttpError(ex.ErrParamsMissing, err.Error()))
 	}
 
-	if err := h.yogaUsecase.Update(ctx, b, p.Id); err != nil {
+	isUpdated, err := h.yogaUsecase.Put(ctx, b, p.Id)
+	if err != nil {
 		return utils.NewError(c, err)
 	}
 
-	return c.Status(http.StatusCreated).JSON(ex.Response{
-		Code:    http.StatusCreated,
+	httpCode := http.StatusOK
+	if !isUpdated {
+		httpCode = http.StatusCreated
+	}
+
+	return c.Status(httpCode).JSON(ex.Response{
+		Code:    httpCode,
 		Message: "",
 	})
 }
@@ -204,8 +210,8 @@ func (h *yogaHandler) Patch(c *fiber.Ctx) error {
 		return utils.NewError(c, err)
 	}
 
-	return c.Status(http.StatusCreated).JSON(ex.Response{
-		Code:    http.StatusCreated,
+	return c.Status(http.StatusOK).JSON(ex.Response{
+		Code:    http.StatusOK,
 		Message: "",
 	})
 }
@@ -330,26 +336,26 @@ func (h *yogaHandler) CreateGroup(c *fiber.Ctx) error {
 	})
 }
 
-// 요가 그룹 수정
+// 요가 그룹 업데이트
 /**
-@api {put} /yoga/group/:id 요가 그룹 수정
+@api {put} /yoga/group/:id 요가 그룹 업데이트
 @apiName putYogaGroup
 @apiVersion 1.0.0
 @apiGroup yogaGroup
-@apiDescription 요가 그룹 수정 (어드민 권한만)
+@apiDescription 요가 그룹 업데이트 (어드민 권한만)
 @apiHeader Authorization accessToken (Bearer)
 @apiParam {Number} id 요가 그룹 아이디
 @apiBody {String} category 요가 카테고리 (한국어)
 @apiBody {String} categoryEng 요가 카테고리 (영어)
 @apiBody {String} [description] 요가에 대한 설명
-@apiSuccess (201) {Number} code 201
-@apiSuccess (201) {String} message ""
+@apiSuccess (200 or 201) {Number} code 200 or 201
+@apiSuccess (200 or 201) {String} message ""
 @apiError JsonMissing <code>400</code> code: 3000
 @apiError ParamsMissing <code>400</code> code: 3002
 @apiError ValidationErrors <code>400</code> code: 2xxx
 @apiError InternalServerError <code>500</code> code: 500
 */
-func (h *yogaHandler) UpdateGroup(c *fiber.Ctx) error {
+func (h *yogaHandler) PutGroup(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	b := new(request.YogaGroupUpdateBody)
@@ -367,23 +373,28 @@ func (h *yogaHandler) UpdateGroup(c *fiber.Ctx) error {
 			JSON(ex.NewHttpError(ex.ErrParamsMissing, err.Error()))
 	}
 
-	if err := h.yogaUsecase.UpdateGroup(ctx, b, p.Id); err != nil {
+	isUpdated, err := h.yogaUsecase.PutGroup(ctx, b, p.Id)
+	if err != nil {
 		return utils.NewError(c, err)
 	}
+	httpCode := http.StatusOK
+	if !isUpdated {
+		httpCode = http.StatusCreated
+	}
 
-	return c.Status(http.StatusCreated).JSON(ex.Response{
-		Code:    http.StatusCreated,
+	return c.Status(httpCode).JSON(ex.Response{
+		Code:    httpCode,
 		Message: "",
 	})
 }
 
-// 요가 그룹 부분 수정
+// 요가 그룹 부분 업데이트
 /**
-@api {patch} /yoga/group/:id 요가 그룹 부분 수정
+@api {patch} /yoga/group/:id 요가 그룹 부분 업데이트
 @apiName patchYogaGroup
 @apiVersion 1.0.0
 @apiGroup yogaGroup
-@apiDescription 요가 그룹 부분 수정 (어드민 권한만)
+@apiDescription 요가 그룹 부분 업데이트 (어드민 권한만)
 @apiHeader Authorization accessToken (Bearer)
 @apiParam {Number} id 요가 그룹 아이디
 @apiBody {String} [category] 요가 카테고리 (한국어)
@@ -418,8 +429,8 @@ func (h *yogaHandler) PatchGroup(c *fiber.Ctx) error {
 		return utils.NewError(c, err)
 	}
 
-	return c.Status(http.StatusCreated).JSON(ex.Response{
-		Code:    http.StatusCreated,
+	return c.Status(http.StatusOK).JSON(ex.Response{
+		Code:    http.StatusOK,
 		Message: "",
 	})
 }
@@ -574,8 +585,8 @@ func (h *yogaHandler) UpdateRaws(c *fiber.Ctx) error {
 		return utils.NewError(c, err)
 	}
 
-	return c.Status(http.StatusCreated).JSON(ex.Response{
-		Code:    http.StatusCreated,
+	return c.Status(http.StatusOK).JSON(ex.Response{
+		Code:    http.StatusOK,
 		Message: "",
 	})
 }
