@@ -15,6 +15,8 @@ import (
 	"onthemat/pkg/ent/yoga"
 	"onthemat/pkg/ent/yogaraw"
 	"onthemat/pkg/entx"
+
+	"github.com/fatih/structs"
 )
 
 type AcademyRepository interface {
@@ -93,6 +95,7 @@ func (repo *academyRepository) Update(ctx context.Context, d *ent.Academy) error
 			academy.IDEQ(d.ID),
 			academy.UserIDEQ(d.UserID),
 		)
+
 	mu := clause.Mutation()
 
 	if d.AddressDetail == nil {
@@ -115,17 +118,20 @@ func (repo *academyRepository) Update(ctx context.Context, d *ent.Academy) error
 }
 
 func (repo *academyRepository) Patch(ctx context.Context, d *request.AcademyPatchBody, id, userId int) error {
-	info := d.Info
-	updateableData := utils.GetUpdateableData(info, academy.Columns)
+	info := structs.New(d.Info)
+	updateableData := utils.GetUpdateableDataV2(info, academy.Columns)
+	delete(updateableData, "id")
 
 	clause := repo.db.Academy.Update().
 		Where(
 			academy.IDEQ(id),
 			academy.UserIDEQ(userId),
 		)
+
 	for key, val := range updateableData {
 		clause.Mutation().SetField(key, val)
 	}
+
 	if d.YogaIDs != nil {
 		yogaIds := *d.YogaIDs
 		clause.ClearYoga().AddYogaIDs(yogaIds...)

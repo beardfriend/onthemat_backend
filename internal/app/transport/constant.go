@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -20,9 +21,16 @@ const (
 
 type TimeString time.Time
 
-func (t TimeString) MarshalJSON() ([]byte, error) {
-	stamp := fmt.Sprintf("\"%s\"", time.Time(t).Format("2006-01-02T15:04:05"))
+func (t *TimeString) MarshalJSON() ([]byte, error) {
+	stamp := fmt.Sprintf("\"%s\"", time.Time(*t).Format("2006-01-02T15:04:05"))
 	return []byte(stamp), nil
+}
+
+func (t *TimeString) UnmarshalJSON(data []byte) error {
+	str := strings.Trim(string(data), "\"")
+	parsed, _ := time.Parse("2006-01-02T15:04:05", str)
+	*t = TimeString(parsed)
+	return nil
 }
 
 func (t TimeString) Value() (driver.Value, error) {

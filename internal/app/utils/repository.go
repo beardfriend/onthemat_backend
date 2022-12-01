@@ -5,8 +5,10 @@ import (
 	"strconv"
 	"strings"
 
+	"onthemat/internal/app/transport"
 	"onthemat/pkg/ent"
 
+	"github.com/fatih/structs"
 	"github.com/iancoleman/strcase"
 )
 
@@ -43,6 +45,66 @@ func GetUpdateableData(data interface{}, allowColumns []string) (result map[stri
 
 		result[col] = value
 
+	}
+	return
+}
+
+func GetUpdateableDataV2(s *structs.Struct, columns []string) (result map[string]interface{}) {
+	result = make(map[string]interface{}, 0)
+	for _, f := range s.Fields() {
+
+		name := strcase.ToSnake(f.Name())
+
+		isUpdateable := Contains(columns, name)
+		if !isUpdateable {
+			continue
+		}
+
+		switch f.Value().(type) {
+
+		case string:
+			value := f.Value().(string)
+			result[name] = value
+
+		case *string:
+			ptrValue := f.Value().(*string)
+			if ptrValue != nil {
+				value := *ptrValue
+				result[name] = value
+			}
+
+		case int:
+			value := f.Value().(int)
+			result[name] = value
+
+		case *int:
+			ptrValue := f.Value().(*int)
+			if ptrValue != nil {
+				value := *ptrValue
+				result[name] = value
+			}
+		case bool:
+			value := f.Value().(bool)
+			result[name] = value
+
+		case *bool:
+			ptrValue := f.Value().(*bool)
+			if ptrValue != nil {
+				value := *ptrValue
+				result[name] = value
+			}
+
+		case transport.TimeString:
+			value := f.Value().(transport.TimeString)
+			result[name] = value
+
+		case *transport.TimeString:
+			ptrValue := f.Value().(*transport.TimeString)
+			if ptrValue != nil {
+				value := *ptrValue
+				result[name] = value
+			}
+		}
 	}
 	return
 }

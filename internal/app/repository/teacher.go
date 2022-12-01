@@ -4,23 +4,23 @@ import (
 	"context"
 
 	"onthemat/internal/app/model"
-	"onthemat/internal/app/transport"
 	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/teacher"
+
 	twe "onthemat/pkg/ent/teacherworkexperience"
 	"onthemat/pkg/ent/user"
 
 	"onthemat/pkg/entx"
 
 	"github.com/fatih/structs"
-	"github.com/iancoleman/strcase"
 )
 
 type TeacherRepository interface {
 	Create(ctx context.Context, d *ent.Teacher) error
 	Update(ctx context.Context, d *ent.Teacher) (err error)
+	Exist(ctx context.Context, id int) (bool, error)
 	Patch(ctx context.Context, d *request.TeacherPatchBody, id, userId int) (err error)
 	GetOnlyIdByUserId(ctx context.Context, userId int) (id int, err error)
 }
@@ -207,6 +207,7 @@ func (repo *teacherRepository) Update(ctx context.Context, d *ent.Teacher) (err 
 			}
 		} else {
 			// do
+			repo.certifi.deletebyTeacherId(ctx, client, d.ID)
 		}
 
 		// YogaRaw
@@ -248,6 +249,7 @@ func (repo *teacherRepository) Update(ctx context.Context, d *ent.Teacher) (err 
 
 		} else {
 			// do
+			repo.yoga.deleteRawsbyTeacherId(ctx, client, d.ID)
 		}
 
 		return
@@ -255,7 +257,8 @@ func (repo *teacherRepository) Update(ctx context.Context, d *ent.Teacher) (err 
 }
 
 func (repo *teacherRepository) Patch(ctx context.Context, d *request.TeacherPatchBody, id, userId int) (err error) {
-	updateableTeacherInfo := utils.GetUpdateableData(d.TeacherInfo, teacher.Columns)
+	teacherInfo := structs.New(d.TeacherInfo)
+	updateableTeacherInfo := utils.GetUpdateableDataV2(teacherInfo, teacher.Columns)
 
 	return entx.WithTx(ctx, repo.db.Debug(), func(tx *ent.Tx) (err error) {
 		client := tx.Client()
@@ -275,7 +278,7 @@ func (repo *teacherRepository) Patch(ctx context.Context, d *request.TeacherPatc
 			for _, v := range d.WorkExperiences {
 				s := structs.New(v)
 				c := client.TeacherWorkExperience
-				res := getPatchData(s)
+				res := utils.GetUpdateableDataV2(s, twe.Columns)
 
 				// Update
 				if v.Id != nil {
@@ -309,74 +312,18 @@ func (repo *teacherRepository) Patch(ctx context.Context, d *request.TeacherPatc
 	})
 }
 
-func getPatchData(s *structs.Struct) (result map[string]interface{}) {
-	result = make(map[string]interface{}, 0)
-	for _, f := range s.Fields() {
-		switch f.Value().(type) {
-		case *string:
-			ptrValue := f.Value().(*string)
-			if ptrValue != nil {
-				value := *ptrValue
-				result[strcase.ToSnake(f.Name())] = value
-
-			}
-		case *int:
-			ptrValue := f.Value().(*int)
-			if ptrValue != nil {
-				value := *ptrValue
-				result[strcase.ToSnake(f.Name())] = value
-
-			}
-		case *transport.TimeString:
-			ptrValue := f.Value().(*transport.TimeString)
-			if ptrValue != nil {
-				value := *ptrValue
-				result[strcase.ToSnake(f.Name())] = value
-
-			}
-		}
-	}
-	return
-}
-
 func (repo *teacherRepository) GetOnlyIdByUserId(ctx context.Context, userId int) (id int, err error) {
 	return repo.db.Teacher.Query().Where(teacher.UserIDEQ(userId)).OnlyID(ctx)
 }
 
+func (repo *teacherRepository) Exist(ctx context.Context, id int) (bool, error) {
+	return repo.db.Teacher.Query().Where(teacher.IDEQ(id)).Exist(ctx)
+}
+
 func makeDataForCondition(requestIds []int, existIds []int) (createable []int, updateable []int, deleteable []int) {
-	updateable = Intersection(requestIds, existIds)
-	deleteable = Difference(existIds, requestIds)
-	createable = Difference(requestIds, existIds)
-	return
-}
-
-func Intersection(a, b []int) (c []int) {
-	m := make(map[int]bool)
-
-	for _, item := range a {
-		m[item] = true
-	}
-
-	for _, item := range b {
-		if _, ok := m[item]; ok {
-			c = append(c, item)
-		}
-	}
-	return
-}
-
-func Difference(a, b []int) (diff []int) {
-	m := make(map[int]bool)
-
-	for _, item := range b {
-		m[item] = true
-	}
-
-	for _, item := range a {
-		if _, ok := m[item]; !ok {
-			diff = append(diff, item)
-		}
-	}
+	updateable = utils.Intersection(requestIds, existIds)
+	deleteable = utils.Difference(existIds, requestIds)
+	createable = utils.Difference(requestIds, existIds)
 	return
 }
 
@@ -388,15 +335,27 @@ func extractIdsFromWorkExp(val []*ent.TeacherWorkExperience) []int {
 	return result
 }
 
+// [0,0,0]
+// [0,1,2,0,0,4]
+
+// [1,2,4]
+// [0,1,2,0,0,4]
+
+//
+
 func filterWorkExperience(val []*ent.TeacherWorkExperience, ids []int) []*ent.TeacherWorkExperience {
 	result := make([]*ent.TeacherWorkExperience, 0)
-	for _, v := range val {
-		for i := range ids {
-			if v.ID == i {
-				result = append(result, v)
+	count := 0
+	for k := 0 + count; k < len(ids); k++ {
+		for i := k; i < len(val); i++ {
+			if val[i].ID == ids[k] {
+				result = append(result, val[i])
+				count++
+				break
 			}
 		}
 	}
+
 	return result
 }
 
@@ -410,10 +369,13 @@ func extractIdsFromCertifi(val []*ent.TeacherCertification) []int {
 
 func filterCertification(val []*ent.TeacherCertification, ids []int) []*ent.TeacherCertification {
 	result := make([]*ent.TeacherCertification, 0)
-	for _, v := range val {
-		for i := range ids {
-			if v.ID == i {
-				result = append(result, v)
+	count := 0
+	for k := 0 + count; k < len(ids); k++ {
+		for i := k; i < len(val); i++ {
+			if val[i].ID == ids[k] {
+				result = append(result, val[i])
+				count++
+				break
 			}
 		}
 	}
@@ -430,10 +392,13 @@ func extractIdsFromYogaRaws(val []*ent.YogaRaw) []int {
 
 func filterYogaRaws(val []*ent.YogaRaw, ids []int) []*ent.YogaRaw {
 	result := make([]*ent.YogaRaw, 0)
-	for _, v := range val {
-		for i := range ids {
-			if v.ID == i {
-				result = append(result, v)
+	count := 0
+	for k := 0 + count; k < len(ids); k++ {
+		for i := k; i < len(val); i++ {
+			if val[i].ID == ids[k] {
+				result = append(result, val[i])
+				count++
+				break
 			}
 		}
 	}

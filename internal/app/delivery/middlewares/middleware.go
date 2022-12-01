@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"onthemat/internal/app/repository"
 	"onthemat/internal/app/service"
 	"onthemat/internal/app/service/token"
 
@@ -15,13 +16,22 @@ type MiddleWare interface {
 }
 
 type middleWare struct {
-	authSvc  service.AuthService
-	tokensvc token.TokenService
+	authSvc     service.AuthService
+	tokensvc    token.TokenService
+	teacherRepo repository.TeacherRepository
+	academyRepo repository.AcademyRepository
 }
 
-func NewMiddelwWare(authSvc service.AuthService, tokensvc token.TokenService) MiddleWare {
+func NewMiddelwWare(
+	authSvc service.AuthService,
+	tokensvc token.TokenService,
+	teacherRepo repository.TeacherRepository,
+	academyRepo repository.AcademyRepository,
+) MiddleWare {
 	return &middleWare{
-		authSvc:  authSvc,
-		tokensvc: tokensvc,
+		authSvc:     authSvc,
+		tokensvc:    tokensvc,
+		teacherRepo: teacherRepo,
+		academyRepo: academyRepo,
 	}
 }

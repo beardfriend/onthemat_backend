@@ -97,12 +97,12 @@ func (ts *TeacherRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 					{
 						AgencyName:   "agency",
 						TeacherID:    1,
-						ClassStartAt: time.Now(),
+						ClassStartAt: transport.TimeString(time.Now()),
 					},
 					{
 						AgencyName:   "agency2",
 						TeacherID:    1,
-						ClassStartAt: time.Now(),
+						ClassStartAt: transport.TimeString(time.Now()),
 					},
 				},
 				YogaRaw: []*ent.YogaRaw{
@@ -131,7 +131,7 @@ func (ts *TeacherRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 		ts.initData()
 		u, _ := ts.userRepo.Create(ts.ctx, &ent.User{})
 		ts.userNo = u.ID
-		err := ts.teacherRepo.Create(ts.ctx, &ent.Teacher{
+		data := &ent.Teacher{
 			UserID: u.ID,
 			Name:   "Name",
 			Age:    utils.Int(21),
@@ -166,12 +166,12 @@ func (ts *TeacherRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 					{
 						AgencyName:   "agency",
 						TeacherID:    1,
-						ClassStartAt: time.Now(),
+						ClassStartAt: transport.TimeString(time.Now()),
 					},
 					{
 						AgencyName:   "agency2",
 						TeacherID:    1,
-						ClassStartAt: time.Now(),
+						ClassStartAt: transport.TimeString(time.Now()),
 					},
 				},
 				YogaRaw: []*ent.YogaRaw{
@@ -193,7 +193,10 @@ func (ts *TeacherRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 					},
 				},
 			},
-		})
+		}
+		err := ts.teacherRepo.Create(ts.ctx, data)
+		// forPostMan, _ := json.Marshal(data)
+		// fmt.Println(string(forPostMan))
 		ts.NoError(err)
 	}
 }
@@ -235,13 +238,13 @@ func (ts *TeacherRepositoryTestSuite) TestUpdate() {
 						ID:           1,
 						AgencyName:   "change",
 						TeacherID:    1,
-						ClassStartAt: time.Now(),
+						ClassStartAt: transport.TimeString(time.Now()),
 					},
 					{
 						ID:           4,
 						AgencyName:   "added",
 						TeacherID:    1,
-						ClassStartAt: time.Now(),
+						ClassStartAt: transport.TimeString(time.Now()),
 					},
 				},
 				YogaRaw: []*ent.YogaRaw{

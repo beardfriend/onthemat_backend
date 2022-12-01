@@ -36,8 +36,6 @@ func (Teacher) Fields() []ent.Field {
 				dialect.Postgres: "varchar(10)",
 			},
 			).
-			MaxLen(10).
-			NotEmpty().
 			Comment("선생님 이름"),
 
 		field.Int("age").

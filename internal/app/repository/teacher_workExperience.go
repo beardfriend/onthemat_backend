@@ -61,10 +61,11 @@ func (repo *teacherWorkExperience) updateMany(ctx context.Context, db *ent.Clien
 }
 
 func (repo *teacherWorkExperience) deletesByIds(ctx context.Context, db *ent.Client, ids []int, teacherId int) (int, error) {
-	return db.TeacherWorkExperience.Delete().Where(twe.And(
-		twe.TeacherIDEQ(teacherId),
-		twe.IDIn(ids...),
-	)).Exec(ctx)
+	return db.TeacherWorkExperience.Delete().Where(
+		twe.And(
+			twe.TeacherIDEQ(teacherId),
+			twe.IDIn(ids...),
+		)).Exec(ctx)
 }
 
 func (repo *teacherWorkExperience) deletesByTecaherId(ctx context.Context, db *ent.Client, teacherId int) error {

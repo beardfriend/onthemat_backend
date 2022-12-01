@@ -71,3 +71,8 @@ func (repo *teacherCertification) deletesByIds(ctx context.Context, db *ent.Clie
 		tcf.IDIn(ids...),
 	)).Exec(ctx)
 }
+
+func (repo *teacherCertification) deletebyTeacherId(ctx context.Context, db *ent.Client, teacherId int) error {
+	_, err := db.TeacherCertification.Delete().Where(tcf.TeacherIDEQ(teacherId)).Exec(ctx)
+	return err
+}

@@ -126,6 +126,7 @@ func (h *academyHandler) Create(c *fiber.Ctx) error {
 func (h *academyHandler) Update(c *fiber.Ctx) error {
 	ctx := c.Context()
 	userId := ctx.UserValue("user_id").(int)
+	academy_id := ctx.UserValue("academy_id").(int)
 
 	reqBody := new(request.AcademyUpdateBody)
 	if err := c.BodyParser(reqBody); err != nil {
@@ -141,7 +142,7 @@ func (h *academyHandler) Update(c *fiber.Ctx) error {
 	}
 
 	// 소유권체크
-	if userId != reqParam.Id {
+	if academy_id != reqParam.Id {
 		return c.Status(http.StatusForbidden).JSON(ex.NewHttpError(ex.ErrOnlyOwnUser, nil))
 	}
 
@@ -191,6 +192,7 @@ func (h *academyHandler) Update(c *fiber.Ctx) error {
 func (h *academyHandler) Patch(c *fiber.Ctx) error {
 	ctx := c.Context()
 	userId := ctx.UserValue("user_id").(int)
+	academy_id := ctx.UserValue("academy_id").(int)
 
 	reqBody := new(request.AcademyPatchBody)
 	if err := c.BodyParser(reqBody); err != nil {
@@ -206,7 +208,7 @@ func (h *academyHandler) Patch(c *fiber.Ctx) error {
 	}
 
 	// 소유권체크
-	if userId != reqParam.Id {
+	if academy_id != reqParam.Id {
 		return c.Status(http.StatusForbidden).JSON(ex.NewHttpError(ex.ErrOnlyOwnUser, nil))
 	}
 

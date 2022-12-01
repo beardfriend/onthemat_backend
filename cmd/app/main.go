@@ -87,9 +87,9 @@ func main() {
 	academyUsecase := usecase.NewAcademyUsecase(academyRepo, academySvc, userRepo, yogaRepo, areaRepo)
 	uploadUsecase := usecase.NewUploadUsecase(imageRepo, s3)
 	yogaUsecase := usecase.NewYogaUsecase(yogaRepo, academyRepo, teacherRepo)
-
+	teacherUsecase := usecase.NewTeacherUsecase(teacherRepo, userRepo)
 	// middleware
-	middleWare := middlewares.NewMiddelwWare(authSvc, tokenModule)
+	middleWare := middlewares.NewMiddelwWare(authSvc, tokenModule, teacherRepo, academyRepo)
 
 	defer func() {
 		infrastructure.ClosePostgres(db)
@@ -110,6 +110,7 @@ func main() {
 	http.NewUserHandler(middleWare, userUsecase, router)
 	http.NewAcademyHandler(middleWare, academyUsecase, validator, router)
 	http.NewYogaHandler(yogaUsecase, middleWare, validator, router)
+	http.NewTeacherHandler(middleWare, teacherUsecase, validator, router)
 
 	app.Listen(":3000")
 }

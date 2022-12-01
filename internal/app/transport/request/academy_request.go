@@ -6,7 +6,7 @@ import "onthemat/internal/app/utils"
 
 type AcademyCreateBody struct {
 	Info    AcademyInfoForCreate `json:"info" validate:"required,dive,required"`
-	YogaIDs *[]int               `json:"yogaIDs"`
+	YogaIds *[]int               `json:"yogaIds"`
 }
 
 type AcademyInfoForCreate struct {

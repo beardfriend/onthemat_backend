@@ -73,12 +73,10 @@ func (u *academyUseCase) Create(ctx context.Context, req *request.AcademyCreateB
 		return
 	}
 
-	// Todo : 유저 타입 선생님일 경우의 에러
-
 	// Prepare Data
 	yoga := make([]*ent.Yoga, 0)
-	if req.YogaIDs != nil {
-		for _, v := range *req.YogaIDs {
+	if req.YogaIds != nil {
+		for _, v := range *req.YogaIds {
 			yoga = append(yoga, &ent.Yoga{ID: v})
 		}
 	}

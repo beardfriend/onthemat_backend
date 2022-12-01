@@ -1,6 +1,8 @@
 package model
 
 import (
+	"onthemat/internal/app/transport"
+
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
@@ -39,7 +41,7 @@ func (TeacherCertification) Fields() []ent.Field {
 				map[string]string{
 					dialect.Postgres: "timestamp",
 				},
-			).
+			).GoType(transport.TimeString{}).
 			Comment("자격증 수업 시작일"),
 
 		field.Time("classEndAt").
@@ -47,7 +49,7 @@ func (TeacherCertification) Fields() []ent.Field {
 				map[string]string{
 					dialect.Postgres: "timestamp",
 				},
-			).
+			).GoType(transport.TimeString{}).
 			Optional().
 			Nillable().
 			Comment("자격증 수업 종료일"),

@@ -71,6 +71,11 @@ func (repo *yogaRepository) getRawIdsByTeacherId(ctx context.Context, db *ent.Cl
 		IDs(ctx)
 }
 
+func (repo *yogaRepository) deleteRawsbyTeacherId(ctx context.Context, db *ent.Client, teacherId int) error {
+	_, err := db.YogaRaw.Delete().Where(yogaraw.TeacherIDEQ(teacherId)).Exec(ctx)
+	return err
+}
+
 func (repo *yogaRepository) updateRaws(ctx context.Context, db *ent.Client, value []*ent.YogaRaw, teacherId, academyId *int) (err error) {
 	for _, v := range value {
 		clause := db.YogaRaw.Update().

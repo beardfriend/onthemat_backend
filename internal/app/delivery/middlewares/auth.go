@@ -53,7 +53,9 @@ func (m *middleWare) OnlySuperAdmin(c *fiber.Ctx) error {
 }
 
 func (m *middleWare) OnlyAcademy(c *fiber.Ctx) error {
+	ctx := c.Context()
 	userType := c.Context().UserValue("user_type").(string)
+	userId := c.Context().UserValue("user_id").(int)
 
 	if userType != "academy" {
 		return c.
@@ -61,11 +63,22 @@ func (m *middleWare) OnlyAcademy(c *fiber.Ctx) error {
 			JSON(ex.NewHttpError(ex.ErrOnlyAcademy, nil))
 	}
 
+	academyId, err := m.academyRepo.GetOnlyIdByUserId(ctx, userId)
+	if err != nil {
+		return c.
+			Status(http.StatusForbidden).
+			JSON(ex.NewHttpError(ex.ErrOnlyAcademy, nil))
+	}
+
+	ctx.SetUserValue("academy_id", academyId)
+
 	return c.Next()
 }
 
 func (m *middleWare) OnlyTeacher(c *fiber.Ctx) error {
+	ctx := c.Context()
 	userType := c.Context().UserValue("user_type").(string)
+	userId := c.Context().UserValue("user_id").(int)
 
 	if userType != "teacher" {
 		return c.
@@ -73,5 +86,13 @@ func (m *middleWare) OnlyTeacher(c *fiber.Ctx) error {
 			JSON(ex.NewHttpError(ex.ErrOnlyTeacher, nil))
 	}
 
+	teacherId, err := m.teacherRepo.GetOnlyIdByUserId(ctx, userId)
+	if err != nil {
+		return c.
+			Status(http.StatusForbidden).
+			JSON(ex.NewHttpError(ex.ErrOnlyTeacher, nil))
+	}
+
+	ctx.SetUserValue("teacher_id", teacherId)
 	return c.Next()
 }
