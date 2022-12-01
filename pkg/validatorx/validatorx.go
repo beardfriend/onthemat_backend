@@ -32,6 +32,7 @@ func NewValidatorx() ValidatorSetter {
 type ValidatorSetter interface {
 	Init() Validator
 	AddPasswordAtLeastOneCharNumValidation(tag string) ValidatorSetter
+	AddCheckMustFieldIfIdFieldExistValidation(tagName string) ValidatorSetter
 	AddPhoneNumValidation(tagName string) ValidatorSetter
 	AddUrlValidation(tagName string) ValidatorSetter
 	SetExtractTagName() ValidatorSetter
@@ -58,6 +59,13 @@ func (v *validator) AddUrlValidation(tagName string) ValidatorSetter {
 	return v
 }
 
+func (v *validator) AddCheckMustFieldIfIdFieldExistValidation(tagName string) ValidatorSetter {
+	if err := v.validator.RegisterValidation(tagName, validateCheckMustFieldIfIdFieldExist, true); err != nil {
+		panic(err)
+	}
+	return v
+}
+
 func (v *validator) SetExtractTagName() ValidatorSetter {
 	v.validator.RegisterTagNameFunc(func(field reflect.StructField) string {
 		jsonName := strings.SplitN(field.Tag.Get("json"), ",", 2)[0]
@@ -79,6 +87,19 @@ func (v *validator) SetExtractTagName() ValidatorSetter {
 		return ""
 	})
 	return v
+}
+
+// patch시 json에 id가 없을 경우 생성을 해야 하는데, 생성 시에 필수값들을 체크하기 위한 벨리데이터
+func validateCheckMustFieldIfIdFieldExist(fl goValidator.FieldLevel) bool {
+	fls := fl.Parent()
+	if !fls.FieldByName("Id").IsNil() {
+		return true
+	} else {
+		if fl.Field().IsZero() {
+			return false
+		}
+	}
+	return true
 }
 
 func validatePhoneNum(fl goValidator.FieldLevel) bool {

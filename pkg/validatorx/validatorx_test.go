@@ -1,10 +1,31 @@
-package validatorx
+package validatorx_test
 
 import (
 	"testing"
 
+	"onthemat/internal/app/utils"
+	"onthemat/pkg/validatorx"
+
 	"github.com/stretchr/testify/assert"
 )
+
+type TestMustFieldStruct struct {
+	Id          *int    `json:"id"`
+	AgencyName  *string `json:"agencyName" validate:"must"`
+	ImageUrl    *string `json:"imageUrl"`
+	Description *string `json:"description" validate:"must"`
+}
+
+func TestMustFieldCheckValidation(t *testing.T) {
+	validator := validatorx.NewValidatorx().AddCheckMustFieldIfIdFieldExistValidation("must").SetExtractTagName().Init()
+	st := &TestMustFieldStruct{
+		Id:         utils.Int(1),
+		AgencyName: utils.String("name"),
+		ImageUrl:   nil,
+	}
+
+	validator.ValidateStruct(st)
+}
 
 type TestRegistStruct struct {
 	Password string `json:"password_aa" validate:"cusPassword,min=5,max=20"`
@@ -13,7 +34,7 @@ type TestRegistStruct struct {
 }
 
 func TestRegistValidation(t *testing.T) {
-	validator := NewValidatorx().
+	validator := validatorx.NewValidatorx().
 		AddPasswordAtLeastOneCharNumValidation("cusPassword").
 		AddPhoneNumValidation("cusPhone").
 		AddUrlValidation("cusUrl").
@@ -40,7 +61,7 @@ type TestPasswordStruct struct {
 
 // 1자 이상의 문자열(특수문자)과 숫자를 포함한 5자 20이하의 패스워드 ... 가능한 특수문자는 !@$%^&*
 func TestPassword(t *testing.T) {
-	validator := NewValidatorx().AddPasswordAtLeastOneCharNumValidation("cusPassword").Init()
+	validator := validatorx.NewValidatorx().AddPasswordAtLeastOneCharNumValidation("cusPassword").Init()
 
 	t.Run("정상 입력된 경우", func(t *testing.T) {
 		t.Run("소문자 + 숫자", func(t *testing.T) {
@@ -136,7 +157,7 @@ type TestUrlStruct struct {
 }
 
 func TestUrl(t *testing.T) {
-	validator := NewValidatorx().AddUrlValidation("cusUrl").Init()
+	validator := validatorx.NewValidatorx().AddUrlValidation("cusUrl").Init()
 
 	t.Run("정상 입려된 경우", func(t *testing.T) {
 		t.Run("http로 시작", func(t *testing.T) {
@@ -217,7 +238,7 @@ type TestPhoneStruct struct {
 }
 
 func TestPhone(t *testing.T) {
-	validator := NewValidatorx().AddPhoneNumValidation("cusPhone").Init()
+	validator := validatorx.NewValidatorx().AddPhoneNumValidation("cusPhone").Init()
 
 	t.Run("정상 입력된 경우", func(t *testing.T) {
 		t.Run("010", func(t *testing.T) {
