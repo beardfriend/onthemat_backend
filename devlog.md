@@ -43,3 +43,15 @@ Usecase에서 Repository,Service에서 재료를 가져와서
 
 ## Reference 요가를 어떤 식으로 참조할 것인지
 
+# ToDO
+
+
+[ ] 요가 Raw요가랑 합칠 때 정렬 순서를 사용자가 정할 수 있도록 column 추가
+
+[ ] Recruit CRUD
+
+[ ] 지원하기
+
+[ ] 최근 활동내역 , 알림기능
+
+[ ] CreatedAt UpdatedAt GoType바꾸기

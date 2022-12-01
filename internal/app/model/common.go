@@ -1,7 +1,7 @@
 package model
 
 import (
-	"time"
+	"onthemat/internal/app/transport"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
@@ -24,19 +24,19 @@ func (DefaultTimeMixin) Fields() []ent.Field {
 					dialect.Postgres: "timestamp",
 				},
 			).
-			Nillable().
-			Default(time.Now),
+			GoType(transport.TimeString{}).
+			Default(transport.TimeString{}.Now),
 
 		field.Time("updatedAt").
-			Default(time.Now).
-			Nillable().
 			Immutable().
+			GoType(transport.TimeString{}).
 			SchemaType(
 				map[string]string{
 					dialect.Postgres: "timestamp",
 				},
 			).
-			UpdateDefault(time.Now),
+			Default(transport.TimeString{}.Now).
+			UpdateDefault(transport.TimeString{}.Now),
 	}
 }
 

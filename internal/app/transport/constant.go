@@ -33,6 +33,10 @@ func (t *TimeString) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (t TimeString) Now() TimeString {
+	return TimeString(time.Now())
+}
+
 func (t TimeString) Value() (driver.Value, error) {
 	return time.Time(t), nil
 }
