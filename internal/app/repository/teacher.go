@@ -345,12 +345,12 @@ func extractIdsFromWorkExp(val []*ent.TeacherWorkExperience) []int {
 
 func filterWorkExperience(val []*ent.TeacherWorkExperience, ids []int) []*ent.TeacherWorkExperience {
 	result := make([]*ent.TeacherWorkExperience, 0)
-	count := 0
-	for k := 0 + count; k < len(ids); k++ {
+
+	for k := 0; k < len(ids); k++ {
 		for i := k; i < len(val); i++ {
 			if val[i].ID == ids[k] {
 				result = append(result, val[i])
-				count++
+
 				break
 			}
 		}
@@ -369,12 +369,12 @@ func extractIdsFromCertifi(val []*ent.TeacherCertification) []int {
 
 func filterCertification(val []*ent.TeacherCertification, ids []int) []*ent.TeacherCertification {
 	result := make([]*ent.TeacherCertification, 0)
-	count := 0
-	for k := 0 + count; k < len(ids); k++ {
+
+	for k := 0; k < len(ids); k++ {
 		for i := k; i < len(val); i++ {
 			if val[i].ID == ids[k] {
 				result = append(result, val[i])
-				count++
+
 				break
 			}
 		}
@@ -392,12 +392,10 @@ func extractIdsFromYogaRaws(val []*ent.YogaRaw) []int {
 
 func filterYogaRaws(val []*ent.YogaRaw, ids []int) []*ent.YogaRaw {
 	result := make([]*ent.YogaRaw, 0)
-	count := 0
-	for k := 0 + count; k < len(ids); k++ {
+	for k := 0; k < len(ids); k++ {
 		for i := k; i < len(val); i++ {
 			if val[i].ID == ids[k] {
 				result = append(result, val[i])
-				count++
 				break
 			}
 		}
