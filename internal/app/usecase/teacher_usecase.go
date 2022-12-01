@@ -12,6 +12,8 @@ import (
 type TeacherUsecase interface {
 	Create(ctx context.Context, academy *request.TeacherCreateBody, userId int) error
 	Update(ctx context.Context, d *request.TeacherUpdateBody, id, userId int) (isUpdated bool, err error)
+	Patch(ctx context.Context, d *request.TeacherPatchBody, id, userId int) (isUpdated bool, err error)
+	Get(ctx context.Context, id, userId int) (*ent.Teacher, error)
 }
 
 type teacherUseCase struct {
@@ -27,6 +29,25 @@ func NewTeacherUsecase(
 		teacherRepo: teacherRepo,
 		userRepo:    userRepo,
 	}
+}
+
+func (u *teacherUseCase) Get(ctx context.Context, id, userId int) (result *ent.Teacher, err error) {
+	result, err = u.teacherRepo.Get(ctx, id)
+	if err != nil {
+		if ent.IsNotFound(err) {
+
+			err = ex.NewNotFoundError(ex.ErrTeacherNotFound, nil)
+			return
+		}
+		return
+	}
+
+	if !result.IsProfileOpen && result.UserID != userId {
+		err = ex.NewForbiddenError(ex.ErrOnlyOwnUser, nil)
+		return
+	}
+
+	return
 }
 
 func (u *teacherUseCase) Create(ctx context.Context, d *request.TeacherCreateBody, userId int) (err error) {
@@ -112,6 +133,20 @@ func (u *teacherUseCase) Create(ctx context.Context, d *request.TeacherCreateBod
 		}
 		return
 	}
+	return
+}
+
+func (u *teacherUseCase) Patch(ctx context.Context, d *request.TeacherPatchBody, id, userId int) (isUpdated bool, err error) {
+	isCreated, err := u.teacherRepo.Patch(ctx, d, id, userId)
+	if err != nil {
+		if ent.IsConstraintError(err) {
+			err = foreignKeyConstraintError(err)
+			return
+
+		}
+		return
+	}
+	isUpdated = !isCreated
 	return
 }
 

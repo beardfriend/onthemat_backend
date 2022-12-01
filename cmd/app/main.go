@@ -66,6 +66,7 @@ func main() {
 	validator := validatorx.NewValidatorx().
 		AddPasswordAtLeastOneCharNumValidation("PassWordAtLeastOneCharOneNum").
 		AddPhoneNumValidation("phoneNumNoDash").
+		AddCheckMustFieldIfIdFieldExistValidation("must").
 		AddUrlValidation("urlStartHttpHttps").SetExtractTagName().Init()
 
 	// repo

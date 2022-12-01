@@ -45,12 +45,14 @@ const (
 	ErrYogaDoseNotExist         = 4007
 	ErrYogaGroupDoesNotExist    = 4008
 	ErrSigunguDoseNotExist      = 4009
+	ErrResourceUnOwned          = 4010
 
 	// 5000 ~ NotFound
 	ErrUserNotFound      = 5001
 	ErrUserEmailNotFound = 5002
 	ErrAcademyNotFound   = 5003
 	ErrAreaNotFound      = 5004
+	ErrTeacherNotFound   = 5005
 
 	// 6000 ~ 401 Authentication UnAuthorization
 	ErrUserEmailUnauthorization = 6001
@@ -106,6 +108,8 @@ func ErrorText(code int) string {
 		return "유효하지 않은 요가 아이디가 포함되어 있습니다."
 
 	// 4000 ~ Conflict
+	case ErrConflict:
+		return "충돌이 발생했습니다."
 	case ErrUserEmailAlreadyExist:
 		return "이미 존재하는 이메일입니다."
 	case ErrUserEmailAlreadyVerfied:
@@ -124,6 +128,8 @@ func ErrorText(code int) string {
 		return "존재하지 않는 요가 그룹입니다."
 	case ErrSigunguDoseNotExist:
 		return "존재하지 않는 시군구입니다."
+	case ErrResourceUnOwned:
+		return "소유권이 없는 리소스가 포함되어 있습니다."
 
 	// 5000 ~
 	case ErrUserNotFound:
@@ -132,6 +138,8 @@ func ErrorText(code int) string {
 		return "존재하지 않는 학원입니다."
 	case ErrAreaNotFound:
 		return "존재하지 않는 행정구역(시군구)입니다."
+	case ErrTeacherNotFound:
+		return "존재하지 않는 선생님입니다."
 
 	// 6000 ~
 	case ErrUserEmailUnauthorization:

@@ -7,13 +7,20 @@ import (
 	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
+	"onthemat/pkg/ent/areasigungu"
 	"onthemat/pkg/ent/teacher"
 
+	"onthemat/pkg/ent/yoga"
+	"onthemat/pkg/ent/yogaraw"
+
+	tcf "onthemat/pkg/ent/teachercertification"
 	twe "onthemat/pkg/ent/teacherworkexperience"
+
 	"onthemat/pkg/ent/user"
 
 	"onthemat/pkg/entx"
 
+	"entgo.io/ent/dialect/sql"
 	"github.com/fatih/structs"
 )
 
@@ -21,7 +28,8 @@ type TeacherRepository interface {
 	Create(ctx context.Context, d *ent.Teacher) error
 	Update(ctx context.Context, d *ent.Teacher) (err error)
 	Exist(ctx context.Context, id int) (bool, error)
-	Patch(ctx context.Context, d *request.TeacherPatchBody, id, userId int) (err error)
+	Patch(ctx context.Context, d *request.TeacherPatchBody, id, userId int) (isCreated bool, err error)
+	Get(ctx context.Context, id int) (res *ent.Teacher, err error)
 	GetOnlyIdByUserId(ctx context.Context, userId int) (id int, err error)
 }
 
@@ -256,29 +264,37 @@ func (repo *teacherRepository) Update(ctx context.Context, d *ent.Teacher) (err 
 	})
 }
 
-func (repo *teacherRepository) Patch(ctx context.Context, d *request.TeacherPatchBody, id, userId int) (err error) {
-	teacherInfo := structs.New(d.TeacherInfo)
-	updateableTeacherInfo := utils.GetUpdateableDataV2(teacherInfo, teacher.Columns)
-
-	return entx.WithTx(ctx, repo.db.Debug(), func(tx *ent.Tx) (err error) {
+func (repo *teacherRepository) Patch(ctx context.Context, d *request.TeacherPatchBody, id, userId int) (isCreated bool, err error) {
+	err = entx.WithTx(ctx, repo.db, func(tx *ent.Tx) (err error) {
 		client := tx.Client()
 
 		clauseTeacher := client.Teacher.Update().
 			Where(teacher.IDEQ(id), teacher.UserIDEQ(userId))
 
-		for key, val := range updateableTeacherInfo {
-			clauseTeacher.Mutation().SetField(key, val)
+		if d.TeacherInfo != nil {
+			teacherInfo := structs.New(d.TeacherInfo)
+			updateableTeacherInfo := utils.GetUpdateableDataV2(teacherInfo, teacher.Columns)
+			for key, val := range updateableTeacherInfo {
+				clauseTeacher.Mutation().SetField(key, val)
+			}
+		}
+
+		if d.SigunguIds != nil {
+			clauseTeacher.ClearSigungu().AddSigunguIDs(*d.SigunguIds...)
+		}
+		if d.YogaIds != nil {
+			clauseTeacher.ClearYoga().AddYogaIDs(*d.YogaIds...)
 		}
 
 		if err := clauseTeacher.Exec(ctx); err != nil {
 			return err
 		}
-
 		if d.WorkExperiences != nil {
 			for _, v := range d.WorkExperiences {
 				s := structs.New(v)
-				c := client.TeacherWorkExperience
 				res := utils.GetUpdateableDataV2(s, twe.Columns)
+
+				c := client.TeacherWorkExperience
 
 				// Update
 				if v.Id != nil {
@@ -302,14 +318,125 @@ func (repo *teacherRepository) Patch(ctx context.Context, d *request.TeacherPatc
 					if err = cr.Exec(ctx); err != nil {
 						return
 					}
+					isCreated = true
 
 				}
+			}
+		}
 
+		if d.Certifications != nil {
+			for _, v := range d.Certifications {
+				s := structs.New(v)
+				res := utils.GetUpdateableDataV2(s, tcf.Columns)
+
+				c := client.TeacherCertification
+
+				// Update
+				if v.Id != nil {
+					u := c.Update().Where(tcf.TeacherIDEQ(id), tcf.IDEQ(*v.Id))
+
+					for key, val := range res {
+						u.Mutation().SetField(key, val)
+					}
+
+					if err = u.Exec(ctx); err != nil {
+						return
+					}
+
+					// Create
+				} else {
+					cr := c.Create().SetTeacherID(id)
+
+					for key, val := range res {
+						cr.Mutation().SetField(key, val)
+					}
+					if err = cr.Exec(ctx); err != nil {
+						return
+					}
+					isCreated = true
+				}
+			}
+		}
+
+		if d.YogaRaws != nil {
+			for _, v := range d.YogaRaws {
+				s := structs.New(v)
+				res := utils.GetUpdateableDataV2(s, yogaraw.Columns)
+
+				c := client.YogaRaw
+
+				// Update
+				if v.Id != nil {
+					u := c.Update().Where(yogaraw.TeacherIDEQ(id), yogaraw.IDEQ(*v.Id))
+
+					for key, val := range res {
+						u.Mutation().SetField(key, val)
+					}
+
+					if err = u.Exec(ctx); err != nil {
+						return
+					}
+
+					// Create
+				} else {
+					cr := c.Create().SetTeacherID(id)
+
+					for key, val := range res {
+						cr.Mutation().SetField(key, val)
+					}
+					if err = cr.Exec(ctx); err != nil {
+						return
+					}
+					isCreated = true
+				}
 			}
 		}
 
 		return err
 	})
+	return
+}
+
+func (repo *teacherRepository) Get(ctx context.Context, id int) (res *ent.Teacher, err error) {
+	return repo.db.Debug().Teacher.Query().
+		WithSigungu(
+			func(asgq *ent.AreaSiGunguQuery) {
+				asgq.Select(areasigungu.FieldID, areasigungu.FieldName)
+				asgq.Order(ent.Desc(areasigungu.FieldName))
+			},
+		).
+		WithYoga(
+			func(yq *ent.YogaQuery) {
+				yq.Select(yoga.FieldID, yoga.FieldNameKor)
+			},
+		).
+		WithYogaRaw(
+			func(yrq *ent.YogaRawQuery) {
+				yrq.Select(yogaraw.FieldID, yogaraw.FieldName, yogaraw.FieldTeacherID)
+			},
+		).
+		WithWorkExperience(
+			func(tweq *ent.TeacherWorkExperienceQuery) {
+				tweq.Order(func(s *sql.Selector) {
+					b := &sql.Builder{}
+					b.Ident(twe.Table).
+						WriteString(".").Ident(twe.FieldWorkEndAt).
+						WriteString(` DESC NULLS FIRST`)
+					s.OrderBy(b.String())
+				})
+			},
+		).
+		WithCertification(
+			func(tcq *ent.TeacherCertificationQuery) {
+				tcq.Order(func(s *sql.Selector) {
+					b := &sql.Builder{}
+					b.Ident(tcf.Table).
+						WriteString(".").Ident(tcf.FieldClassEndAt).
+						WriteString(` DESC NULLS FIRST`)
+					s.OrderBy(b.String())
+				})
+			},
+		).Where(teacher.IDEQ(id)).Only(ctx)
 }
 
 func (repo *teacherRepository) GetOnlyIdByUserId(ctx context.Context, userId int) (id int, err error) {

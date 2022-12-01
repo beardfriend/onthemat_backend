@@ -278,12 +278,11 @@ func (ts *TeacherRepositoryTestSuite) TestPatch() {
 
 				{
 					Id:          utils.Int(3),
-					AcademyName: utils.String("수정"),
+					AcademyName: utils.String("dd"),
 					WorkStartAt: &ti,
 				},
 
 				{
-					AcademyName: utils.String("생성"),
 					WorkStartAt: &ti,
 				},
 
@@ -293,6 +292,7 @@ func (ts *TeacherRepositoryTestSuite) TestPatch() {
 				},
 			},
 		}, 1, 1)
+
 		ts.NoError(err)
 	})
 }
