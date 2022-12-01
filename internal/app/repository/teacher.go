@@ -335,14 +335,6 @@ func extractIdsFromWorkExp(val []*ent.TeacherWorkExperience) []int {
 	return result
 }
 
-// [0,0,0]
-// [0,1,2,0,0,4]
-
-// [1,2,4]
-// [0,1,2,0,0,4]
-
-//
-
 func filterWorkExperience(val []*ent.TeacherWorkExperience, ids []int) []*ent.TeacherWorkExperience {
 	result := make([]*ent.TeacherWorkExperience, 0)
 
@@ -350,7 +342,6 @@ func filterWorkExperience(val []*ent.TeacherWorkExperience, ids []int) []*ent.Te
 		for i := k; i < len(val); i++ {
 			if val[i].ID == ids[k] {
 				result = append(result, val[i])
-
 				break
 			}
 		}
@@ -374,7 +365,6 @@ func filterCertification(val []*ent.TeacherCertification, ids []int) []*ent.Teac
 		for i := k; i < len(val); i++ {
 			if val[i].ID == ids[k] {
 				result = append(result, val[i])
-
 				break
 			}
 		}
