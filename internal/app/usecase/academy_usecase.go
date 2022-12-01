@@ -112,7 +112,7 @@ func foreignKeyConstraintError(err error) error {
 	} else if strings.Contains(err.Error(), "sigungu") {
 		err = ex.NewConflictError(ex.ErrSigunguDoseNotExist, nil)
 	} else {
-		err = ex.NewConflictError(ex.ErrConflict, nil)
+		err = ex.NewConflictError(ex.ErrResourceUnOwned, nil)
 	}
 	return err
 }

@@ -240,12 +240,13 @@ func (h *academyHandler) Patch(c *fiber.Ctx) error {
 @apiSuccess {String} result.addressDetail 상세 주소
 @apiSuccess {String} result.addressSigun 시군구
 @apiSuccess {Object[]} [result.yoga] 요가
+@apiSuccess {Number} result.yoga.index 요가 순서 번호
 @apiSuccess {Number} result.yoga.id 요가 아이디
 @apiSuccess {String} result.yoga.nameKor 요가 한글 이름
+@apiSuccess {String} result.yoga.isReference 정식적으로 등록됐는지 여부
 @apiSuccess {String} result.createdAt 생성일시
 @apiSuccess {String} result.updatedAt 업데이트일시
 @apiError QueryMissing <code>400</code> code: 3001
-@apiError ValidationError <code>400</code> code: 2xxx
 @apiError InternalServerError <code>500</code> code: 500
 */
 func (h *academyHandler) Get(c *fiber.Ctx) error {
@@ -255,9 +256,6 @@ func (h *academyHandler) Get(c *fiber.Ctx) error {
 
 	if err := c.ParamsParser(reqParam); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(ex.NewHttpError(ex.ErrParamsMissing, err.Error()))
-	}
-	if err := h.Validator.ValidateStruct(reqParam); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
 	}
 
 	academy, err := h.academyUsecase.Get(ctx, reqParam.Id)

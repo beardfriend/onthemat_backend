@@ -20,8 +20,10 @@ type AcademyRepsonse struct {
 }
 
 type yoga struct {
-	ID      int    `json:"id"`
-	NameKor string `json:"nameKor"`
+	Index       int    `json:"index"`
+	ID          int    `json:"id"`
+	NameKor     string `json:"nameKor"`
+	IsReference bool   `json:"isReference"`
 }
 
 func NewAcademyListResponse(model []*ent.Academy) []*AcademyRepsonse {
@@ -51,15 +53,17 @@ func NewAcademyDetailResponse(m *ent.Academy) *AcademyRepsonse {
 		AddressRoad:    m.AddressRoad,
 		AddressDetail:  m.AddressDetail,
 		AddressSigungu: m.Edges.AreaSigungu.Name,
-		CreatedAt:      transport.TimeString(*m.CreatedAt),
-		UpdatedAt:      transport.TimeString(*m.UpdatedAt),
+		CreatedAt:      m.CreatedAt,
+		UpdatedAt:      m.UpdatedAt,
 	}
 
 	if len(m.Edges.Yoga) > 0 {
-		for _, v := range m.Edges.Yoga {
+		for i, v := range m.Edges.Yoga {
 			resp.Yoga = append(resp.Yoga, yoga{
-				ID:      v.ID,
-				NameKor: v.NameKor,
+				Index:       i,
+				ID:          v.ID,
+				NameKor:     v.NameKor,
+				IsReference: true,
 			})
 		}
 	} else {
