@@ -76,6 +76,7 @@ func main() {
 	areaRepo := repository.NewAreaRepository(db)
 	yogaRepo := repository.NewYogaRepository(db)
 	teacherRepo := repository.NewTeacherRepository(db)
+	recruitmentRepo := repository.NewRecruitmentRepository(db)
 
 	// service
 	authSvc := service.NewAuthService(k, g, n, emailM)
@@ -89,6 +90,7 @@ func main() {
 	uploadUsecase := usecase.NewUploadUsecase(imageRepo, s3)
 	yogaUsecase := usecase.NewYogaUsecase(yogaRepo, academyRepo, teacherRepo)
 	teacherUsecase := usecase.NewTeacherUsecase(teacherRepo, userRepo)
+	recruitmentUsecase := usecase.NewRecruitmentUsecase(recruitmentRepo)
 	// middleware
 	middleWare := middlewares.NewMiddelwWare(authSvc, tokenModule, teacherRepo, academyRepo)
 
@@ -112,6 +114,6 @@ func main() {
 	http.NewAcademyHandler(middleWare, academyUsecase, validator, router)
 	http.NewYogaHandler(yogaUsecase, middleWare, validator, router)
 	http.NewTeacherHandler(middleWare, teacherUsecase, validator, router)
-
+	http.NewRecruitmentHandler(middleWare, recruitmentUsecase, validator, router)
 	app.Listen(":3000")
 }

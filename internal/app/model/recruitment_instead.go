@@ -4,7 +4,6 @@ import (
 	"onthemat/internal/app/transport"
 
 	"entgo.io/ent"
-	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
@@ -42,25 +41,7 @@ func (RecruitmentInstead) Fields() []ent.Field {
 		field.String("pay").
 			Comment("급여"),
 
-		field.JSON("schedule", []Schedule{}).Optional(),
-
-		field.Time("startDateTime").
-			SchemaType(
-				map[string]string{
-					dialect.Postgres: "timestamp",
-				},
-			).
-			GoType(transport.TimeString{}).
-			Comment("수업 시작 일시"),
-
-		field.Time("endDateTime").
-			SchemaType(
-				map[string]string{
-					dialect.Postgres: "timestamp",
-				},
-			).
-			GoType(transport.TimeString{}).
-			Comment("수업 종료 일시"),
+		field.JSON("schedule", []*Schedule{}).Optional(),
 	}
 }
 

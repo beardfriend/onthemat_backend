@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"onthemat/internal/app/model"
 	"onthemat/pkg/ent"
 	ri "onthemat/pkg/ent/recruitmentinstead"
 )
@@ -12,12 +13,20 @@ type recruitmentInsteadRepo struct{}
 func (repo *recruitmentInsteadRepo) createMany(ctx context.Context, db *ent.Client, vals []*ent.RecruitmentInstead, recruitmentId int) (err error) {
 	bulk := make([]*ent.RecruitmentInsteadCreate, len(vals))
 	for i, v := range vals {
+
+		schedules := make([]*model.Schedule, 0)
+		for _, s := range v.Schedule {
+			schedules = append(schedules, &model.Schedule{
+				StartDateTime: s.StartDateTime,
+				EndDateTime:   s.EndDateTime,
+			})
+		}
+
 		clause := db.RecruitmentInstead.Create().
 			SetRecuritmentID(recruitmentId).
 			SetMinCareer(v.MinCareer).
 			SetPay(v.Pay).
-			SetStartDateTime(v.StartDateTime).
-			SetEndDateTime(v.EndDateTime)
+			SetSchedule(schedules)
 
 		if v.ID != 0 {
 			clause.SetID(v.ID)
@@ -36,13 +45,20 @@ func (repo *recruitmentInsteadRepo) getIdsByRecruitId(ctx context.Context, db *e
 
 func (repo *recruitmentInsteadRepo) updateMany(ctx context.Context, db *ent.Client, vals []*ent.RecruitmentInstead, recruitId int) (err error) {
 	for _, v := range vals {
+		schedules := make([]*model.Schedule, 0)
+		for _, s := range v.Schedule {
+			schedules = append(schedules, &model.Schedule{
+				StartDateTime: s.StartDateTime,
+				EndDateTime:   s.EndDateTime,
+			})
+		}
+
 		err = db.RecruitmentInstead.Update().
 			Where(ri.RecruitmentIDEQ(recruitId)).
 			SetRecuritmentID(recruitId).
 			SetMinCareer(v.MinCareer).
 			SetPay(v.Pay).
-			SetStartDateTime(v.StartDateTime).
-			SetEndDateTime(v.EndDateTime).
+			SetSchedule(schedules).
 			SetNillablePasserID(v.TeacherID).Exec(ctx)
 		if err != nil {
 			return

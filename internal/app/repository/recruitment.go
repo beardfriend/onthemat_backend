@@ -9,8 +9,10 @@ import (
 	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
+	"onthemat/pkg/ent/academy"
 	"onthemat/pkg/ent/recruitment"
 	ri "onthemat/pkg/ent/recruitmentinstead"
+	"onthemat/pkg/ent/yoga"
 	"onthemat/pkg/entx"
 
 	"entgo.io/ent/dialect/sql"
@@ -18,6 +20,10 @@ import (
 )
 
 type RecruitmentRepository interface {
+	Create(ctx context.Context, d *ent.Recruitment) (err error)
+	Update(ctx context.Context, d *ent.Recruitment) (err error)
+	Patch(ctx context.Context, d *request.RecruitmentPatchBody, id, academyId int) (isCreated bool, err error)
+	Total(ctx context.Context, startDateTime, endDateTime *transport.TimeString, yogaIds, sigunguId *[]int) (result int, err error)
 	List(ctx context.Context, pgModule *utils.Pagination, startDateTime, endDateTime *transport.TimeString, yogaIds, sigunguId *[]int) ([]*ent.Recruitment, error)
 }
 
@@ -180,6 +186,20 @@ func (repo *recruitmentRepository) Patch(ctx context.Context, d *request.Recruit
 	return
 }
 
+func (repo *recruitmentRepository) Total(
+	ctx context.Context,
+	startDateTime,
+	endDateTime *transport.TimeString,
+	yogaIds,
+	sigunguId *[]int,
+) (result int, err error) {
+	clause := repo.db.Recruitment.Query()
+
+	clause = repo.conditionQuery(clause, startDateTime, endDateTime, yogaIds, sigunguId)
+	result, err = clause.Count(ctx)
+	return
+}
+
 func (repo *recruitmentRepository) List(
 	ctx context.Context,
 	pgModule *utils.Pagination,
@@ -191,11 +211,17 @@ func (repo *recruitmentRepository) List(
 	clause := repo.db.Debug().Recruitment.Query().
 		WithRecruitmentInstead(
 			func(riq *ent.RecruitmentInsteadQuery) {
-				riq.WithYoga()
+				riq.Select(ri.FieldID, ri.FieldRecruitmentID)
+				riq.WithYoga(
+					func(yq *ent.YogaQuery) {
+						yq.Select(yoga.FieldLevel, yoga.FieldNameKor)
+					},
+				)
 			},
 		).
 		Limit(pgModule.GetLimit()).
-		Offset(pgModule.GetOffset())
+		Offset(pgModule.GetOffset()).
+		Order(ent.Desc(recruitment.FieldUpdatedAt))
 
 	clause = repo.conditionQuery(clause, startDateTime, endDateTime, yogaIds, sigunguId)
 	return clause.All(ctx)
@@ -229,6 +255,21 @@ func (repo *recruitmentRepository) conditionQuery(
 					})
 					s.Where(p)
 				},
+			),
+		)
+	}
+	if yogaIds != nil {
+		clause.Where(
+			recruitment.HasRecruitmentInsteadWith(
+				ri.HasYogaWith(yoga.IDIn(*yogaIds...)),
+			),
+		)
+	}
+
+	if sigunguId != nil {
+		clause.Where(
+			recruitment.HasWriterWith(
+				academy.SigunguIDIn(*sigunguId...),
 			),
 		)
 	}

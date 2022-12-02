@@ -1,6 +1,33 @@
 package request
 
-import "onthemat/internal/app/transport"
+import (
+	"onthemat/internal/app/transport"
+)
+
+// ------------------- Create -------------------
+
+// ___________ body ___________
+
+type (
+	RecruitmentCreateBody struct {
+		Info        RecruitmentInfoForCreate       `json:"info" validate:"required,dive"`
+		InsteadInfo []*RecruitmentInsteadForCreate `json:"insteadInfo" validate:"omitempty,dive"`
+	}
+
+	RecruitmentInfoForCreate struct {
+		IsOpen bool `json:"isOpen"`
+	}
+	RecruitmentInsteadForCreate struct {
+		MinCareer string     `json:"minCareer" validate:"required"`
+		Pay       string     `json:"pay" validate:"required"`
+		Schedules []Schedule `json:"schedules" validate:"required,dive"`
+	}
+
+	Schedule struct {
+		StartDateTime transport.TimeString `json:"startDateTime" valiate:"required"`
+		EndDateTime   transport.TimeString `json:"endDateTime" valiate:"required"`
+	}
+)
 
 // ------------------- Patch -------------------
 

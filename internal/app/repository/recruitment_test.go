@@ -80,3 +80,21 @@ func TestRecruitmentList(t *testing.T) {
 	l, _ := repo.List(ctx, module, &f, &e, nil, nil)
 	fmt.Println(l)
 }
+
+func TestRecruitmentListByYoga(t *testing.T) {
+	c := config.NewConfig()
+	err := c.Load("../../../configs")
+	if err != nil {
+		t.Error(err)
+	}
+
+	db := infrastructure.NewPostgresDB(c)
+
+	repo := NewRecruitmentRepository(db)
+	ctx := context.Background()
+	module := utils.NewPagination(1, 10)
+
+	// sigunguIds := []int{1}
+	l, _ := repo.List(ctx, module, nil, nil, nil, nil)
+	fmt.Println(l)
+}
