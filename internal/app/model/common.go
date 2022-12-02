@@ -15,6 +15,29 @@ type DefaultTimeMixin struct {
 	mixin.Schema
 }
 
+var TimeDefault = []ent.Field{
+	field.Time("createdAt").
+		Immutable().
+		SchemaType(
+			map[string]string{
+				dialect.Postgres: "timestamp",
+			},
+		).
+		GoType(transport.TimeString{}).
+		Default(transport.TimeString{}.Now),
+
+	field.Time("updatedAt").
+		Immutable().
+		GoType(transport.TimeString{}).
+		SchemaType(
+			map[string]string{
+				dialect.Postgres: "timestamp",
+			},
+		).
+		Default(transport.TimeString{}.Now).
+		UpdateDefault(transport.TimeString{}.Now),
+}
+
 func (DefaultTimeMixin) Fields() []ent.Field {
 	return []ent.Field{
 		field.Time("createdAt").

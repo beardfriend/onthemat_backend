@@ -1,0 +1,259 @@
+package repository
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"onthemat/internal/app/transport"
+	"onthemat/internal/app/transport/request"
+	"onthemat/internal/app/utils"
+	"onthemat/pkg/ent"
+	"onthemat/pkg/ent/recruitment"
+	ri "onthemat/pkg/ent/recruitmentinstead"
+	"onthemat/pkg/entx"
+
+	"entgo.io/ent/dialect/sql"
+	"github.com/fatih/structs"
+)
+
+type RecruitmentRepository interface {
+	List(ctx context.Context, pgModule *utils.Pagination, startDateTime, endDateTime *transport.TimeString, yogaIds, sigunguId *[]int) ([]*ent.Recruitment, error)
+}
+
+type recruitmentRepository struct {
+	db                 *ent.Client
+	recruitInsteadRepo *recruitmentInsteadRepo
+}
+
+func NewRecruitmentRepository(db *ent.Client) RecruitmentRepository {
+	return &recruitmentRepository{
+		db: db,
+	}
+}
+
+func (repo *recruitmentRepository) Create(ctx context.Context, d *ent.Recruitment) (err error) {
+	return entx.WithTx(ctx, repo.db, func(tx *ent.Tx) (err error) {
+		client := tx.Client()
+
+		recruit, err := client.Recruitment.Create().
+			SetWriterID(d.AcademyID).
+			Save(ctx)
+		if err != nil {
+			return
+		}
+
+		if len(d.Edges.RecruitmentInstead) > 0 {
+			err = repo.recruitInsteadRepo.createMany(ctx, client, d.Edges.RecruitmentInstead, recruit.ID)
+			if err != nil {
+				return
+			}
+		}
+		return
+	})
+}
+
+func (repo *recruitmentRepository) Update(ctx context.Context, d *ent.Recruitment) (err error) {
+	return entx.WithTx(ctx, repo.db, func(tx *ent.Tx) (err error) {
+		client := tx.Client()
+
+		rowAffected, err := client.Recruitment.Update().
+			Where(
+				recruitment.IDEQ(d.ID),
+				recruitment.AcademyIDEQ(d.AcademyID),
+			).
+			// 필요할까 ?
+			SetWriterID(d.AcademyID).
+			SetIsFinish(d.IsFinish).
+			SetIsOpen(d.IsOpen).Save(ctx)
+		if err != nil {
+			return
+		}
+
+		if rowAffected != 1 {
+			err = errors.New("업데이트할 내역이 없습니다")
+			return
+		}
+
+		if len(d.Edges.RecruitmentInstead) > 0 {
+			ids, err := repo.recruitInsteadRepo.getIdsByRecruitId(ctx, client, d.ID)
+			if err != nil {
+				return err
+			}
+
+			requestIds := repo.extractIdsFromInsteadrepo(d.Edges.RecruitmentInstead)
+			createable, updateable, deleteable := utils.MakeDataForCondition(requestIds, ids)
+
+			if len(createable) > 0 {
+				createData := repo.filterRecruitInstead(d.Edges.RecruitmentInstead, createable)
+				err = repo.recruitInsteadRepo.createMany(ctx, client, createData, d.ID)
+				if err != nil {
+					return err
+				}
+			}
+
+			if len(updateable) > 0 {
+				updateData := repo.filterRecruitInstead(d.Edges.RecruitmentInstead, updateable)
+				err = repo.recruitInsteadRepo.updateMany(ctx, client, updateData, d.ID)
+				if err != nil {
+					return err
+				}
+			}
+
+			if len(deleteable) > 0 {
+				err = repo.recruitInsteadRepo.deleteByIds(ctx, client, deleteable)
+				if err != nil {
+					return err
+				}
+			}
+
+		} else {
+
+			err = repo.recruitInsteadRepo.deleteByRecruitId(ctx, client, d.ID)
+			if err != nil {
+				return err
+			}
+
+		}
+		return
+	})
+}
+
+func (repo *recruitmentRepository) Patch(ctx context.Context, d *request.RecruitmentPatchBody, id, academyId int) (isCreated bool, err error) {
+	entx.WithTx(ctx, repo.db, func(tx *ent.Tx) (err error) {
+		client := tx.Client()
+
+		clause := client.Recruitment.Update().
+			Where(recruitment.IDEQ(id), recruitment.AcademyID(academyId))
+
+		if d.Info != nil {
+			recruitInfo := structs.New(d.Info)
+			updateableRecruitInfo := utils.GetUpdateableDataV2(recruitInfo, recruitment.Columns)
+			for key, val := range updateableRecruitInfo {
+				clause.Mutation().SetField(key, val)
+			}
+		}
+		rowAffected, err := clause.Save(ctx)
+		if err != nil {
+			return
+		}
+
+		if rowAffected != 1 {
+			err = errors.New("업데이트할 내역이 없습니다")
+			return
+		}
+
+		if d.InsteadInfo != nil {
+			for _, v := range d.InsteadInfo {
+				s := structs.New(v)
+				res := utils.GetUpdateableDataV2(s, ri.Columns)
+
+				c := client.RecruitmentInstead
+
+				// Update
+				if v.ID != nil {
+					u := c.Update().Where(ri.IDEQ(*v.ID))
+
+					for key, val := range res {
+						u.Mutation().SetField(key, val)
+					}
+
+					if err = u.Exec(ctx); err != nil {
+						return
+					}
+					// Create
+				} else {
+					cr := c.Create()
+
+					for key, val := range res {
+						cr.Mutation().SetField(key, val)
+					}
+					if err = cr.Exec(ctx); err != nil {
+						return
+					}
+					isCreated = true
+				}
+			}
+		}
+		return
+	})
+	return
+}
+
+func (repo *recruitmentRepository) List(
+	ctx context.Context,
+	pgModule *utils.Pagination,
+	startDateTime,
+	endDateTime *transport.TimeString,
+	yogaIds,
+	sigunguId *[]int,
+) ([]*ent.Recruitment, error) {
+	clause := repo.db.Debug().Recruitment.Query().
+		WithRecruitmentInstead(
+			func(riq *ent.RecruitmentInsteadQuery) {
+				riq.WithYoga()
+			},
+		).
+		Limit(pgModule.GetLimit()).
+		Offset(pgModule.GetOffset())
+
+	clause = repo.conditionQuery(clause, startDateTime, endDateTime, yogaIds, sigunguId)
+	return clause.All(ctx)
+}
+
+// 시간으로 조회 // 요가로 조회 // 학원 위치로 조회
+func (repo *recruitmentRepository) conditionQuery(
+	clause *ent.RecruitmentQuery,
+	startDateTime, endDateTime *transport.TimeString,
+	yogaIds, sigunguId *[]int,
+) *ent.RecruitmentQuery {
+	if startDateTime != nil && endDateTime != nil {
+		clause.Where(
+			recruitment.HasRecruitmentInsteadWith(
+				func(s *sql.Selector) {
+					tableName := fmt.Sprintf(`%s, jsonb_array_elements(%s) c`, ri.Table, ri.FieldSchedule)
+					s.From(sql.Table(tableName))
+
+					p := &sql.Predicate{}
+					p.Append(func(b *sql.Builder) {
+						// startDateTime으로 조회
+						b.WriteString("c ->> 'startDateTime'").
+							WriteOp(sql.OpGTE).Arg(startDateTime.ToString())
+
+						b.WriteString(" AND ")
+
+						// endDateTime으로 조회
+						b.WriteString("c ->>'startDateTime'").
+							WriteOp(sql.OpLTE).
+							Arg(endDateTime.ToString())
+					})
+					s.Where(p)
+				},
+			),
+		)
+	}
+	return clause
+}
+
+func (repo *recruitmentRepository) extractIdsFromInsteadrepo(vals []*ent.RecruitmentInstead) []int {
+	var result []int
+	for _, s := range vals {
+		result = append(result, s.ID)
+	}
+	return result
+}
+
+func (repo *recruitmentRepository) filterRecruitInstead(vals []*ent.RecruitmentInstead, ids []int) []*ent.RecruitmentInstead {
+	result := make([]*ent.RecruitmentInstead, 0)
+
+	for k := 0; k < len(ids); k++ {
+		for i := k; i < len(vals); i++ {
+			if vals[i].ID == ids[k] {
+				result = append(result, vals[i])
+				break
+			}
+		}
+	}
+
+	return result
+}

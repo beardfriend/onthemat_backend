@@ -108,3 +108,10 @@ func GetUpdateableDataV2(s *structs.Struct, columns []string) (result map[string
 	}
 	return
 }
+
+func MakeDataForCondition(requestIds []int, existIds []int) (createable []int, updateable []int, deleteable []int) {
+	updateable = Intersection(requestIds, existIds)
+	deleteable = Difference(existIds, requestIds)
+	createable = Difference(requestIds, existIds)
+	return
+}

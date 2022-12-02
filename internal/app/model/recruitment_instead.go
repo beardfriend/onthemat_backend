@@ -1,7 +1,10 @@
 package model
 
 import (
+	"onthemat/internal/app/transport"
+
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
@@ -18,9 +21,20 @@ func (RecruitmentInstead) Annotations() []schema.Annotation {
 	}
 }
 
+type Schedule struct {
+	StartDateTime transport.TimeString `json:"startDateTime"`
+	EndDateTime   transport.TimeString `json:"endDateTime"`
+}
+
 func (RecruitmentInstead) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("id"),
+
 		field.Int("recruitment_id"),
+
+		field.Int("teacher_id").
+			Optional().
+			Nillable(),
 
 		field.String("minCareer").
 			Comment("최소 경력"),
@@ -28,11 +42,31 @@ func (RecruitmentInstead) Fields() []ent.Field {
 		field.String("pay").
 			Comment("급여"),
 
+		field.JSON("schedule", []Schedule{}).Optional(),
+
 		field.Time("startDateTime").
+			SchemaType(
+				map[string]string{
+					dialect.Postgres: "timestamp",
+				},
+			).
+			GoType(transport.TimeString{}).
 			Comment("수업 시작 일시"),
 
 		field.Time("endDateTime").
+			SchemaType(
+				map[string]string{
+					dialect.Postgres: "timestamp",
+				},
+			).
+			GoType(transport.TimeString{}).
 			Comment("수업 종료 일시"),
+	}
+}
+
+func (RecruitmentInstead) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		DefaultTimeMixin{},
 	}
 }
 
@@ -43,6 +77,11 @@ func (RecruitmentInstead) Edges() []ent.Edge {
 			Unique().
 			Required().
 			Field("recruitment_id"),
+
+		edge.From("passer", Teacher.Type).
+			Ref("passer").
+			Unique().
+			Field("teacher_id"),
 
 		edge.To("applicant", Teacher.Type).
 			StorageKey(edge.Table("rinstead_academy"), edge.Columns("r_instead_id", "academy_id")),

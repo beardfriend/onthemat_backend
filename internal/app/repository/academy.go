@@ -89,6 +89,7 @@ func (repo *academyRepository) Exist(ctx context.Context, id int) (bool, error) 
 	return repo.db.Academy.Query().Where(academy.IDEQ(id)).Exist(ctx)
 }
 
+// TODO : 로직 변경 필요
 func (repo *academyRepository) Update(ctx context.Context, d *ent.Academy) error {
 	clause := repo.db.Academy.Update().
 		Where(
@@ -117,6 +118,7 @@ func (repo *academyRepository) Update(ctx context.Context, d *ent.Academy) error
 	return clause.Exec(ctx)
 }
 
+// TODO : 로직 변경 필요
 func (repo *academyRepository) Patch(ctx context.Context, d *request.AcademyPatchBody, id, userId int) error {
 	info := structs.New(d.Info)
 	updateableData := utils.GetUpdateableDataV2(info, academy.Columns)
@@ -188,7 +190,7 @@ func (repo *academyRepository) List(ctx context.Context,
 	yogaIDs *[]int, sigunguID *int, academyName *string,
 	orderCol *string, orderType common.Sorts,
 ) (result []*ent.Academy, err error) {
-	clause := repo.db.Academy.
+	clause := repo.db.Debug().Academy.
 		Query().
 		WithAreaSigungu(
 			func(asgq *ent.AreaSiGunguQuery) {

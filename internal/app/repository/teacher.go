@@ -156,7 +156,7 @@ func (repo *teacherRepository) Update(ctx context.Context, d *ent.Teacher) (err 
 				return err
 			}
 			requestIds := extractIdsFromWorkExp(d.Edges.WorkExperience)
-			createable, updateable, deleteable := makeDataForCondition(requestIds, ids)
+			createable, updateable, deleteable := utils.MakeDataForCondition(requestIds, ids)
 
 			if len(createable) > 0 {
 				createData := filterWorkExperience(d.Edges.WorkExperience, createable)
@@ -190,7 +190,7 @@ func (repo *teacherRepository) Update(ctx context.Context, d *ent.Teacher) (err 
 				return err
 			}
 			requestIds := extractIdsFromCertifi(d.Edges.Certification)
-			createable, updateable, deleteable := makeDataForCondition(requestIds, ids)
+			createable, updateable, deleteable := utils.MakeDataForCondition(requestIds, ids)
 
 			if len(createable) > 0 {
 				createData := filterCertification(d.Edges.Certification, createable)
@@ -226,7 +226,7 @@ func (repo *teacherRepository) Update(ctx context.Context, d *ent.Teacher) (err 
 			}
 
 			requestIds := extractIdsFromYogaRaws(d.Edges.YogaRaw)
-			createable, updateable, deleteable := makeDataForCondition(requestIds, ids)
+			createable, updateable, deleteable := utils.MakeDataForCondition(requestIds, ids)
 
 			var teacherId *int
 			if d.ID != 0 {
@@ -445,13 +445,6 @@ func (repo *teacherRepository) GetOnlyIdByUserId(ctx context.Context, userId int
 
 func (repo *teacherRepository) Exist(ctx context.Context, id int) (bool, error) {
 	return repo.db.Teacher.Query().Where(teacher.IDEQ(id)).Exist(ctx)
-}
-
-func makeDataForCondition(requestIds []int, existIds []int) (createable []int, updateable []int, deleteable []int) {
-	updateable = utils.Intersection(requestIds, existIds)
-	deleteable = utils.Difference(existIds, requestIds)
-	createable = utils.Difference(requestIds, existIds)
-	return
 }
 
 func extractIdsFromWorkExp(val []*ent.TeacherWorkExperience) []int {

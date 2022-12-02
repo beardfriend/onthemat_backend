@@ -8,7 +8,6 @@ import (
 	"onthemat/internal/app/config"
 	"onthemat/internal/app/infrastructure"
 	"onthemat/internal/app/transport"
-	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
 
@@ -261,38 +260,6 @@ func (ts *TeacherRepositoryTestSuite) TestUpdate() {
 				},
 			},
 		})
-		ts.NoError(err)
-	})
-}
-
-func (ts *TeacherRepositoryTestSuite) TestPatch() {
-	ts.Run("성공", func() {
-		ti := transport.TimeString(time.Now())
-		err := ts.teacherRepo.Patch(ts.ctx, &request.TeacherPatchBody{
-			WorkExperiences: []*request.WorkExperiencesForPatch{
-				{
-					Id:          utils.Int(1),
-					AcademyName: utils.String("변경이름"),
-					WorkStartAt: &ti,
-				},
-
-				{
-					Id:          utils.Int(3),
-					AcademyName: utils.String("dd"),
-					WorkStartAt: &ti,
-				},
-
-				{
-					WorkStartAt: &ti,
-				},
-
-				{
-					AcademyName: utils.String("생성"),
-					WorkStartAt: &ti,
-				},
-			},
-		}, 1, 1)
-
 		ts.NoError(err)
 	})
 }

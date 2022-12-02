@@ -26,6 +26,10 @@ func (t *TimeString) MarshalJSON() ([]byte, error) {
 	return []byte(stamp), nil
 }
 
+func (t *TimeString) ToString() string {
+	return time.Time(*t).Format("2006-01-02T15:04:05")
+}
+
 func (t *TimeString) UnmarshalJSON(data []byte) error {
 	str := strings.Trim(string(data), "\"")
 	parsed, _ := time.Parse("2006-01-02T15:04:05", str)

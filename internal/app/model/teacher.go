@@ -71,6 +71,8 @@ func (Teacher) Edges() []ent.Edge {
 		edge.From("recruitment_instead", RecruitmentInstead.Type).
 			Ref("applicant"),
 
+		edge.To("passer", RecruitmentInstead.Type),
+
 		// 다루는 요가
 		edge.To("yoga", Yoga.Type),
 

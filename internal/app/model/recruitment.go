@@ -20,11 +20,23 @@ func (Recruitment) Annotations() []schema.Annotation {
 
 func (Recruitment) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("id"),
+
 		field.Int("academy_id"),
+
+		field.Bool("isOpen").
+			Default(true).
+			Comment("공개 여부"),
 
 		field.Bool("isFinish").
 			Default(false).
 			Comment("채용 종료 여부"),
+	}
+}
+
+func (Recruitment) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		DefaultTimeMixin{},
 	}
 }
 

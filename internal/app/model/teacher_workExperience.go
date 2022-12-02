@@ -35,7 +35,8 @@ func (TeacherWorkExperience) Fields() []ent.Field {
 				map[string]string{
 					dialect.Postgres: "timestamp",
 				},
-			).GoType(transport.TimeString{}).
+			).
+			GoType(transport.TimeString{}).
 			Comment("근무 시작일"),
 
 		field.Time("workEndAt").
@@ -43,7 +44,8 @@ func (TeacherWorkExperience) Fields() []ent.Field {
 				map[string]string{
 					dialect.Postgres: "timestamp",
 				},
-			).GoType(transport.TimeString{}).
+			).
+			GoType(transport.TimeString{}).
 			Optional().
 			Nillable().
 			Comment("근무 종료일"),
