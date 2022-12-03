@@ -29,6 +29,34 @@ type (
 	}
 )
 
+// ------------------- Update -------------------
+
+// ___________ body ___________
+
+type (
+	RecruitmentUpdateBody struct {
+		Info        RecruitmentInfoForUpdate       `json:"info" validate:"required,dive"`
+		InsteadInfo []*RecruitmentInsteadForUpdate `json:"insteadInfo" validate:"omitempty,dive"`
+	}
+
+	RecruitmentInfoForUpdate struct {
+		IsFinish bool `json:"isFinish"`
+		IsOpen   bool `json:"isOpen"`
+	}
+	RecruitmentInsteadForUpdate struct {
+		Id        int        `json:"id"`
+		MinCareer string     `json:"minCareer" validate:"required"`
+		Pay       string     `json:"pay" validate:"required"`
+		Schedules []Schedule `json:"schedules" validate:"required,dive"`
+	}
+)
+
+// ___________ Param ___________
+
+type RecruitmentUpdateParam struct {
+	Id int `param:"id" validate:"required"`
+}
+
 // ------------------- Patch -------------------
 
 // ___________ body ___________
@@ -53,3 +81,9 @@ type (
 		PasserId      *int                  `json:"passerId"`
 	}
 )
+
+// ___________ Param ___________
+
+type RecruitmentPatchParam struct {
+	Id int `param:"id" validate:"required"`
+}

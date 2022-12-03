@@ -35,6 +35,11 @@ func NewRecruitmentHandler(
 	g := router.Group("/recruitment")
 
 	g.Post("", middleware.Auth, middleware.OnlyAcademy, handler.Create)
+	g.Put("/:id", middleware.Auth, middleware.OnlyAcademy, handler.Update)
+	g.Patch("/:id", middleware.Auth, middleware.OnlyAcademy, handler.Update)
+	g.Delete("/:id", middleware.Auth, middleware.OnlyAcademy, handler.Update)
+	g.Get("/:id", middleware.Auth, handler.Update)
+	g.Get("/list", handler.Update)
 }
 
 func (h *recruitmentHandler) Create(c *fiber.Ctx) error {
@@ -58,6 +63,71 @@ func (h *recruitmentHandler) Create(c *fiber.Ctx) error {
 
 	return c.Status(http.StatusCreated).JSON(ex.Response{
 		Code:    http.StatusCreated,
+		Message: "",
+	})
+}
+
+func (h *recruitmentHandler) Update(c *fiber.Ctx) error {
+	ctx := c.Context()
+	academyId := ctx.UserValue("academy_id").(int)
+
+	reqBody := new(request.RecruitmentUpdateBody)
+	if err := c.BodyParser(reqBody); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
+	}
+	if err := h.Validator.ValidateStruct(reqBody); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
+	}
+
+	reqParam := new(request.RecruitmentUpdateParam)
+	if err := c.ParamsParser(reqParam); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
+	}
+
+	isUpdated, err := h.recruitmentUsecase.Update(ctx, reqBody, reqParam.Id, academyId)
+	if err != nil {
+		return utils.NewError(c, err)
+	}
+
+	httpCode := http.StatusOK
+	if !isUpdated {
+		httpCode = http.StatusCreated
+	}
+
+	return c.Status(httpCode).JSON(ex.Response{
+		Code:    httpCode,
+		Message: "",
+	})
+}
+
+func (h *recruitmentHandler) Patch(c *fiber.Ctx) error {
+	ctx := c.Context()
+	teacherId := ctx.UserValue("teacher_id").(int)
+
+	reqBody := new(request.RecruitmentPatchBody)
+	if err := c.BodyParser(reqBody); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
+	}
+	if err := h.Validator.ValidateStruct(reqBody); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
+	}
+
+	reqParam := new(request.RecruitmentPatchParam)
+	if err := c.ParamsParser(reqParam); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
+	}
+
+	isUpdated, err := h.recruitmentUsecase.Patch(ctx, reqBody, reqParam.Id, teacherId)
+	if err != nil {
+		return utils.NewError(c, err)
+	}
+	httpCode := http.StatusOK
+	if !isUpdated {
+		httpCode = http.StatusCreated
+	}
+
+	return c.Status(httpCode).JSON(ex.Response{
+		Code:    httpCode,
 		Message: "",
 	})
 }

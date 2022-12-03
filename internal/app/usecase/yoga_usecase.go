@@ -69,7 +69,7 @@ func (u *yogaUseCase) DeleteGroup(ctx context.Context, ids []int) (rowAffected i
 
 func (u *yogaUseCase) PutGroup(ctx context.Context, req *request.YogaGroupUpdateBody, id int) (isUpdated bool, err error) {
 	isExist, err := u.yogaRepo.ExistGroup(ctx, id)
-	isUpdated = !isExist
+	isUpdated = isExist
 
 	if err != nil {
 		return

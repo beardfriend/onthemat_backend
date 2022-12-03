@@ -141,7 +141,7 @@ func (u *academyUseCase) Put(ctx context.Context, req *request.AcademyUpdateBody
 
 	// Already Exisit
 	isExist, err := u.academyRepo.Exist(ctx, id)
-	isUpdated = !isExist
+	isUpdated = isExist
 	if err != nil {
 		return
 	}

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"onthemat/internal/app/model"
 	"onthemat/pkg/ent"
@@ -35,7 +36,14 @@ func (repo *recruitmentInsteadRepo) createMany(ctx context.Context, db *ent.Clie
 		bulk[i] = clause
 	}
 
-	return db.RecruitmentInstead.CreateBulk(bulk...).Exec(ctx)
+	err = db.RecruitmentInstead.CreateBulk(bulk...).Exec(ctx)
+	if err != nil {
+		if err.Error() == "incosistent id values for batch insert" {
+			err = errors.New(ErrOnlyOwnUser)
+		}
+		return
+	}
+	return
 }
 
 func (repo *recruitmentInsteadRepo) getIdsByRecruitId(ctx context.Context, db *ent.Client, recruitId int) ([]int, error) {
@@ -53,15 +61,23 @@ func (repo *recruitmentInsteadRepo) updateMany(ctx context.Context, db *ent.Clie
 			})
 		}
 
-		err = db.RecruitmentInstead.Update().
-			Where(ri.RecruitmentIDEQ(recruitId)).
+		rowAffcted, err := db.RecruitmentInstead.Update().
+			Where(
+				ri.IDEQ(v.ID),
+				ri.RecruitmentIDEQ(recruitId),
+			).
 			SetRecuritmentID(recruitId).
 			SetMinCareer(v.MinCareer).
 			SetPay(v.Pay).
 			SetSchedule(schedules).
-			SetNillablePasserID(v.TeacherID).Exec(ctx)
+			SetNillablePasserID(v.TeacherID).Save(ctx)
+
+		if rowAffcted < 1 {
+			err = errors.New(ErrOnlyOwnUser)
+		}
+
 		if err != nil {
-			return
+			return err
 		}
 	}
 	return

@@ -213,7 +213,7 @@ func (u *teacherUseCase) Update(ctx context.Context, d *request.TeacherUpdateBod
 
 	// Already Exisit
 	isExist, err := u.teacherRepo.Exist(ctx, id)
-	isUpdated = !isExist
+	isUpdated = isExist
 	if err != nil {
 		return
 	}

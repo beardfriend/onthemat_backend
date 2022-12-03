@@ -25,6 +25,7 @@ type RecruitmentRepository interface {
 	Patch(ctx context.Context, d *request.RecruitmentPatchBody, id, academyId int) (isCreated bool, err error)
 	Total(ctx context.Context, startDateTime, endDateTime *transport.TimeString, yogaIds, sigunguId *[]int) (result int, err error)
 	List(ctx context.Context, pgModule *utils.Pagination, startDateTime, endDateTime *transport.TimeString, yogaIds, sigunguId *[]int) ([]*ent.Recruitment, error)
+	Exist(ctx context.Context, id int) (bool, error)
 }
 
 type recruitmentRepository struct {
@@ -59,8 +60,10 @@ func (repo *recruitmentRepository) Create(ctx context.Context, d *ent.Recruitmen
 	})
 }
 
+const ErrOnlyOwnUser = "소유자만 접근할 수 있습니다"
+
 func (repo *recruitmentRepository) Update(ctx context.Context, d *ent.Recruitment) (err error) {
-	return entx.WithTx(ctx, repo.db, func(tx *ent.Tx) (err error) {
+	return entx.WithTx(ctx, repo.db.Debug(), func(tx *ent.Tx) (err error) {
 		client := tx.Client()
 
 		rowAffected, err := client.Recruitment.Update().
@@ -77,7 +80,7 @@ func (repo *recruitmentRepository) Update(ctx context.Context, d *ent.Recruitmen
 		}
 
 		if rowAffected != 1 {
-			err = errors.New("업데이트할 내역이 없습니다")
+			err = errors.New(ErrOnlyOwnUser)
 			return
 		}
 
@@ -225,6 +228,10 @@ func (repo *recruitmentRepository) List(
 
 	clause = repo.conditionQuery(clause, startDateTime, endDateTime, yogaIds, sigunguId)
 	return clause.All(ctx)
+}
+
+func (repo *recruitmentRepository) Exist(ctx context.Context, id int) (bool, error) {
+	return repo.db.Recruitment.Query().Where(recruitment.IDEQ(id)).Exist(ctx)
 }
 
 // 시간으로 조회 // 요가로 조회 // 학원 위치로 조회
