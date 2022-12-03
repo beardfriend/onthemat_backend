@@ -7,6 +7,7 @@ import (
 	"onthemat/internal/app/model"
 	"onthemat/internal/app/repository"
 	"onthemat/internal/app/transport/request"
+	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
 )
 
@@ -14,6 +15,7 @@ type RecruitmentUsecase interface {
 	Create(ctx context.Context, d *request.RecruitmentCreateBody, academyId int) (err error)
 	Update(ctx context.Context, d *request.RecruitmentUpdateBody, id, academyId int) (isUpdated bool, err error)
 	Patch(ctx context.Context, d *request.RecruitmentPatchBody, id, academyId int) (isUpdated bool, err error)
+	List(ctx context.Context, a *request.RecruitmentListQueries) (result []*ent.Recruitment, paginationInfo *utils.PagenationInfo, err error)
 }
 
 type recruitmentUsecase struct {
@@ -132,5 +134,24 @@ func (u *recruitmentUsecase) Patch(ctx context.Context, d *request.RecruitmentPa
 		return
 	}
 	isUpdated = !isCreated
+	return
+}
+
+func (u *recruitmentUsecase) List(ctx context.Context, a *request.RecruitmentListQueries) (result []*ent.Recruitment, paginationInfo *utils.PagenationInfo, err error) {
+	paginationModule := utils.NewPagination(a.PageNo, a.PageSize)
+
+	pginationModule := utils.NewPagination(a.PageNo, a.PageSize)
+	total, err := u.recruitRepo.Total(ctx, a.StartDateTime, a.EndDateTime, a.YogaIDs, a.SigunguIds)
+	if err != nil {
+		return
+	}
+
+	pginationModule.SetTotal(total)
+	result, err = u.recruitRepo.List(ctx, paginationModule, a.StartDateTime, a.EndDateTime, a.YogaIDs, a.SigunguIds)
+	if err != nil {
+		return
+	}
+
+	paginationInfo = pginationModule.GetInfo(len(result))
 	return
 }

@@ -2,7 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
+	"reflect"
+	"time"
 
 	"onthemat/internal/app/config"
 	"onthemat/internal/app/delivery/http"
@@ -11,6 +14,7 @@ import (
 	"onthemat/internal/app/repository"
 	"onthemat/internal/app/service"
 	"onthemat/internal/app/service/token"
+	"onthemat/internal/app/transport"
 	"onthemat/internal/app/usecase"
 	"onthemat/pkg/auth/jwt"
 	"onthemat/pkg/auth/store/redis"
@@ -98,10 +102,25 @@ func main() {
 		infrastructure.ClosePostgres(db)
 	}()
 	// app
+
 	app := fiber.New(fiber.Config{
 		JSONEncoder: json.Marshal,
 		JSONDecoder: json.Unmarshal,
 	})
+
+	fiber.SetParserDecoder(fiber.ParserConfig{
+		ParserType: []fiber.ParserType{{
+			Customtype: transport.TimeString{},
+			Converter: func(value string) reflect.Value {
+				fmt.Println("timeConverter", value)
+				if v, err := time.Parse("2006-01-02T15:04:05", value); err == nil {
+					return reflect.ValueOf(v)
+				}
+				return reflect.Value{}
+			},
+		}},
+	})
+
 	app.Use(logger.New())
 	app.Use(recover.New())
 	// app.Use(limiter.New(limiter.ConfigDefault))

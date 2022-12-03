@@ -6,6 +6,7 @@ import (
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/delivery/middlewares"
 	"onthemat/internal/app/transport/request"
+	"onthemat/internal/app/transport/response"
 	"onthemat/internal/app/usecase"
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/fiberx"
@@ -38,8 +39,8 @@ func NewRecruitmentHandler(
 	g.Put("/:id", middleware.Auth, middleware.OnlyAcademy, handler.Update)
 	g.Patch("/:id", middleware.Auth, middleware.OnlyAcademy, handler.Update)
 	g.Delete("/:id", middleware.Auth, middleware.OnlyAcademy, handler.Update)
+	g.Get("/list", handler.List)
 	g.Get("/:id", middleware.Auth, handler.Update)
-	g.Get("/list", handler.Update)
 }
 
 func (h *recruitmentHandler) Create(c *fiber.Ctx) error {
@@ -129,5 +130,32 @@ func (h *recruitmentHandler) Patch(c *fiber.Ctx) error {
 	return c.Status(httpCode).JSON(ex.Response{
 		Code:    httpCode,
 		Message: "",
+	})
+}
+
+func (h *recruitmentHandler) List(c *fiber.Ctx) error {
+	ctx := c.Context()
+
+	reqQueries := request.NewRecruitmentListQueries()
+
+	if err := fiberx.QueryParser(c, reqQueries); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewHttpError(ex.ErrQueryStringMissing, nil))
+	}
+
+	if err := h.Validator.ValidateStruct(reqQueries); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
+	}
+
+	recruits, pagination, err := h.recruitmentUsecase.List(ctx, reqQueries)
+	resp := response.NewRecruitmentListResponse(recruits)
+	if err != nil {
+		return utils.NewError(c, err)
+	}
+
+	return c.Status(http.StatusOK).JSON(ex.ResponseWithPagination{
+		Code:       http.StatusOK,
+		Message:    "",
+		Result:     resp,
+		Pagination: pagination,
 	})
 }

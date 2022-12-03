@@ -87,3 +87,25 @@ type (
 type RecruitmentPatchParam struct {
 	Id int `param:"id" validate:"required"`
 }
+
+// ------------------- List -------------------
+
+type RecruitmentListQueries struct {
+	PageNo        int                   `query:"pageNo"`
+	PageSize      int                   `query:"pageSize"`
+	StartDateTime *transport.TimeString `query:"startDateTime"`
+	EndDateTime   *transport.TimeString `query:"endDateTime"`
+	YogaIDs       *[]int                `query:"yogaIds"`
+	SigunguIds    *[]int                `query:"sigunguIds"`
+}
+
+func NewRecruitmentListQueries() *RecruitmentListQueries {
+	return &RecruitmentListQueries{
+		PageNo:        1,
+		PageSize:      10,
+		StartDateTime: nil,
+		EndDateTime:   nil,
+		YogaIDs:       nil,
+		SigunguIds:    nil,
+	}
+}

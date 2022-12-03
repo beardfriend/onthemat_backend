@@ -36,7 +36,7 @@ func (Recruitment) Fields() []ent.Field {
 
 func (Recruitment) Mixin() []ent.Mixin {
 	return []ent.Mixin{
-		DefaultTimeMixin{},
+		WithDeletedTimeMixin{},
 	}
 }
 

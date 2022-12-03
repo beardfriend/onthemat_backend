@@ -28,4 +28,6 @@ func main() {
 	seed.Academies()
 	seed.YogaGroup()
 	seed.Yoga()
+	seed.Teachers()
+	seed.Recruitment()
 }

@@ -15,29 +15,6 @@ type DefaultTimeMixin struct {
 	mixin.Schema
 }
 
-var TimeDefault = []ent.Field{
-	field.Time("createdAt").
-		Immutable().
-		SchemaType(
-			map[string]string{
-				dialect.Postgres: "timestamp",
-			},
-		).
-		GoType(transport.TimeString{}).
-		Default(transport.TimeString{}.Now),
-
-	field.Time("updatedAt").
-		Immutable().
-		GoType(transport.TimeString{}).
-		SchemaType(
-			map[string]string{
-				dialect.Postgres: "timestamp",
-			},
-		).
-		Default(transport.TimeString{}.Now).
-		UpdateDefault(transport.TimeString{}.Now),
-}
-
 func (DefaultTimeMixin) Fields() []ent.Field {
 	return []ent.Field{
 		field.Time("createdAt").
@@ -51,7 +28,6 @@ func (DefaultTimeMixin) Fields() []ent.Field {
 			Default(transport.TimeString{}.Now),
 
 		field.Time("updatedAt").
-			Immutable().
 			GoType(transport.TimeString{}).
 			SchemaType(
 				map[string]string{
@@ -60,6 +36,46 @@ func (DefaultTimeMixin) Fields() []ent.Field {
 			).
 			Default(transport.TimeString{}.Now).
 			UpdateDefault(transport.TimeString{}.Now),
+	}
+}
+
+// ------------------- Delete -------------------
+
+type WithDeletedTimeMixin struct {
+	mixin.Schema
+}
+
+func (WithDeletedTimeMixin) Fields() []ent.Field {
+	return []ent.Field{
+		field.Time("createdAt").
+			Immutable().
+			SchemaType(
+				map[string]string{
+					dialect.Postgres: "timestamp",
+				},
+			).
+			GoType(transport.TimeString{}).
+			Default(transport.TimeString{}.Now),
+
+		field.Time("updatedAt").
+			GoType(transport.TimeString{}).
+			SchemaType(
+				map[string]string{
+					dialect.Postgres: "timestamp",
+				},
+			).
+			Default(transport.TimeString{}.Now).
+			UpdateDefault(transport.TimeString{}.Now),
+
+		field.Time("deletedAt").
+			GoType(transport.TimeString{}).
+			SchemaType(
+				map[string]string{
+					dialect.Postgres: "timestamp",
+				},
+			).
+			Nillable().
+			Optional(),
 	}
 }
 

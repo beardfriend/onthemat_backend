@@ -30,6 +30,10 @@ func (t *TimeString) ToString() string {
 	return time.Time(*t).Format("2006-01-02T15:04:05")
 }
 
+func (t *TimeString) String() string {
+	return time.Time(*t).String()
+}
+
 func (t *TimeString) UnmarshalJSON(data []byte) error {
 	str := strings.Trim(string(data), "\"")
 	parsed, _ := time.Parse("2006-01-02T15:04:05", str)

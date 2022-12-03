@@ -10,6 +10,7 @@ import (
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/academy"
+	"onthemat/pkg/ent/areasigungu"
 	"onthemat/pkg/ent/recruitment"
 	ri "onthemat/pkg/ent/recruitmentinstead"
 	"onthemat/pkg/ent/yoga"
@@ -189,6 +190,9 @@ func (repo *recruitmentRepository) Patch(ctx context.Context, d *request.Recruit
 	return
 }
 
+func (repo *recruitmentRepository) Delete() {
+}
+
 func (repo *recruitmentRepository) Total(
 	ctx context.Context,
 	startDateTime,
@@ -214,7 +218,7 @@ func (repo *recruitmentRepository) List(
 	clause := repo.db.Debug().Recruitment.Query().
 		WithRecruitmentInstead(
 			func(riq *ent.RecruitmentInsteadQuery) {
-				riq.Select(ri.FieldID, ri.FieldRecruitmentID)
+				riq.Select(ri.FieldID, ri.FieldRecruitmentID, ri.FieldSchedule)
 				riq.WithYoga(
 					func(yq *ent.YogaQuery) {
 						yq.Select(yoga.FieldLevel, yoga.FieldNameKor)
@@ -222,6 +226,13 @@ func (repo *recruitmentRepository) List(
 				)
 			},
 		).
+		WithWriter(func(aq *ent.AcademyQuery) {
+			aq.Select(academy.FieldName, academy.FieldSigunguID)
+			aq.WithAreaSigungu(func(asgq *ent.AreaSiGunguQuery) {
+				asgq.Select(areasigungu.FieldName)
+			})
+		}).
+		Where(recruitment.DeletedAtIsNil()).
 		Limit(pgModule.GetLimit()).
 		Offset(pgModule.GetOffset()).
 		Order(ent.Desc(recruitment.FieldUpdatedAt))

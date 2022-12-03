@@ -65,7 +65,7 @@ func (RecruitmentInstead) Edges() []ent.Edge {
 			Field("teacher_id"),
 
 		edge.To("applicant", Teacher.Type).
-			StorageKey(edge.Table("rinstead_academy"), edge.Columns("r_instead_id", "academy_id")),
+			StorageKey(edge.Table("rinstead_teacher"), edge.Columns("r_instead_id", "teacher_id")),
 
 		edge.To("yoga", Yoga.Type).
 			StorageKey(edge.Table("rinstead_yoga"), edge.Columns("r_instead_id", "yoga_id")),
