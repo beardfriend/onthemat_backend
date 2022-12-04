@@ -110,33 +110,38 @@
 
 URL : http://43.201.147.22:3000/
 
-![api문서](https://user-images.githubusercontent.com/97140962/201019708-08588b56-8304-4a77-946a-cf67e443a7a5.png)
-
+<img width="1680" alt="스크린샷 2022-12-04 오후 3 54 02" src="https://user-images.githubusercontent.com/97140962/205478479-f0c7fd16-e8fd-4590-81f8-a1b8c386cfa6.png">
 
 
 # 2. 기술 상세
 
 ## 2.1. REST API
 
-RESTFUl한 API를 설계했습니다.
+RESTFUl한 API를 설계했습니다.  
 
 GET, POST, PUT, PACTH, DELETE 5가지를 사용합니다.
 
 ### PUT
-db에 저장된 값을 요청 값으로 모두 대체합니다.
-만약 저장된 값이 없을 경우 요청 값을 생성합니다.
+
+사용자가 요청한 리소스를 DB에 업데이트합니다.    
+요청받은 리소스의 일부 정보가 생략된 경우에  
+DB컬럼이 NULL을 지원한다면 NULL값으로 업데이트됩니다.  
+
+만약 요청받은 리소스의 Primary키가 DB에 존재하지 않을 때,  
+요청받은 Primary키로 리소스를 생성합니다.
 
 ### Patch
 
-Put메서드와 원리는 같으나
+Put메서드와 원리는 같습니다.
+다른 부분은,    
+리소스 중 요청받은 값만 데이터베이스에 업데이트합니다.  
 
-Put은 저장된 값 전부를 대체하지만,
-Patch는 요청한 값만 대체합니다.
+요청 시 primary키를 생략하면  
+요청받은 리소스를 생성합니다.
 
-만약 저장된 값이 없을 경우 요청값을 생성하며,
-
-데이터베이스에 필수로 들어가야 하는 값이
-전부 있는 경우에만 성공적인 응답을 받을 수 있습니다.
+이 때,  
+데이터베이스에 필수로 들어가야 하는 값이  
+전부 존재해야만 성공적인 응답을 받을 수 있습니다.
 
 
 ## 2.2. Repository
@@ -145,16 +150,16 @@ Patch는 요청한 값만 대체합니다.
 
 [업데이트 로직 예시 ](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/repository/teacher.go#L112)
 
-데이터베이스에 컬럼이 NULL이 가능한 경우는
-요청값이 없으면 NULL로 변경합니다.
-
 다대다 관계에서는
 기존 값을 전부 지우고 새로운 값으로 대체합니다.
 
 
 [일대다 관계일 때 로직](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/repository/teacher.go#L153)
+
 일대다 관계에서는 
-데이터베이스에 존재하는 id값들과 요청값 id들을 비교하여
+데이터베이스에 존재하는 id값들과  
+요청값 id들을 비교하여  
+
 생성, 업데이트, 삭제를 진행합니다.
 
 
@@ -162,19 +167,26 @@ Patch는 요청한 값만 대체합니다.
 
 [Patch로직 예시](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/repository/teacher.go#L292)
 
-
-요청값에 id가 있으면 업데이트 없으면 생성,
-
-요청값이 업데이트 가능한 컬럼이면
-업데이트 합니다.
+[업데이트 가능한 컬럼 추출하는 코드](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/utils/repository.go#L52)
+요청받은 Column이 데이터베이스에 존재하는지 확인한 뒤,  
+존재하면 key(컬럼이름), value(요청값)을 배열에 담아 리턴합니다.  
 
 ### 2.2.3. List 로직
 
 [List로직 예시](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/repository/recruitment.go#L291)
 
-위 부분은 PostgreSQL의 JsonB타입 컬럼에 존재하는
-데이터 Key값을 기준으로 리스트를 조회할 수 있도록 도와주는
-검색로직입니다.
+PostgreSQL에는 JsonB타입이 존재합니다.
+
+json에 있는 key를 사용하기 위해서는 
+`column ->> 'key'` 방식으로 코드를 작성해야 합니다.
+
+ent ORM에는 이러한 방식의 쿼리문을 작성할 수 있는 인터페이스가 존재하지 않습니다.  
+jsonb타입을 많이 사용하지 않고 있기 때문에,  
+다른 모듈을 찾아보기보다는 ent에서 지원하는 인터페이스 내에서 해결하기로 했습니다.  
+
+테이블 이름, Operation Field이름을 변경해도 로직에 영향을 주지 않는 것을 중점으로  
+프로그램을 작성했습니다.
+
 
 
 ### 2.2.4. 테스트케이스
