@@ -109,3 +109,19 @@ func NewRecruitmentListQueries() *RecruitmentListQueries {
 		SigunguIds:    nil,
 	}
 }
+
+// ------------------- Get -------------------
+
+// ___________ Param ___________
+
+type RecruitmentGetParam struct {
+	Id int `param:"id" validate:"required"`
+}
+
+// ------------------- Delete -------------------
+
+// ___________ Param ___________
+
+type RecruitmentDeleteParam struct {
+	Id int `param:"id" validate:"required"`
+}

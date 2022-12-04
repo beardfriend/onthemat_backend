@@ -48,9 +48,12 @@ Usecase에서 Repository,Service에서 재료를 가져와서
 
 [ ] 요가 Raw요가랑 합칠 때 정렬 순서를 사용자가 정할 수 있도록 column 추가
 
-[ ] Recruit CRUD
+[ ] Recruit D
 
 [ ] 지원하기
+
+[ ] 선생님용 recruitList /api/v1/academy/:id/recruitments
+
 
 [ ] 최근 활동내역 , 알림기능
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"onthemat/internal/app/transport"
 	"onthemat/internal/app/transport/request"
@@ -13,6 +14,7 @@ import (
 	"onthemat/pkg/ent/areasigungu"
 	"onthemat/pkg/ent/recruitment"
 	ri "onthemat/pkg/ent/recruitmentinstead"
+	"onthemat/pkg/ent/teacher"
 	"onthemat/pkg/ent/yoga"
 	"onthemat/pkg/entx"
 
@@ -24,9 +26,11 @@ type RecruitmentRepository interface {
 	Create(ctx context.Context, d *ent.Recruitment) (err error)
 	Update(ctx context.Context, d *ent.Recruitment) (err error)
 	Patch(ctx context.Context, d *request.RecruitmentPatchBody, id, academyId int) (isCreated bool, err error)
+	PatchDeletedAt(ctx context.Context, id, academyId int) (err error)
 	Total(ctx context.Context, startDateTime, endDateTime *transport.TimeString, yogaIds, sigunguId *[]int) (result int, err error)
 	List(ctx context.Context, pgModule *utils.Pagination, startDateTime, endDateTime *transport.TimeString, yogaIds, sigunguId *[]int) ([]*ent.Recruitment, error)
 	Exist(ctx context.Context, id int) (bool, error)
+	Get(ctx context.Context, id int) (*ent.Recruitment, error)
 }
 
 type recruitmentRepository struct {
@@ -61,6 +65,22 @@ func (repo *recruitmentRepository) Create(ctx context.Context, d *ent.Recruitmen
 	})
 }
 
+func (repo *recruitmentRepository) PatchDeletedAt(ctx context.Context, id, academyId int) (err error) {
+	rowAffcetd, err := repo.db.Recruitment.Update().
+		SetDeletedAt(transport.TimeString(time.Now())).
+		Where(recruitment.AcademyIDEQ(academyId), recruitment.IDEQ(id)).
+		Save(ctx)
+	if err != nil {
+		return
+	}
+
+	if rowAffcetd != 1 {
+		err = errors.New(ErrOnlyOwnUser)
+		return
+	}
+	return
+}
+
 const ErrOnlyOwnUser = "소유자만 접근할 수 있습니다"
 
 func (repo *recruitmentRepository) Update(ctx context.Context, d *ent.Recruitment) (err error) {
@@ -75,7 +95,8 @@ func (repo *recruitmentRepository) Update(ctx context.Context, d *ent.Recruitmen
 			// 필요할까 ?
 			SetWriterID(d.AcademyID).
 			SetIsFinish(d.IsFinish).
-			SetIsOpen(d.IsOpen).Save(ctx)
+			SetIsOpen(d.IsOpen).
+			Save(ctx)
 		if err != nil {
 			return
 		}
@@ -149,7 +170,7 @@ func (repo *recruitmentRepository) Patch(ctx context.Context, d *request.Recruit
 		}
 
 		if rowAffected != 1 {
-			err = errors.New("업데이트할 내역이 없습니다")
+			err = errors.New(ErrOnlyOwnUser)
 			return
 		}
 
@@ -190,7 +211,23 @@ func (repo *recruitmentRepository) Patch(ctx context.Context, d *request.Recruit
 	return
 }
 
-func (repo *recruitmentRepository) Delete() {
+func (repo *recruitmentRepository) Get(ctx context.Context, id int) (*ent.Recruitment, error) {
+	return repo.db.Debug().Recruitment.Query().
+		WithRecruitmentInstead(
+			func(riq *ent.RecruitmentInsteadQuery) {
+				riq.WithYoga(
+					func(yq *ent.YogaQuery) {
+						yq.Select(yoga.FieldID, yoga.FieldNameKor)
+					},
+				)
+				riq.WithApplicant(
+					func(tq *ent.TeacherQuery) {
+						tq.Select(teacher.FieldID)
+					})
+			}).
+		WithWriter().
+		Where(recruitment.DeletedAtIsNil(), recruitment.IDEQ(id)).
+		Only(ctx)
 }
 
 func (repo *recruitmentRepository) Total(

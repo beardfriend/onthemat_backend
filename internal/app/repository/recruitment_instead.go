@@ -70,7 +70,8 @@ func (repo *recruitmentInsteadRepo) updateMany(ctx context.Context, db *ent.Clie
 			SetMinCareer(v.MinCareer).
 			SetPay(v.Pay).
 			SetSchedule(schedules).
-			SetNillablePasserID(v.TeacherID).Save(ctx)
+			SetNillablePasserID(v.TeacherID).
+			Save(ctx)
 
 		if rowAffcted < 1 {
 			err = errors.New(ErrOnlyOwnUser)

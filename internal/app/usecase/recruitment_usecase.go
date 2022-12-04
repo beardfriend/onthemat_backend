@@ -15,7 +15,9 @@ type RecruitmentUsecase interface {
 	Create(ctx context.Context, d *request.RecruitmentCreateBody, academyId int) (err error)
 	Update(ctx context.Context, d *request.RecruitmentUpdateBody, id, academyId int) (isUpdated bool, err error)
 	Patch(ctx context.Context, d *request.RecruitmentPatchBody, id, academyId int) (isUpdated bool, err error)
+	SoftDelete(ctx context.Context, id, academyId int) (err error)
 	List(ctx context.Context, a *request.RecruitmentListQueries) (result []*ent.Recruitment, paginationInfo *utils.PagenationInfo, err error)
+	Get(ctx context.Context, id int) (result *ent.Recruitment, err error)
 }
 
 type recruitmentUsecase struct {
@@ -61,6 +63,10 @@ func (u *recruitmentUsecase) Create(ctx context.Context, d *request.RecruitmentC
 	if err != nil {
 		if ent.IsConstraintError(err) {
 			err = ex.NewConflictError(ex.ErrConflict, nil)
+
+			if err.Error() == repository.ErrOnlyOwnUser {
+				err = ex.NewConflictError(ex.ErrResourceUnOwned, nil)
+			}
 		}
 		return
 	}
@@ -153,5 +159,34 @@ func (u *recruitmentUsecase) List(ctx context.Context, a *request.RecruitmentLis
 	}
 
 	paginationInfo = pginationModule.GetInfo(len(result))
+	return
+}
+
+func (u *recruitmentUsecase) Get(ctx context.Context, id int) (result *ent.Recruitment, err error) {
+	result, err = u.recruitRepo.Get(ctx, id)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			err = ex.NewNotFoundError(ex.ErrRecruitmentNotFound, nil)
+			return
+		}
+		return
+	}
+	return
+}
+
+func (u *recruitmentUsecase) SoftDelete(ctx context.Context, id, academyId int) (err error) {
+	err = u.recruitRepo.PatchDeletedAt(ctx, id, academyId)
+
+	if err != nil {
+		if err.Error() == repository.ErrOnlyOwnUser {
+			err = ex.NewConflictError(ex.ErrResourceUnOwned, nil)
+		}
+
+		if ent.IsConstraintError(err) {
+			err = ex.NewConflictError(ex.ErrConflict, nil)
+		}
+		return
+	}
+
 	return
 }
