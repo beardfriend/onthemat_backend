@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"onthemat/internal/app/model"
 	"onthemat/internal/app/transport"
 	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/utils"
@@ -298,13 +299,13 @@ func (repo *recruitmentRepository) conditionQuery(
 					p := &sql.Predicate{}
 					p.Append(func(b *sql.Builder) {
 						// startDateTime으로 조회
-						b.WriteString("c ->> 'startDateTime'").
+						b.WriteString("c ->> '" + model.FieldStartDateTime + "'").
 							WriteOp(sql.OpGTE).Arg(startDateTime.ToString())
 
 						b.WriteString(" AND ")
 
 						// endDateTime으로 조회
-						b.WriteString("c ->>'startDateTime'").
+						b.WriteString("c ->>'" + model.FieldStartDateTime + "'").
 							WriteOp(sql.OpLTE).
 							Arg(endDateTime.ToString())
 					})

@@ -25,6 +25,8 @@ type Schedule struct {
 	EndDateTime   transport.TimeString `json:"endDateTime"`
 }
 
+var FieldStartDateTime = "startDateTime"
+
 func (RecruitmentInstead) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("id"),
