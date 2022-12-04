@@ -31,8 +31,8 @@
 ```
 ├── cmd
 │   ├── app             // 메인 어플리케이션
-│ . ├── migraiton				// 마이그레이션 생성
-│   └── seeding 				// 테스트용 데이터 insert
+│   ├── migraiton	// 마이그레이션 생성
+│   └── seeding 	// 테스트용 데이터 insert
 │
 │
 ├── configs             // 어플리케이션 설정파일
@@ -60,7 +60,7 @@
 │         │
 │         ├── usecase
 │         │
-│         ├── transport // 데이터 전송 Object
+│         ├── transport 	// 데이터 전송 Object
 │         │           ├── request
 │         │           └── response
 │         │
