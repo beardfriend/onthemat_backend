@@ -30,7 +30,7 @@ fiber를 선택한 이유 : 압도적인 성능 때문입니다.
 
 entGO를 선택한 이유 : generate된 인터페이스를 사용하기 떄문에 gORM에 비해 안정적이면서도 빠른 속도를 가져갈 수 있습니다. 
 
-
+postgres를 선택한 이유 fiber는 fasthttp기반으로 설계가 되어 있는데 fasthttp와 postgresql의 조합이 빠른 속도를 낸다고 알려져 있습니다.
 
 
 ## 1.2. 디렉토리 구조
