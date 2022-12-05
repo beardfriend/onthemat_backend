@@ -7,7 +7,6 @@
 계속 진행중 .....
 
 
-
 ## 1.1. 스택
 
 🔎 백엔드  
@@ -102,7 +101,7 @@
 
 ### 1.3.1. 서버 아키텍처
 
-의존성을 최대한 낮추기 위해 노력했습니다.
+
 
 ![서버 아키텍처](https://user-images.githubusercontent.com/97140962/202600851-884abaad-c12c-4f7e-8b23-715dee475e5c.jpg)
 
@@ -117,32 +116,29 @@ URL : http://43.201.147.22:3000/
 
 ## 2.1. REST API
 
-RESTFUl한 API를 설계했습니다.  
 
 GET, POST, PUT, PACTH, DELETE 5가지를 사용합니다.
 
-### PUT
+RFC문서의 내용에 맞게 설계했습니다.
 
-사용자가 요청한 리소스를 DB에 업데이트합니다.    
-요청받은 리소스의 일부 정보가 생략된 경우에  
-DB컬럼이 NULL을 지원한다면 NULL값으로 업데이트됩니다.  
+> The PUT method requests that the state of the target resource be created or 
+> replaced with the state defined by the representation enclosed in the request message payload.
 
-만약 요청받은 리소스의 Primary키가 DB에 존재하지 않을 때,  
-요청받은 Primary키로 리소스를 생성합니다.
+> This specification defines the new HTTP/1.1 [RFC2616] method, 
+> PATCH, which is used to apply partial modifications to a resource.
 
-### Patch
 
-Put메서드와 원리는 같습니다.
-다른 부분은,    
-리소스 중 요청받은 값만 데이터베이스에 업데이트합니다.  
+PATCH는 사용자가 원하는 자원만 골라서    
+수정할 수 있습니다.
 
-요청 시 primary키를 생략하면  
-요청받은 리소스를 생성합니다.
+PATCH를 한 번 만들어 놓는다면,  
+클라이언트 측에서 부분적으로 수정할 요소들이 계속 변해도  
+API를 수정하지 않아도 되는 장점이 있었습니다.  
 
-이 때,  
-데이터베이스에 필수로 들어가야 하는 값이  
-전부 존재해야만 성공적인 응답을 받을 수 있습니다.
-
+이는 Graphql과 닮았습니다.  
+Graphql은 조회할 때마저도 사용자가 원하는 자원을 가져올 수 있습니다.  
+서비스의 형태변경이 자주 필요하다면  
+꼭 Graphql을 사용해보려고 합니다. 
 
 ## 2.2. Repository
 
@@ -150,41 +146,49 @@ Put메서드와 원리는 같습니다.
 
 [업데이트 로직 예시 ](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/repository/teacher.go#L112)
 
-다대다 관계에서는
-기존 값을 전부 지우고 새로운 값으로 대체합니다.
+로직은 아래와 같습니다.
 
+1. 요청에 값이 존재하지 않으면 NULL 혹은 "", 0, false로 대체한다.
+2. 일대다 관계에서는
+   유저가 소유한 ID값과 요청값 ID를 비교하여
+	 각 상황에 맞게 생성, 업데이트, 삭제를 진행한다.
+3. 다대다 관계에서는
+   요청값 id로 모두 대체한다.
 
-[일대다 관계일 때 로직](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/repository/teacher.go#L153)
-
-일대다 관계에서는 
-데이터베이스에 존재하는 id값들과  
-요청값 id들을 비교하여  
-
-생성, 업데이트, 삭제를 진행합니다.
 
 
 ### 2.2.2. Patch 로직
 
 [Patch로직 예시](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/repository/teacher.go#L292)
 
+로직은 아래와 같습니다.
+
+1. 요청정보가 NULL이 아닌 경우 해당 Field를 업데이트를 한다.
+2. 일대다 관계일 경우 요청 id가 존재하지 않으면 생성 존재하면 업데이트를 진행한다.
+
+
 [업데이트 가능한 컬럼 추출하는 코드](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/utils/repository.go#L52)
-요청받은 Column이 데이터베이스에 존재하는지 확인한 뒤,  
-존재하면 key(컬럼이름), value(요청값)을 배열에 담아 리턴합니다.  
+
+요청받은 key가 데이터베이스에서 업데이트할 수 있는지 여부를 확인한 뒤,   
+key(컬럼이름)-value(요청값)을 배열에 담아 리턴합니다.
 
 ### 2.2.3. List 로직
 
 [List로직 예시](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/repository/recruitment.go#L291)
 
-PostgreSQL에는 JsonB타입이 존재합니다.
+PostgreSQL에는 jsonb타입이 존재합니다.
 
-json에 있는 key를 사용하기 위해서는 
+json에 있는 key를 불러오기 위해서는 
 `column ->> 'key'` 방식으로 코드를 작성해야 합니다.
 
-ent ORM에는 이러한 방식의 쿼리문을 작성할 수 있는 인터페이스가 존재하지 않습니다.  
-jsonb타입을 많이 사용하지 않고 있기 때문에,  
-다른 모듈을 찾아보기보다는 ent에서 지원하는 인터페이스 내에서 해결하기로 했습니다.  
+ent ORM에는 이러한 방식의 쿼리문을 작성할 수 있는 인터페이스가 존재하지 않습니다.
 
-테이블 이름, Operation Field이름을 변경해도 로직에 영향을 주지 않는 것을 중점으로  
+제 프로젝트에서는  
+jsonb타입을 많이 사용하지 않고 있기 때문에,  
+다른 라이브러리를 찾아보기 보다는  
+entORM 인터페이스 내에서 해결하기로 했습니다.  
+
+`테이블 이름, Field이름을 변경해도 로직에 영향을 주지 않기` 중점으로  
 프로그램을 작성했습니다.
 
 
@@ -194,23 +198,26 @@ jsonb타입을 많이 사용하지 않고 있기 때문에,
 
 [Repository_test](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/repository/user_test.go)
 
-테스트 시작 시, 로컬에서 도커 컨테이너를 생성하고 
-테스트 전체가 종료되면
-컨테이너를 삭제하도록 하였습니다.
+테스트 과정
 
-각각의 테스트케이스마다 독립적인 실행을 원했습니다.
-각각의 테스트가 종료되면 테스트한 데이터 전체를 삭제하여
-의존성을 낮췄습니다.
+1. 테스트 시작 시 로컬에서 도커 컨테이너에 DB를 생성
+2. 도커 컨테이너에 연결
 
-각각의 테스트케이스마다  
-테스트를 위한 데이터를 미리 생성해야되기 때문에,  
-(ex, SELECT 을 했을 때 정상적으로 데이터가 출력됨을 확인하기 위해 INSERT작업이 필요)
+반복..
 
-테스트 코드가 길어져 가독성이 떨어진다는 단점이 존재했습니다.  
+3. 각기 다른 테스트 실행에 필요한 데이터 삽입
+4. 각각의 테스트 실행
+5. 테스트한 데이터 모두 삭제
 
-BeforeTest 함수에 테스트에 필요한 코드들을 넣음으로써
-테스트케이스에는 테스트코드만 넣어 이해하기 쉽게 만들었습니다.
+... 
 
+6. 도커 컨테이너 삭제 
+
+`BeforeTest` 함수에 
+실행에 필요한 데이터를 삽입하는 과정을 담았습니다.  
+
+때문에 테스트케이스에서는 테스트할 함수들만 남아있어서  
+이해하기 쉬워졌습니다.  
 
 ## 2.3. Service
 
@@ -241,34 +248,59 @@ Access토큰을 재발급하여 인증에 사용합니다.
 
 [Create](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/usecase/recruitment_usecase.go#L34)
 
-Ent라는 ORM은 코드를 Generate해줍니다.
-
-데이터베이스 스키마에 맞게
-Object를 생성해줍니다. 
-
-생성된 Object를 이용하여 사용자의 HTTP 요청을 받을 수도 있었지만 
-
-데이터를 Request Response할 때의 Object와
-데이터를 INSERT GET할 때의 Object를 분리하였습니다.
-
+DTO, DAO를 분리했습니다.
 코드가 길어진다는 단점이 존재하지만,
 
-요청값과 응답값의
-코드를 작성함으로써
-요청값과 응답값이 명확하다는 장점이 존재했고
-
-요청 응답 값을 바꿔도 데이터베이스에 접근하는 오브젝트를 수정하지 않아도 되서 편리했습니다.
+요청값과 응답값이 명확해진다는 장점과  
+요청 응답값 변경이 용이하다는 장점을 포기할 수 없었습니다.
 
 ### 2.4.3. 에러처리
 
 [에러 서버코드](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/common/errors.go#L50)
 
-HTTP응답코드를 준수하였으며,
-400, 401, 403, 400, 409 등이 사용됩니다.
-
 친절한 API를 만들고 싶었습니다.
 에러메세지와 에러코드를 상황별로 제공하여
 프론트엔드 개발자가 예외처리를 조금 더 편하게 할 수 있도록 하였습니다.
+
+details의 key는 json key값 value에는 어떻게 수정해야 될지 방향을 알려줍니다.
+
+```json
+// 응답 예시
+HTTP 400 BadReqeust
+{
+    "code": 2000,
+    "message": "유효하지 않은 요청값들이 존재합니다.",
+    "details": [
+        {
+            "email": "email"
+        },
+        {
+            "password": "required"
+        },
+        {
+            "nickname": "required"
+        },
+        {
+            "termAgree": "required"
+        }
+    ]
+}
+
+```
+
+```go
+// 응답 예시
+HTTP 400 BadReqeust
+{
+    "code": 2002,
+    "message": "유효하지 않은 이메일입니다.",
+    "details": [
+        {
+            "email": "email"
+        }
+    ]
+}
+```
 
 ### 2.4.4. 테스트케이스
 
@@ -288,3 +320,5 @@ mock을 사용하여 각 모듈의 리턴값을 원하는 값으로 정하여
 [코드 예시](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/delivery/http/academy_handler.go#L30)
 
 응답받은 요청을 파싱, 검증하는 과정을 담당합니다.
+
+
