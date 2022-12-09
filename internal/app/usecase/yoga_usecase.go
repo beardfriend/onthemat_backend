@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"onthemat/internal/app/common"
@@ -121,13 +122,25 @@ func (u *yogaUseCase) GroupList(ctx context.Context, req *request.YogaGroupListQ
 // ------------------- Yoga -------------------
 
 func (u *yogaUseCase) Create(ctx context.Context, req *request.YogaCreateBody) (err error) {
-	err = u.yogaRepo.Create(ctx, &ent.Yoga{
+	y, err := u.yogaRepo.Create(ctx, &ent.Yoga{
 		NameKor:     req.NameKor,
 		NameEng:     req.NameEng,
 		Description: req.Description,
 		Level:       req.Level,
 		YogaGroupID: req.YogaGroupId,
 	})
+
+	e := u.yogaRepo.CreateE(ctx, &model.ElasticYoga{
+		Id:   y.ID,
+		Name: y.NameKor,
+	})
+	fmt.Println(e)
+
+	e = u.yogaRepo.CreateE(ctx, &model.ElasticYoga{
+		Id:   y.ID,
+		Name: *y.NameEng,
+	})
+	fmt.Println(e)
 	if err != nil {
 		if ent.IsConstraintError(err) {
 			err = ex.NewConflictError(ex.ErrYogaGroupDoesNotExist, nil)
@@ -155,7 +168,7 @@ func (u *yogaUseCase) Put(ctx context.Context, req *request.YogaUpdateBody, yoga
 	}
 
 	if !isExist {
-		err = u.yogaRepo.Create(ctx, data)
+		_, err = u.yogaRepo.Create(ctx, data)
 	} else {
 		err = u.yogaRepo.Update(ctx, data)
 	}

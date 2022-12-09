@@ -11,7 +11,6 @@ import (
 	"onthemat/internal/app/mocks"
 	"onthemat/internal/app/model"
 	"onthemat/internal/app/service"
-	"onthemat/internal/app/transport"
 	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/usecase"
 	"onthemat/pkg/ent"
@@ -27,6 +26,7 @@ type AcademyUCTestSuite struct {
 	mockAcademySvc  *mocks.AcademyService
 	mockUserRepo    *mocks.UserRepository
 	mockAreaRepo    *mocks.AreaRepository
+	mockYogaRepo    *mocks.YogaRepository
 }
 
 // 모든 테스트 시작 전 1회
@@ -35,8 +35,9 @@ func (ts *AcademyUCTestSuite) SetupSuite() {
 	ts.mockAcademySvc = new(mocks.AcademyService)
 	ts.mockUserRepo = new(mocks.UserRepository)
 	ts.mockAreaRepo = new(mocks.AreaRepository)
+	ts.mockYogaRepo = new(mocks.YogaRepository)
 
-	ts.academyUC = usecase.NewAcademyUsecase(ts.mockAcademyRepo, ts.mockAcademySvc, ts.mockUserRepo, ts.mockAreaRepo)
+	ts.academyUC = usecase.NewAcademyUsecase(ts.mockAcademyRepo, ts.mockAcademySvc, ts.mockUserRepo, ts.mockYogaRepo, ts.mockAreaRepo)
 }
 
 // ------------------- Test Case -------------------
@@ -57,7 +58,7 @@ func (ts *AcademyUCTestSuite) TestCreate() {
 		ts.mockAcademyRepo.On("Create", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil).Once()
 
-		err := ts.academyUC.Create(context.Background(), &transport.AcademyCreateRequestBody{}, 1)
+		err := ts.academyUC.Create(context.Background(), &request.AcademyCreateBody{}, 1)
 		ts.NoError(err)
 	})
 
@@ -66,7 +67,7 @@ func (ts *AcademyUCTestSuite) TestCreate() {
 			Return(errors.New(service.ErrBussinessCodeInvalid)).
 			Once()
 
-		err := ts.academyUC.Create(context.Background(), &transport.AcademyCreateRequestBody{}, 1)
+		err := ts.academyUC.Create(context.Background(), &request.AcademyCreateBody{}, 1)
 		errorStruct := err.(common.HttpError)
 		ts.Equal(http.StatusBadRequest, errorStruct.ErrHttpCode)
 	})
@@ -81,7 +82,7 @@ func (ts *AcademyUCTestSuite) TestCreate() {
 				Type: &model.TeacherType,
 			}, nil).Once()
 
-		err := ts.academyUC.Create(context.Background(), &transport.AcademyCreateRequestBody{}, 1)
+		err := ts.academyUC.Create(context.Background(), &request.AcademyCreateBody{}, 1)
 		errorStruct := err.(common.HttpError)
 		ts.Equal(http.StatusConflict, errorStruct.ErrHttpCode)
 	})
@@ -116,7 +117,7 @@ func (ts *AcademyUCTestSuite) TestUpdate() {
 		ts.mockAcademyRepo.On("Update", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil).Once()
 
-		err := ts.academyUC.Update(context.Background(), &transport.AcademyUpdateRequestBody{}, 1)
+		_, err := ts.academyUC.Put(context.Background(), &request.AcademyUpdateBody{}, 1, 1)
 		ts.NoError(err)
 	})
 
@@ -124,7 +125,7 @@ func (ts *AcademyUCTestSuite) TestUpdate() {
 		ts.mockAcademyRepo.On("Update", mock.Anything, mock.Anything, mock.Anything).
 			Return(&ent.NotFoundError{}).Once()
 
-		err := ts.academyUC.Update(context.Background(), &transport.AcademyUpdateRequestBody{}, 1)
+		_, err := ts.academyUC.Put(context.Background(), &request.AcademyUpdateBody{}, 1, 1)
 		errorStruct := err.(common.HttpError)
 		ts.Equal(http.StatusNotFound, errorStruct.ErrHttpCode)
 	})

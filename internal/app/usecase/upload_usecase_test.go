@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"onthemat/internal/app/mocks"
-	"onthemat/internal/app/transport"
+	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/usecase"
 
 	pkgMocks "onthemat/pkg/mocks"
@@ -43,7 +43,7 @@ func (ts *UploadUCTestSuite) TestUpload() {
 			Filename: "../../../pkg/aws/test_object/akmu.jpeg",
 		}
 
-		ts.uploadUC.Upload(context.Background(), h, &transport.UploadParams{}, 1)
+		ts.uploadUC.Upload(context.Background(), h, &request.UploadParams{}, 1)
 	})
 }
 

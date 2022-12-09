@@ -8,3 +8,4 @@ pkg/ent
 apidocs
 internal/app/mocks
 pkg/mocks
+*.crt

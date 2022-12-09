@@ -1,10 +1,13 @@
 package repository
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 
 	"onthemat/internal/app/common"
+	"onthemat/internal/app/model"
 	"onthemat/internal/app/transport/request"
 
 	"onthemat/internal/app/utils"
@@ -13,6 +16,9 @@ import (
 	"onthemat/pkg/ent/yogagroup"
 	"onthemat/pkg/ent/yogaraw"
 	"onthemat/pkg/entx"
+
+	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/google/uuid"
 )
 
 type YogaRepository interface {
@@ -24,7 +30,8 @@ type YogaRepository interface {
 	GroupTotal(ctx context.Context, category *string) (count int, err error)
 	GroupList(ctx context.Context, pgModule *utils.Pagination, category *string, sorts common.Sorts) (result []*ent.YogaGroup, err error)
 
-	Create(ctx context.Context, data *ent.Yoga) error
+	Create(ctx context.Context, data *ent.Yoga) (*ent.Yoga, error)
+	CreateE(ctx context.Context, d *model.ElasticYoga) error
 	Update(ctx context.Context, data *ent.Yoga) error
 	Patch(ctx context.Context, data *request.YogaPatchBody, id int) error
 	Delete(ctx context.Context, id int) error
@@ -37,12 +44,16 @@ type YogaRepository interface {
 }
 
 type yogaRepository struct {
-	db *ent.Client
+	db      *ent.Client
+	ela     *elasticsearch.Client
+	elaYoga string
 }
 
-func NewYogaRepository(db *ent.Client) YogaRepository {
+func NewYogaRepository(db *ent.Client, ela *elasticsearch.Client) YogaRepository {
 	return &yogaRepository{
-		db: db,
+		db:      db,
+		ela:     ela,
+		elaYoga: "yoga",
 	}
 }
 
@@ -206,7 +217,7 @@ func (repo *yogaRepository) DeleteGroups(ctx context.Context, ids []int) (int, e
 
 // ------------------- Yoga -------------------
 
-func (repo *yogaRepository) Create(ctx context.Context, data *ent.Yoga) error {
+func (repo *yogaRepository) Create(ctx context.Context, data *ent.Yoga) (*ent.Yoga, error) {
 	clause := repo.db.Debug().Yoga.Create().
 		SetNameKor(data.NameKor).
 		SetNillableNameEng(data.NameEng).
@@ -217,7 +228,21 @@ func (repo *yogaRepository) Create(ctx context.Context, data *ent.Yoga) error {
 	if data.ID != 0 {
 		clause.SetID(data.ID)
 	}
-	return clause.Exec(ctx)
+
+	return clause.Save(ctx)
+}
+
+func (repo *yogaRepository) CreateE(ctx context.Context, d *model.ElasticYoga) error {
+	uid := uuid.New().String()
+
+	var buf bytes.Buffer
+	json.NewEncoder(&buf).Encode(d)
+
+	_, err := repo.ela.Create(repo.elaYoga, uid, &buf)
+	if err != nil {
+		return err
+	}
+	return err
 }
 
 func (repo *yogaRepository) Update(ctx context.Context, data *ent.Yoga) error {

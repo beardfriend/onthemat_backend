@@ -19,6 +19,7 @@ import (
 	"onthemat/pkg/auth/jwt"
 	"onthemat/pkg/auth/store/redis"
 	"onthemat/pkg/aws"
+	ela "onthemat/pkg/elastic"
 	"onthemat/pkg/email"
 	"onthemat/pkg/google"
 	"onthemat/pkg/kakao"
@@ -65,7 +66,8 @@ func main() {
 	// db
 	db := infrastructure.NewPostgresDB(c)
 	redisCli := infrastructure.NewRedis(c)
-
+	elastic := infrastructure.NewElasticSearch(c)
+	ela.InitYoga(elastic)
 	// utils
 	validator := validatorx.NewValidatorx().
 		AddPasswordAtLeastOneCharNumValidation("PassWordAtLeastOneCharOneNum").
@@ -78,7 +80,7 @@ func main() {
 	imageRepo := repository.NewImageRepository(db)
 	academyRepo := repository.NewAcademyRepository(db)
 	areaRepo := repository.NewAreaRepository(db)
-	yogaRepo := repository.NewYogaRepository(db)
+	yogaRepo := repository.NewYogaRepository(db, elastic)
 	teacherRepo := repository.NewTeacherRepository(db)
 	recruitmentRepo := repository.NewRecruitmentRepository(db)
 

@@ -22,6 +22,7 @@ type Config struct {
 	AWS        AWS        `mapstructure:"Aws"`
 	AWSS3      AWSS3      `mapstructure:"AwsS3"`
 	PostgreSQL PostgreSQL `mapstructure:"PostgreSQL"`
+	Elastic    Elastic    `mapstructure:"Elastic"`
 	Onthemat   Onthemat   `mapstructure:"Onthemat"`
 }
 
@@ -39,6 +40,13 @@ type PostgreSQL struct {
 	Port     int    `env:"POSTGRES_PORT" envDefault:"5432"`
 	Database string `env:"POSTGRES_DATABASE"`
 	Password string `env:"POSTGRES_PASSWORD"`
+}
+
+type Elastic struct {
+	Host     string `env:"ELASTIC_HOST"`
+	Port     int    `env:"ELASTIC_PORT"`
+	User     string `env:"ELASTIC_USER"`
+	Password string `env:"ELASTIC_PASSWORD"`
 }
 
 type Redis struct {
@@ -123,6 +131,7 @@ func (c *Config) Load(filePath string) error {
 	data["AwsS3"] = &AWSS3{}
 	data["Secret"] = &Secret{}
 	data["Onthemat"] = &Onthemat{}
+	data["Elastic"] = &Elastic{}
 
 	for _, v := range data {
 		if err := env.Parse(v, op); err != nil {

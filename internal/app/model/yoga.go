@@ -12,6 +12,11 @@ type Yoga struct {
 	ent.Schema
 }
 
+type ElasticYoga struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+}
+
 func (Yoga) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "yoga"},

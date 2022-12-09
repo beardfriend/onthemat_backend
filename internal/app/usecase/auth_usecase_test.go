@@ -12,7 +12,7 @@ import (
 	"onthemat/internal/app/mocks"
 	"onthemat/internal/app/model"
 	"onthemat/internal/app/service/token"
-	"onthemat/internal/app/transport"
+	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/usecase"
 	"onthemat/pkg/ent"
 	"onthemat/pkg/kakao"
@@ -74,7 +74,7 @@ func (ts *AuthUCTestSuite) TestSignUp() {
 	ts.Run("이미 존재하는 이메일", func() {
 		ts.mockAuthService.On("HashPassword", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return("hashedPassword")
 		ts.mockUserRepo.On("Create", mock.Anything, mock.AnythingOfType("*ent.User")).Return(nil, &ent.ConstraintError{}).Once()
-		err := ts.authUC.SignUp(context.TODO(), &transport.SignUpBody{
+		err := ts.authUC.SignUp(context.TODO(), &request.AuthSignUpBody{
 			Email:     "alreadyExisit@naver.com",
 			Password:  "password",
 			NickName:  "nick",
@@ -90,7 +90,7 @@ func (ts *AuthUCTestSuite) TestSignUp() {
 		ts.mockAuthService.On("GenerateRandomString").Return("randomasdqwd")
 		ts.mockStore.On("Set", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("time.Duration")).Return(nil).Once()
 		ts.mockAuthService.On("SendEmailVerifiedUser", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(nil)
-		err := ts.authUC.SignUp(context.TODO(), &transport.SignUpBody{
+		err := ts.authUC.SignUp(context.TODO(), &request.AuthSignUpBody{
 			Email:     "email@naver.com",
 			Password:  "password",
 			NickName:  "nick",
@@ -280,7 +280,7 @@ func (ts *AuthUCTestSuite) TestLogin() {
 		ts.mockAuthService.On("HashPassword", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return("hashedPassword")
 		ts.mockUserRepo.On("GetByEmailPassword", mock.Anything, mock.AnythingOfType("*ent.User")).Return(nil, &ent.NotFoundError{}).Once()
 
-		_, err := ts.authUC.Login(context.TODO(), &transport.LoginBody{
+		_, err := ts.authUC.Login(context.TODO(), &request.AuthLoginBody{
 			Email:    "asd@naver.com",
 			Password: "password",
 		})
@@ -297,7 +297,7 @@ func (ts *AuthUCTestSuite) TestLogin() {
 			IsEmailVerified: false,
 		}, nil).Once()
 
-		_, err := ts.authUC.Login(context.TODO(), &transport.LoginBody{
+		_, err := ts.authUC.Login(context.TODO(), &request.AuthLoginBody{
 			Email:    userEmail,
 			Password: userPassword,
 		})
@@ -338,7 +338,7 @@ func (ts *AuthUCTestSuite) TestLogin() {
 			Return(time.Now()).
 			Once()
 
-		l, err := ts.authUC.Login(context.TODO(), &transport.LoginBody{
+		l, err := ts.authUC.Login(context.TODO(), &request.AuthLoginBody{
 			Email:    userEmail,
 			Password: userPassword,
 		})
@@ -411,7 +411,7 @@ func (ts *AuthUCTestSuite) TestSocialLogin() {
 			Return(time.Now()).Once()
 
 		// 검증
-		l, err := ts.authUC.SocialLogin(context.TODO(), model.KakaoSocialType, redirectCode)
+		l, err := ts.authUC.SocialLogin(context.TODO(), model.KakaoString, redirectCode)
 
 		ts.Equal(l.AccessToken, "AccessToken")
 		ts.NoError(err, nil)
@@ -451,7 +451,7 @@ func (ts *AuthUCTestSuite) TestSocialLogin() {
 		ts.mockTokenService.On("GetExpiredAt", mock.AnythingOfType("int")).
 			Return(time.Now()).Once()
 
-		l, err := ts.authUC.SocialLogin(context.TODO(), model.KakaoSocialType, redirectCode)
+		l, err := ts.authUC.SocialLogin(context.TODO(), model.KakaoString, redirectCode)
 
 		ts.Equal(l.AccessToken, "AccessToken")
 		ts.NoError(err, nil)
@@ -495,7 +495,7 @@ func (ts *AuthUCTestSuite) TestSocialLogin() {
 		ts.mockTokenService.On("GetExpiredAt", mock.AnythingOfType("int")).
 			Return(time.Now()).Once()
 
-		l, err := ts.authUC.SocialLogin(context.TODO(), model.KakaoSocialType, redirectCode)
+		l, err := ts.authUC.SocialLogin(context.TODO(), model.KakaoString, redirectCode)
 
 		ts.Equal(l.AccessToken, "AccessToken")
 		ts.NoError(err, nil)
@@ -506,7 +506,7 @@ func (ts *AuthUCTestSuite) TestSocialSignup() {
 	ts.Run("email-already Exisit", func() {
 		email := "asd@naver.com"
 		ts.mockUserRepo.On("Get", mock.Anything, mock.AnythingOfType("int")).Return(&ent.User{Email: &email}, nil).Once()
-		err := ts.authUC.SocialSignUp(context.TODO(), &transport.SocialSignUpBody{
+		err := ts.authUC.SocialSignUp(context.TODO(), &request.AuthSocialSignUpBody{
 			UserID: 1,
 			Email:  "asd@naver.com",
 		})
@@ -522,7 +522,7 @@ func (ts *AuthUCTestSuite) TestSocialSignup() {
 			mock.AnythingOfType("int")).
 			Return(nil).Once()
 
-		err := ts.authUC.SocialSignUp(context.TODO(), &transport.SocialSignUpBody{
+		err := ts.authUC.SocialSignUp(context.TODO(), &request.AuthSocialSignUpBody{
 			UserID: 1,
 			Email:  "asd@naver.com",
 		})
