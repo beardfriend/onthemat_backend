@@ -2,22 +2,20 @@ package elastic
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
-func InitYoga(ela *elasticsearch.Client) error {
-	res, err := ela.Indices.GetFieldMapping([]string{"yoga"})
+func (e *ElasticX) InitYoga() error {
+	res, err := e.ela.Indices.GetFieldMapping([]string{"yoga"})
 	if err != nil {
 		return err
 	}
 
 	if res.StatusCode != 404 {
-		return errors.New("이미 존재")
+		return nil
 	}
 
 	settings := `
@@ -72,7 +70,7 @@ func InitYoga(ela *elasticsearch.Client) error {
 		Index: "yoga",
 		Body:  sbuf,
 	}
-	resp, err := req.Do(context.Background(), ela)
+	resp, err := req.Do(context.Background(), e.ela)
 
 	fmt.Println(resp)
 	fmt.Println(err)
@@ -90,7 +88,7 @@ func InitYoga(ela *elasticsearch.Client) error {
 	}
 	`
 	pbuf := strings.NewReader(data)
-	resp, err = ela.Indices.PutMapping([]string{"yoga"}, pbuf)
+	resp, err = e.ela.Indices.PutMapping([]string{"yoga"}, pbuf)
 
 	fmt.Println(resp)
 	return err

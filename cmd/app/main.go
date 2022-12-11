@@ -19,6 +19,7 @@ import (
 	"onthemat/pkg/auth/jwt"
 	"onthemat/pkg/auth/store/redis"
 	"onthemat/pkg/aws"
+
 	ela "onthemat/pkg/elastic"
 	"onthemat/pkg/email"
 	"onthemat/pkg/google"
@@ -67,7 +68,10 @@ func main() {
 	db := infrastructure.NewPostgresDB(c)
 	redisCli := infrastructure.NewRedis(c)
 	elastic := infrastructure.NewElasticSearch(c)
-	ela.InitYoga(elastic)
+
+	elaX := ela.NewElasticX(elastic)
+	elaX.AuthMigration()
+
 	// utils
 	validator := validatorx.NewValidatorx().
 		AddPasswordAtLeastOneCharNumValidation("PassWordAtLeastOneCharOneNum").
