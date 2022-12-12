@@ -11,6 +11,7 @@ import (
 	"onthemat/internal/app/transport/request"
 
 	"onthemat/internal/app/utils"
+	"onthemat/pkg/elasticx"
 	"onthemat/pkg/ent"
 	"onthemat/pkg/ent/yoga"
 	"onthemat/pkg/ent/yogagroup"
@@ -18,6 +19,7 @@ import (
 	"onthemat/pkg/entx"
 
 	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/google/uuid"
 )
 
@@ -31,12 +33,13 @@ type YogaRepository interface {
 	GroupList(ctx context.Context, pgModule *utils.Pagination, category *string, sorts common.Sorts) (result []*ent.YogaGroup, err error)
 
 	Create(ctx context.Context, data *ent.Yoga) (*ent.Yoga, error)
-	CreateE(ctx context.Context, d *model.ElasticYoga) error
+	ElasticCreate(ctx context.Context, d *model.ElasticYoga) error
 	Update(ctx context.Context, data *ent.Yoga) error
 	Patch(ctx context.Context, data *request.YogaPatchBody, id int) error
 	Delete(ctx context.Context, id int) error
 	Exist(ctx context.Context, id int) (bool, error)
 	List(ctx context.Context, groupdId int) ([]*ent.Yoga, error)
+	ElasticList(ctx context.Context, name string) (resp []elasticx.ElasticSearchListBody[model.ElasticYoga], err error)
 
 	CreateRaws(ctx context.Context, d []*ent.YogaRaw) error
 	DeleteAndCreateRaws(ctx context.Context, d []*ent.YogaRaw, academyId, teacherId *int) (err error)
@@ -232,7 +235,7 @@ func (repo *yogaRepository) Create(ctx context.Context, data *ent.Yoga) (*ent.Yo
 	return clause.Save(ctx)
 }
 
-func (repo *yogaRepository) CreateE(ctx context.Context, d *model.ElasticYoga) error {
+func (repo *yogaRepository) ElasticCreate(ctx context.Context, d *model.ElasticYoga) error {
 	uid := uuid.New().String()
 
 	var buf bytes.Buffer
@@ -243,6 +246,38 @@ func (repo *yogaRepository) CreateE(ctx context.Context, d *model.ElasticYoga) e
 		return err
 	}
 	return err
+}
+
+func (repo *yogaRepository) ElasticList(ctx context.Context, name string) (resp []elasticx.ElasticSearchListBody[model.ElasticYoga], err error) {
+	var buf bytes.Buffer
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"match": map[string]interface{}{
+				"name": name,
+			},
+		},
+	}
+
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		panic(err)
+	}
+
+	res, err := esapi.SearchRequest{
+		Index: []string{"yoga"},
+		Body:  &buf,
+	}.Do(ctx, repo.ela)
+	if err != nil {
+		panic(err)
+	}
+
+	var responseBody elasticx.ElasticSearchResponse[elasticx.ElasticSearchListBody[model.ElasticYoga]]
+	err = json.NewDecoder(res.Body).Decode(&responseBody)
+	if err != nil {
+		return
+	}
+
+	resp = responseBody.Hits.Hits
+	return
 }
 
 func (repo *yogaRepository) Update(ctx context.Context, data *ent.Yoga) error {

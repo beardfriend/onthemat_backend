@@ -10,14 +10,13 @@ import (
 	elasticsearch "github.com/elastic/go-elasticsearch/v8"
 )
 
-func NewElasticSearch(c *config.Config) *elasticsearch.Client {
-	cert, err := ioutil.ReadFile("../../configs/elastic.crt")
+func NewElasticSearch(c *config.Config, certUrl string) *elasticsearch.Client {
+	cert, err := ioutil.ReadFile(certUrl)
 	if err != nil {
-		panic(err)
+		log.Fatalf("fail %v", err)
 	}
 
 	address := fmt.Sprintf("https://%s:%d", c.Elastic.Host, c.Elastic.Port)
-
 	cnf := elasticsearch.Config{
 		Addresses: []string{
 			address,
@@ -29,12 +28,13 @@ func NewElasticSearch(c *config.Config) *elasticsearch.Client {
 	client, err := elasticsearch.NewClient(cnf)
 	if err != nil {
 		log.Fatalf("Error creating the client: %s", err)
-		panic(err)
 	}
+
 	resp, err := client.Info()
 	if err != nil {
-		fmt.Println("health check error")
+		log.Fatalf("helath check error")
 	}
+
 	fmt.Printf("helath check %s \n", resp)
 
 	return client

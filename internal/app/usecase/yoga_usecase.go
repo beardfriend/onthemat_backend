@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"onthemat/internal/app/common"
@@ -11,6 +10,7 @@ import (
 	r "onthemat/internal/app/repository"
 	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/utils"
+	"onthemat/pkg/elasticx"
 	"onthemat/pkg/ent"
 )
 
@@ -23,6 +23,7 @@ type YogaUsecase interface {
 
 	Create(ctx context.Context, req *request.YogaCreateBody) (err error)
 	List(ctx context.Context, groupId int) ([]*ent.Yoga, error)
+	Recomendation(ctx context.Context, name string) ([]elasticx.ElasticSearchListBody[model.ElasticYoga], error)
 	Put(ctx context.Context, req *request.YogaUpdateBody, yogaId int) (isUpdated bool, err error)
 	Delete(ctx context.Context, yogaId int) error
 	Patch(ctx context.Context, req *request.YogaPatchBody, yogaId int) (err error)
@@ -129,18 +130,6 @@ func (u *yogaUseCase) Create(ctx context.Context, req *request.YogaCreateBody) (
 		Level:       req.Level,
 		YogaGroupID: req.YogaGroupId,
 	})
-
-	e := u.yogaRepo.CreateE(ctx, &model.ElasticYoga{
-		Id:   y.ID,
-		Name: y.NameKor,
-	})
-	fmt.Println(e)
-
-	e = u.yogaRepo.CreateE(ctx, &model.ElasticYoga{
-		Id:   y.ID,
-		Name: *y.NameEng,
-	})
-	fmt.Println(e)
 	if err != nil {
 		if ent.IsConstraintError(err) {
 			err = ex.NewConflictError(ex.ErrYogaGroupDoesNotExist, nil)
@@ -148,6 +137,26 @@ func (u *yogaUseCase) Create(ctx context.Context, req *request.YogaCreateBody) (
 		}
 		return
 	}
+
+	data := []*model.ElasticYoga{
+		{
+			Id:   y.ID,
+			Name: y.NameKor,
+		},
+		{
+			Id:   y.ID,
+			Name: *y.NameEng,
+		},
+	}
+	err = u.yogaRepo.ElasticCreate(ctx, data[0])
+	if err != nil {
+		return
+	}
+	err = u.yogaRepo.ElasticCreate(ctx, data[1])
+	if err != nil {
+		return
+	}
+
 	return
 }
 
@@ -200,6 +209,10 @@ func (u *yogaUseCase) Delete(ctx context.Context, yogaId int) error {
 
 func (u *yogaUseCase) List(ctx context.Context, groupId int) ([]*ent.Yoga, error) {
 	return u.yogaRepo.List(ctx, groupId)
+}
+
+func (u *yogaUseCase) Recomendation(ctx context.Context, name string) ([]elasticx.ElasticSearchListBody[model.ElasticYoga], error) {
+	return u.yogaRepo.ElasticList(ctx, name)
 }
 
 // ------------------- YogaRaw -------------------

@@ -20,7 +20,7 @@ import (
 	"onthemat/pkg/auth/store/redis"
 	"onthemat/pkg/aws"
 
-	ela "onthemat/pkg/elastic"
+	ela "onthemat/pkg/elasticx"
 	"onthemat/pkg/email"
 	"onthemat/pkg/google"
 	"onthemat/pkg/kakao"
@@ -67,7 +67,7 @@ func main() {
 	// db
 	db := infrastructure.NewPostgresDB(c)
 	redisCli := infrastructure.NewRedis(c)
-	elastic := infrastructure.NewElasticSearch(c)
+	elastic := infrastructure.NewElasticSearch(c, "../../configs/elastic.crt")
 
 	elaX := ela.NewElasticX(elastic)
 	elaX.AuthMigration()

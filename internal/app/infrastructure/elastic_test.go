@@ -10,5 +10,5 @@ import (
 func TestElastic(t *testing.T) {
 	c := config.NewConfig()
 	c.Load("../../../configs")
-	infrastructure.NewElasticSearch(c)
+	infrastructure.NewElasticSearch(c, "../../../configs/elastic.crt")
 }

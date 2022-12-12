@@ -37,9 +37,10 @@ func (ts *YogaRepositoryTestSuite) SetupSuite() {
 
 	// 포스트그레스 연결
 	ts.client = infrastructure.NewPostgresDB(ts.config)
+	elastic := infrastructure.NewElasticSearch(c, "../../../configs/elastic.crt")
 
 	// 모듈 연결
-	ts.yogaRepo = NewYogaRepository(ts.client)
+	ts.yogaRepo = NewYogaRepository(ts.client, elastic)
 	ts.userRepo = NewUserRepository(ts.client)
 }
 
@@ -94,7 +95,7 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			})
 			ts.NoError(err)
 
-			err = ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
+			_, err = ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
 				YogaGroupID: 4,
 				NameKor:     "플라잉 키즈",
 			})
@@ -149,7 +150,7 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 				Description: utils.String("아쉬탕가 요가입니다."),
 			})
 			ts.NoError(err)
-			err = ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
+			_, err = ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
 				NameKor:     "아쉬탕가 프라이머리",
 				NameEng:     utils.String("ashtanga primary"),
 				YogaGroupID: 1,
@@ -164,7 +165,7 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 				Description: utils.String("아쉬탕가 요가입니다."),
 			})
 			ts.NoError(err)
-			err = ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
+			_, err = ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
 				NameKor:     "아쉬탕가 프라이머리",
 				NameEng:     utils.String("ashtanga primary"),
 				Level:       utils.Int(1),
@@ -179,7 +180,7 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 				Description: utils.String("아쉬탕가 요가입니다."),
 			})
 			ts.NoError(err)
-			err = ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
+			_, err = ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
 				NameKor:     "아쉬탕가 프라이머리",
 				NameEng:     utils.String("ashtanga primary"),
 				Level:       utils.Int(1),
@@ -202,6 +203,19 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			}
 			_, err = ts.client.Yoga.CreateBulk(bulk...).Save(ts.ctx)
 			ts.NoError(err)
+
+		case "TestElasticList":
+			// err := ts.yogaRepo.ElasticCreate(ts.ctx, &model.ElasticYoga{
+			// 	Id:   1,
+			// 	Name: "아쉬탕가",
+			// })
+			// ts.NoError(err)
+
+			// err = ts.yogaRepo.ElasticCreate(ts.ctx, &model.ElasticYoga{
+			// 	Id:   2,
+			// 	Name: "ashtanga",
+			// })
+			// ts.NoError(err)
 		}
 	}
 }
@@ -313,7 +327,7 @@ func (ts *YogaRepositoryTestSuite) TestGroupList() {
 
 func (ts *YogaRepositoryTestSuite) TestCreate() {
 	ts.Run("success", func() {
-		err := ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
+		_, err := ts.yogaRepo.Create(ts.ctx, &ent.Yoga{
 			NameKor:     "아쉬탕가 프라이머리",
 			YogaGroupID: 1,
 		})
@@ -396,6 +410,12 @@ func (ts *YogaRepositoryTestSuite) TestList() {
 		result, err := ts.yogaRepo.List(ts.ctx, 1)
 		ts.NoError(err)
 		ts.Equal(20, len(result))
+	})
+}
+
+func (ts *YogaRepositoryTestSuite) TestElasticList() {
+	ts.Run("success", func() {
+		ts.yogaRepo.ElasticList(ts.ctx, "ㅇ")
 	})
 }
 

@@ -53,6 +53,11 @@ type YogaListQuery struct {
 	GroupId int `query:"groupId"`
 }
 
+// ___________ Recommandation ___________
+type YogaRecommandationQuery struct {
+	Name string `query:"name"`
+}
+
 // ------------------- YogaGroup -------------------
 
 // ___________ Create ___________

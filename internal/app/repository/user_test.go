@@ -75,7 +75,7 @@ func (ts *UserRepositoryTestSuite) SetupSuite() {
 	ts.client = infrastructure.NewPostgresDB(ts.config)
 
 	// 모듈 연결
-	ts.yogaRepo = NewYogaRepository(ts.client)
+	ts.yogaRepo = NewYogaRepository(ts.client, nil)
 	ts.userRepo = NewUserRepository(ts.client)
 }
 

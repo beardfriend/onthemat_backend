@@ -63,6 +63,8 @@ func NewYogaHandler(
 	g.Delete("/:id", middleware.Auth, middleware.OnlySuperAdmin, handler.Delete)
 	// 그룹아이디 별 요가 리스트 조회
 	g.Get("/list", middleware.Auth, handler.ListByGroupId)
+	// 연관 검색어
+	g.Get("/recommendation", handler.Recommandation)
 }
 
 // 요가 생성
@@ -291,6 +293,26 @@ func (h *yogaHandler) ListByGroupId(c *fiber.Ctx) error {
 		Code:    http.StatusOK,
 		Message: "",
 		Result:  resp,
+	})
+}
+
+func (h *yogaHandler) Recommandation(c *fiber.Ctx) error {
+	ctx := c.Context()
+	b := new(request.YogaRecommandationQuery)
+
+	if err := c.QueryParser(b); err != nil {
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrQueryStringMissing, nil))
+	}
+	data, err := h.yogaUsecase.Recomendation(ctx, b.Name)
+	if err != nil {
+		return utils.NewError(c, err)
+	}
+
+	return c.Status(http.StatusOK).JSON(ex.ResponseWithData{
+		Code:    http.StatusOK,
+		Message: "",
+		Result:  data,
 	})
 }
 
