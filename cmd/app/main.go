@@ -20,7 +20,6 @@ import (
 	"onthemat/pkg/auth/store/redis"
 	"onthemat/pkg/aws"
 
-	ela "onthemat/pkg/elasticx"
 	"onthemat/pkg/email"
 	"onthemat/pkg/google"
 	"onthemat/pkg/kakao"
@@ -67,10 +66,10 @@ func main() {
 	// db
 	db := infrastructure.NewPostgresDB(c)
 	redisCli := infrastructure.NewRedis(c)
-	elastic := infrastructure.NewElasticSearch(c, "../../configs/elastic.crt")
+	// elastic := infrastructure.NewElasticSearch(c, "./configs/elastic.crt")
 
-	elaX := ela.NewElasticX(elastic)
-	elaX.AuthMigration()
+	// elaX := ela.NewElasticX(elastic)
+	// elaX.AuthMigration()
 
 	// utils
 	validator := validatorx.NewValidatorx().
@@ -84,7 +83,7 @@ func main() {
 	imageRepo := repository.NewImageRepository(db)
 	academyRepo := repository.NewAcademyRepository(db)
 	areaRepo := repository.NewAreaRepository(db)
-	yogaRepo := repository.NewYogaRepository(db, elastic)
+	yogaRepo := repository.NewYogaRepository(db, nil)
 	teacherRepo := repository.NewTeacherRepository(db)
 	recruitmentRepo := repository.NewRecruitmentRepository(db)
 
