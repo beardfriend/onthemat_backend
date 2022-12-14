@@ -1,0 +1,36 @@
+  name: CI
+  on:
+    push:
+      branches: [ main ]
+    pull_request:
+      branches: [ main ]
+  jobs:
+    access:
+      runs-on: ubuntu-latest
+      steps:
+      - uses: actions/checkout@v2
+      - name: sshPass install
+        run : sudo apt-get install -y sshpass
+
+      - name: Run Script
+        uses: appleboy/ssh-action@master
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+        script: |
+          ls -al
+      # - name: Set up Go
+      #   uses: actions/setup-go@v3
+      #   with:
+      #     go-version: 1.19.3
+      
+      # - name: Display Go version
+      #   run: go version
+
+      # - name: Install Dependencies
+      #   run: |
+      #   go get.
+      # - name: Build
+      #   run: |
+
