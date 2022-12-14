@@ -18,19 +18,6 @@
           key: ${{ secrets.SSH_KEY }}
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
-        script: |
-          ls -al
-      # - name: Set up Go
-      #   uses: actions/setup-go@v3
-      #   with:
-      #     go-version: 1.19.3
-      
-      # - name: Display Go version
-      #   run: go version
-
-      # - name: Install Dependencies
-      #   run: |
-      #   go get.
-      # - name: Build
-      #   run: |
+          script: |
+            ls -al
 
