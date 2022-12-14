@@ -9,9 +9,27 @@
       runs-on: ubuntu-latest
       steps:
       - uses: actions/checkout@v2
-      - name: sshPass install
-        run : sudo apt-get install -y sshpass
 
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.3
+
+      - name: Install Dependencies
+        run: |
+          go get.
+      - name: Build
+        run: |
+          go build .
+          
+      - name: copy file
+        uses: appleboy/scp-action@master
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          source: "./main"
+          target: "onthemat"
       - name: Run Script
         uses: appleboy/ssh-action@master
         with:
@@ -20,4 +38,6 @@
           username: ${{ secrets.USER }}
           script: |
             ls -al
+            
+
 
