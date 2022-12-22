@@ -115,7 +115,7 @@ postgres를 선택한 이유 fiber는 fasthttp기반으로 설계가 되어 있�
 
 ## 1.4. API 명세 
 
-URL : http://43.201.147.22:3000/
+URL : http://13.125.48.238:3000/
 
 <img width="1680" alt="스크린샷 2022-12-04 오후 3 54 02" src="https://user-images.githubusercontent.com/97140962/205478479-f0c7fd16-e8fd-4590-81f8-a1b8c386cfa6.png">
 
