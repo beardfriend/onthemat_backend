@@ -78,8 +78,12 @@ func (h *authHandler) SocialUrl(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.NewError(c, err)
 	}
-
-	return c.Redirect(url)
+	return c.Status(200).
+		JSON(ex.ResponseWithData{
+			Code:    200,
+			Message: "",
+			Result:  url,
+		})
 }
 
 // 소셜로그인 콜백
@@ -124,13 +128,19 @@ func (h *authHandler) SocialCallback(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.NewError(c, err)
 	}
+	c.Cookie(&fiber.Cookie{
+		Name:    "accessToken",
+		Value:   data.AccessToken,
+		Expires: data.AccessTokenExpiredAt,
+	})
 
-	return c.Status(200).
-		JSON(ex.ResponseWithData{
-			Code:    200,
-			Message: "",
-			Result:  data,
-		})
+	c.Cookie(&fiber.Cookie{
+		Name:    "refreshToken",
+		Value:   data.RefreshToken,
+		Expires: data.RefreshTokenExpiredAt,
+	})
+
+	return c.Redirect("http://localhost:3000/")
 }
 
 // 회원가입

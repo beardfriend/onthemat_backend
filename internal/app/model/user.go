@@ -62,9 +62,9 @@ func (User) Fields() []ent.Field {
 
 		field.String("nickname").
 			SchemaType(map[string]string{
-				dialect.Postgres: "varchar(20)",
+				dialect.Postgres: "varchar(50)",
 			}).
-			MaxLen(20).
+			MaxLen(50).
 			Optional().
 			Nillable().
 			Comment("닉네임"),

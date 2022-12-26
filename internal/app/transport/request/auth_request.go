@@ -49,6 +49,6 @@ type AuthTempPasswordQuery struct {
 // ------------------- VerifyEmail -------------------
 type AuthVerifyEmailQueries struct {
 	Email    string `query:"email,required" validate:"email"`
-	IssuedAt string `query:"isseudAt,required"`
+	IssuedAt string `query:"issuedAt,required"`
 	Key      string `query:"key,required"`
 }

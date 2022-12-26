@@ -15,6 +15,7 @@ type UserRepository interface {
 	UpdateEmail(ctx context.Context, email string, userId int) error
 	UpdateTempPassword(ctx context.Context, u *ent.User) error
 	UpdateEmailVerifeid(ctx context.Context, userId int) error
+	UpdateSocialKey(ctx context.Context, u *ent.User) (err error)
 	GetBySocialKey(ctx context.Context, u *ent.User) (*ent.User, error)
 	GetByEmail(ctx context.Context, email string) (*ent.User, error)
 	GetByEmailPassword(ctx context.Context, u *ent.User) (*ent.User, error)
@@ -61,6 +62,13 @@ func (repo *userRepository) Update(ctx context.Context, user *ent.User) (result 
 		return
 	}
 	return
+}
+
+func (repo *userRepository) UpdateSocialKey(ctx context.Context, u *ent.User) (err error) {
+	return repo.db.User.UpdateOneID(u.ID).
+		SetSocialKey(*u.SocialKey).
+		SetSocialName(*u.SocialName).
+		Exec(ctx)
 }
 
 func (repo *userRepository) UpdateEmail(ctx context.Context, email string, userId int) error {

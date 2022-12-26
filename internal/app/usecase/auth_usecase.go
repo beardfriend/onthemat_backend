@@ -76,7 +76,6 @@ func (a *authUseCase) SocialLoginRedirectUrl(ctx context.Context, socialName str
 	if socialName == model.NaverString {
 		url = a.authSvc.GetNaverRedirectUrl()
 		return
-
 	}
 	err = errors.New("socialName을 확인해주세요")
 	return
@@ -141,7 +140,7 @@ func (a *authUseCase) Login(ctx context.Context, body *request.AuthLoginBody) (r
 }
 
 func (a *authUseCase) SocialLogin(ctx context.Context, socialName string, code string) (result *LoginResult, err error) {
-	if socialName != model.KakaoString || socialName != model.GoogleString || socialName != model.NaverString {
+	if socialName != model.KakaoString && socialName != model.GoogleString && socialName != model.NaverString {
 		err = errors.New("socialName을 확인해주세요")
 		return
 	}
@@ -196,12 +195,28 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName string, code s
 
 	// 유저가 없으면 회원 정보 생성
 	if checkedUser == nil {
+
 		user.TermAgreeAt = time.Now()
 		checkedUser, err = a.userRepo.Create(ctx, user)
+		if ent.IsConstraintError(err) {
+
+			checkedUser, err = a.userRepo.GetByEmail(ctx, *user.Email)
+			if err != nil {
+				return
+			}
+
+			user.ID = checkedUser.ID
+			err = a.userRepo.UpdateSocialKey(ctx, user)
+			if err != nil {
+				return
+			}
+			err = nil
+		}
 		if err != nil {
 			return
 		}
 	}
+	user.ID = checkedUser.ID
 
 	userType := ""
 	if checkedUser.Type != nil {

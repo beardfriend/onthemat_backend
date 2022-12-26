@@ -29,6 +29,7 @@ import (
 
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
@@ -128,6 +129,10 @@ func main() {
 
 	app.Use(logger.New())
 	app.Use(recover.New())
+
+	// Default config
+	app.Use(cors.New())
+
 	// app.Use(limiter.New(limiter.ConfigDefault))
 
 	// handler
@@ -139,5 +144,5 @@ func main() {
 	http.NewYogaHandler(yogaUsecase, middleWare, validator, router)
 	http.NewTeacherHandler(middleWare, teacherUsecase, validator, router)
 	http.NewRecruitmentHandler(middleWare, recruitmentUsecase, validator, router)
-	app.Listen(":3000")
+	app.Listen(":8000")
 }

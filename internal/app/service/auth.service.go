@@ -171,7 +171,7 @@ func (a *authService) SendEmailResetPassword(user *ent.User) error {
 
 // TODO : 스택에 쌓아서 전송 실패할 경우 재전송
 func (a *authService) SendEmailVerifiedUser(email string, authKey string, issuedAt string, onthematHost string) error {
-	href := fmt.Sprintf("%s/api/v1/auth/verify-email?key=%s&email=%s&issued=%s", onthematHost, authKey, email, issuedAt)
+	href := fmt.Sprintf("%s/api/v1/auth/verify-email?key=%s&email=%s&issuedAt=%s", onthematHost, authKey, email, issuedAt)
 	subject := "Subject: Test email from Go!\n"
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 	body := fmt.Sprintf(`
@@ -225,5 +225,6 @@ func (a *authService) HashPassword(password string, secret string) string {
 func (a *authService) IsExpiredEmailForVerify(issuedAt string) bool {
 	issuedAtTime, _ := time.Parse(time.RFC3339, issuedAt)
 	isseudAtAfterOneDay := issuedAtTime.Add(time.Hour * 24)
-	return time.Now().After(isseudAtAfterOneDay)
+	fmt.Println(isseudAtAfterOneDay)
+	return time.Now().Before(isseudAtAfterOneDay)
 }
