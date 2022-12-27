@@ -37,6 +37,8 @@ func NewAuthHandler(
 	g.Post("/signup", handler.SignUp)
 	// 로그인
 	g.Post("/login", handler.Login)
+	// 로그아웃
+	g.Get("/logout", handler.Logout)
 	// 소셜 회원가입
 	g.Patch("/social/signup", handler.SocialSignUp)
 	// 임시 비밀번호 발급
@@ -446,4 +448,41 @@ func (h *authHandler) Refresh(c *fiber.Ctx) error {
 			Message: "",
 			Result:  res,
 		})
+}
+
+// 로그아웃
+/**
+@api {get} /auth/logout 로그아웃
+@apiName logout
+@apiVersion 1.0.0
+@apiGroup auth
+@apiQuery {String} userId 유저의 id
+@apiDescription 로그아웃 API
+@apiHeader {String} Authorization 리프레쉬토큰(Bearer)
+@apiSuccess {Number} code 200
+@apiSuccess {String} message ""
+@apiError QueryStringMissing <code>400</code> code: 3001
+@apiError AuthorizationHeaderFormatUnavailable <code>400</code> code: 3005
+@apiError InternalServerError <code>500</code> code: 500
+*/
+
+func (h *authHandler) Logout(c *fiber.Ctx) error {
+	ctx := c.Context()
+	query := new(request.AuthLogoutQuery)
+
+	authorizationHeader := c.Request().Header.Peek("Authorization")
+
+	if err := c.QueryParser(query); err != nil {
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrQueryStringMissing, err.Error()))
+	}
+
+	if err := h.AuthUseCase.Logout(ctx, query.UserId, authorizationHeader); err != nil {
+		return utils.NewError(c, err)
+	}
+
+	return c.Status(200).JSON(ex.Response{
+		Code:    200,
+		Message: "",
+	})
 }

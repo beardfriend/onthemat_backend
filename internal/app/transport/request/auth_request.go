@@ -52,3 +52,9 @@ type AuthVerifyEmailQueries struct {
 	IssuedAt string `query:"issuedAt,required"`
 	Key      string `query:"key,required"`
 }
+
+// ------------------- Logout -------------------
+
+type AuthLogoutQuery struct {
+	UserId int `query:"userId,required"`
+}

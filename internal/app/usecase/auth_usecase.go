@@ -27,7 +27,7 @@ type AuthUseCase interface {
 	SocialLogin(ctx context.Context, socialName string, code string) (result *LoginResult, err error)
 	SocialLoginRedirectUrl(ctx context.Context, socialName string) (url string, err error)
 
-	// LogOut
+	Logout(ctx context.Context, userId int, authorizationHeader []byte) (err error)
 	// PasswordChange
 	// 탈퇴
 
@@ -446,5 +446,22 @@ func (a *authUseCase) Refresh(ctx context.Context, authorizationHeader []byte) (
 		AccessToken:          access,
 		AccessTokenExpiredAt: a.tokenSvc.GetExpiredAt(a.config.JWT.AccessTokenExpired),
 	}
+	return
+}
+
+func (a *authUseCase) Logout(ctx context.Context, userId int, authorizationHeader []byte) (err error) {
+	refreshToken, err := a.authSvc.ExtractTokenFromHeader(string(authorizationHeader))
+	if err != nil {
+		err = ex.NewBadRequestError(ex.ErrAuthorizationHeaderFormatUnavailable, "Bearer")
+		return
+	}
+	claim := new(token.TokenClaim)
+	a.tokenSvc.ParseToken(refreshToken, claim)
+
+	err = a.store.HDel(ctx, strconv.Itoa(userId), claim.Uuid)
+	if err != nil {
+		return
+	}
+
 	return
 }

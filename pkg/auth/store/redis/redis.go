@@ -23,11 +23,22 @@ func (s *store) Del(ctx context.Context, key string) error {
 
 func (s *store) HSet(ctx context.Context, key string, field string, value string, expiration time.Duration) error {
 	connect := s.cli.Conn()
+
 	err := connect.HSet(ctx, key, field, value).Err()
 	if err != nil {
 		return err
 	}
 	return connect.Expire(ctx, key, expiration).Err()
+}
+
+func (s *store) HDel(ctx context.Context, key, field string) (err error) {
+	connect := s.cli.Conn()
+
+	err = connect.HDel(ctx, key, field).Err()
+	if err != nil {
+		return err
+	}
+	return
 }
 
 func (s *store) HGet(ctx context.Context, key string, field string) (string, error) {
