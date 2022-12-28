@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"onthemat/internal/app/common"
 	"onthemat/internal/app/model"
@@ -24,7 +25,7 @@ import (
 )
 
 type YogaRepository interface {
-	CreateGroup(ctx context.Context, data *ent.YogaGroup) error
+	CreateGroup(ctx context.Context, data *ent.YogaGroup) (*ent.YogaGroup, error)
 	UpdateGroup(ctx context.Context, data *ent.YogaGroup) error
 	PatchGroup(ctx context.Context, data *request.YogaGroupPatchBody, id int) error
 	DeleteGroups(ctx context.Context, ids []int) (int, error)
@@ -34,6 +35,9 @@ type YogaRepository interface {
 
 	Create(ctx context.Context, data *ent.Yoga) (*ent.Yoga, error)
 	ElasticCreate(ctx context.Context, d *model.ElasticYoga) error
+	ElasitcDelete(ctx context.Context, ids []int) (rowAfftected int, err error)
+	//@@deprecated
+	ElasticUpdate(ctx context.Context, data *model.ElasticYoga) (rowAfftected int, err error)
 	Update(ctx context.Context, data *ent.Yoga) error
 	Patch(ctx context.Context, data *request.YogaPatchBody, id int) error
 	Delete(ctx context.Context, id int) error
@@ -47,16 +51,14 @@ type YogaRepository interface {
 }
 
 type yogaRepository struct {
-	db      *ent.Client
-	ela     *elasticsearch.Client
-	elaYoga string
+	db  *ent.Client
+	ela *elasticsearch.Client
 }
 
 func NewYogaRepository(db *ent.Client, ela *elasticsearch.Client) YogaRepository {
 	return &yogaRepository{
-		db:      db,
-		ela:     ela,
-		elaYoga: "yoga",
+		db:  db,
+		ela: ela,
 	}
 }
 
@@ -139,7 +141,7 @@ func (repo *yogaRepository) ExistGroup(ctx context.Context, id int) (bool, error
 	return repo.db.YogaGroup.Query().Where(yogagroup.IDEQ(id)).Exist(ctx)
 }
 
-func (repo *yogaRepository) CreateGroup(ctx context.Context, data *ent.YogaGroup) error {
+func (repo *yogaRepository) CreateGroup(ctx context.Context, data *ent.YogaGroup) (*ent.YogaGroup, error) {
 	clause := repo.db.YogaGroup.Create().
 		SetCategory(data.Category).
 		SetCategoryEng(data.CategoryEng).
@@ -149,7 +151,7 @@ func (repo *yogaRepository) CreateGroup(ctx context.Context, data *ent.YogaGroup
 		clause.SetID(data.ID)
 	}
 
-	return clause.Exec(ctx)
+	return clause.Save(ctx)
 }
 
 func (repo *yogaRepository) UpdateGroup(ctx context.Context, data *ent.YogaGroup) error {
@@ -241,11 +243,83 @@ func (repo *yogaRepository) ElasticCreate(ctx context.Context, d *model.ElasticY
 	var buf bytes.Buffer
 	json.NewEncoder(&buf).Encode(d)
 
-	_, err := repo.ela.Create(repo.elaYoga, uid, &buf)
+	_, err := repo.ela.Create(model.ElasticYogaIndexName, uid, &buf)
 	if err != nil {
 		return err
 	}
 	return err
+}
+
+func (repo *yogaRepository) ElasitcDelete(ctx context.Context, ids []int) (rowAfftected int, err error) {
+	var buf bytes.Buffer
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"terms": map[string]interface{}{
+				"id": ids,
+			},
+		},
+	}
+
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		panic(err)
+	}
+	resp, err := repo.ela.DeleteByQuery([]string{model.ElasticYogaIndexName}, &buf)
+	if err != nil {
+		return
+	}
+	var response elasticx.ElasticDeleteUpdateQueryResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return
+	}
+	rowAfftected = response.Deleted
+	return
+}
+
+// @deprecated
+func (repo *yogaRepository) ElasticUpdate(ctx context.Context, data *model.ElasticYoga) (rowAfftected int, err error) {
+	var buf bytes.Buffer
+
+	updateSource := fmt.Sprintf("ctx._source.name = '%s';", data.Name)
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"must": []map[string]interface{}{
+					{
+						"match": map[string]interface{}{
+							"name": data.Name,
+						},
+					},
+					{
+						"match": map[string]interface{}{
+							"id": data.Id,
+						},
+					},
+				},
+			},
+		},
+		"script": map[string]interface{}{
+			"source": updateSource,
+		},
+	}
+
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		panic(err)
+	}
+
+	resp, err := repo.ela.UpdateByQuery([]string{model.ElasticYogaIndexName}, func(r *esapi.UpdateByQueryRequest) {
+		r.Body = &buf
+	})
+	if err != nil {
+		return
+	}
+	var response elasticx.ElasticDeleteUpdateQueryResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return
+	}
+	rowAfftected = response.Updated
+	return
 }
 
 func (repo *yogaRepository) ElasticList(ctx context.Context, name string) (resp []elasticx.ElasticSearchListBody[model.ElasticYoga], err error) {
@@ -263,7 +337,7 @@ func (repo *yogaRepository) ElasticList(ctx context.Context, name string) (resp 
 	}
 
 	res, err := esapi.SearchRequest{
-		Index: []string{"yoga"},
+		Index: []string{model.ElasticYogaIndexName},
 		Body:  &buf,
 	}.Do(ctx, repo.ela)
 	if err != nil {

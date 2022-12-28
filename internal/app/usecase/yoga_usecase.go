@@ -50,7 +50,7 @@ func NewYogaUsecase(yogaRepo r.YogaRepository, academyRepo r.AcademyRepository, 
 // ------------------- Group -------------------
 
 func (u *yogaUseCase) CreateGroup(ctx context.Context, req *request.YogaGroupCreateBody) (err error) {
-	err = u.yogaRepo.CreateGroup(ctx, &ent.YogaGroup{
+	y, err := u.yogaRepo.CreateGroup(ctx, &ent.YogaGroup{
 		Category:    req.Category,
 		CategoryEng: req.CategoryEng,
 		Description: req.Description,
@@ -62,10 +62,34 @@ func (u *yogaUseCase) CreateGroup(ctx context.Context, req *request.YogaGroupCre
 		}
 		return
 	}
+
+	data := []*model.ElasticYoga{
+		{
+			Id:   y.ID,
+			Name: y.Category,
+		},
+		{
+			Id:   y.ID,
+			Name: y.CategoryEng,
+		},
+	}
+	err = u.yogaRepo.ElasticCreate(ctx, data[0])
+	if err != nil {
+		return
+	}
+	err = u.yogaRepo.ElasticCreate(ctx, data[1])
+	if err != nil {
+		return
+	}
+
 	return
 }
 
 func (u *yogaUseCase) DeleteGroup(ctx context.Context, ids []int) (rowAffected int, err error) {
+	_, err = u.yogaRepo.ElasitcDelete(ctx, ids)
+	if err != nil {
+		return
+	}
 	return u.yogaRepo.DeleteGroups(ctx, ids)
 }
 
@@ -85,9 +109,26 @@ func (u *yogaUseCase) PutGroup(ctx context.Context, req *request.YogaGroupUpdate
 	}
 
 	if !isExist {
-		err = u.yogaRepo.CreateGroup(ctx, data)
+		_, err = u.yogaRepo.CreateGroup(ctx, data)
+		u.yogaRepo.ElasticCreate(ctx, &model.ElasticYoga{
+			Id:   id,
+			Name: req.Category,
+		})
+		u.yogaRepo.ElasticCreate(ctx, &model.ElasticYoga{
+			Id:   id,
+			Name: req.CategoryEng,
+		})
 	} else {
 		err = u.yogaRepo.UpdateGroup(ctx, data)
+		u.yogaRepo.ElasitcDelete(ctx, []int{id})
+		u.yogaRepo.ElasticCreate(ctx, &model.ElasticYoga{
+			Id:   id,
+			Name: req.Category,
+		})
+		u.yogaRepo.ElasticCreate(ctx, &model.ElasticYoga{
+			Id:   id,
+			Name: req.CategoryEng,
+		})
 	}
 
 	return
@@ -123,7 +164,7 @@ func (u *yogaUseCase) GroupList(ctx context.Context, req *request.YogaGroupListQ
 // ------------------- Yoga -------------------
 
 func (u *yogaUseCase) Create(ctx context.Context, req *request.YogaCreateBody) (err error) {
-	y, err := u.yogaRepo.Create(ctx, &ent.Yoga{
+	_, err = u.yogaRepo.Create(ctx, &ent.Yoga{
 		NameKor:     req.NameKor,
 		NameEng:     req.NameEng,
 		Description: req.Description,
@@ -135,25 +176,6 @@ func (u *yogaUseCase) Create(ctx context.Context, req *request.YogaCreateBody) (
 			err = ex.NewConflictError(ex.ErrYogaGroupDoesNotExist, nil)
 			return
 		}
-		return
-	}
-
-	data := []*model.ElasticYoga{
-		{
-			Id:   y.ID,
-			Name: y.NameKor,
-		},
-		{
-			Id:   y.ID,
-			Name: *y.NameEng,
-		},
-	}
-	err = u.yogaRepo.ElasticCreate(ctx, data[0])
-	if err != nil {
-		return
-	}
-	err = u.yogaRepo.ElasticCreate(ctx, data[1])
-	if err != nil {
 		return
 	}
 

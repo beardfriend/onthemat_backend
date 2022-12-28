@@ -17,6 +17,8 @@ type ElasticYoga struct {
 	Name string `json:"name"`
 }
 
+const ElasticYogaIndexName = "yoga"
+
 func (Yoga) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "yoga"},

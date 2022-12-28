@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"onthemat/internal/app/common"
 	"onthemat/internal/app/config"
 	"onthemat/internal/app/infrastructure"
+	"onthemat/internal/app/model"
 	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/utils"
 	"onthemat/pkg/ent"
@@ -31,13 +33,16 @@ type YogaRepositoryTestSuite struct {
 func (ts *YogaRepositoryTestSuite) SetupSuite() {
 	t := ts.T()
 	ts.ctx = context.Background()
-
 	c := utils.GetTestConfig(t)
 	ts.config = c
+	utils.RepoTestClose(t)
+	time.Sleep(1 * time.Second)
+	ts.config = utils.RepoTestInit(t)
+	time.Sleep(3 * time.Second)
 
 	// 포스트그레스 연결
 	ts.client = infrastructure.NewPostgresDB(ts.config)
-	elastic := infrastructure.NewElasticSearch(c, "../../../configs/elastic.crt")
+	elastic := infrastructure.NewElasticSearch(ts.config, "../../../configs/elastic.crt")
 
 	// 모듈 연결
 	ts.yogaRepo = NewYogaRepository(ts.client, elastic)
@@ -47,6 +52,7 @@ func (ts *YogaRepositoryTestSuite) SetupSuite() {
 // 모든 테스트 종료 후 1회
 func (ts *YogaRepositoryTestSuite) TearDownSuite() {
 	ts.client.Close()
+	utils.RepoTestClose(nil)
 }
 
 // 각 테스트 종료 후 N회
@@ -61,7 +67,7 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 		case "TestCreateGroup":
 
 		case "TestUpdateGroup":
-			err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+			_, err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
 				Category:    "아쉬탕가",
 				CategoryEng: "ashtanga",
 				Description: utils.String("아쉬탕가 요가입니다."),
@@ -69,26 +75,26 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			ts.NoError(err)
 
 		case "TestDeleteGroups":
-			err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+			_, err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
 				Category:    "아쉬탕가",
 				CategoryEng: "ashtanga",
 				Description: utils.String("아쉬탕가 요가입니다."),
 			})
 			ts.NoError(err)
-			err = ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+			_, err = ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
 				Category:    "하타",
 				CategoryEng: "hata",
 				Description: utils.String("하타 요가입니다."),
 			})
 			ts.NoError(err)
 
-			err = ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+			_, err = ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
 				Category:    "인",
 				CategoryEng: "in",
 				Description: utils.String("인 요가입니다."),
 			})
 			ts.NoError(err)
-			err = ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+			_, err = ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
 				Category:    "플라잉",
 				CategoryEng: "flying",
 				Description: utils.String("플라잉 요가입니다."),
@@ -102,7 +108,7 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			ts.NoError(err)
 
 		case "TestPatchGroup":
-			err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+			_, err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
 				Category:    "아쉬탕가",
 				CategoryEng: "ashtanga",
 				Description: utils.String("아쉬탕가 요가입니다."),
@@ -110,13 +116,13 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			ts.NoError(err)
 
 		case "TestGroupTotal":
-			err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+			_, err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
 				Category:    "인",
 				CategoryEng: "in",
 				Description: utils.String("인 요가입니다."),
 			})
 			ts.NoError(err)
-			err = ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+			_, err = ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
 				Category:    "플라잉",
 				CategoryEng: "flying",
 				Description: utils.String("플라잉 요가입니다."),
@@ -136,7 +142,7 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			ts.NoError(err)
 
 		case "TestCreate":
-			err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+			_, err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
 				Category:    "아쉬탕가",
 				CategoryEng: "ashtanga",
 				Description: utils.String("아쉬탕가 요가입니다."),
@@ -144,7 +150,7 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			ts.NoError(err)
 
 		case "TestUpdate":
-			err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+			_, err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
 				Category:    "아쉬탕가",
 				CategoryEng: "ashtanga",
 				Description: utils.String("아쉬탕가 요가입니다."),
@@ -159,7 +165,7 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			ts.NoError(err)
 
 		case "TestPatch":
-			err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+			_, err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
 				Category:    "아쉬탕가",
 				CategoryEng: "ashtanga",
 				Description: utils.String("아쉬탕가 요가입니다."),
@@ -174,7 +180,7 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			})
 			ts.NoError(err)
 		case "TestDelete":
-			err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+			_, err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
 				Category:    "아쉬탕가",
 				CategoryEng: "ashtanga",
 				Description: utils.String("아쉬탕가 요가입니다."),
@@ -190,7 +196,7 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			ts.NoError(err)
 
 		case "TestList":
-			err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+			_, err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
 				Category:    "아쉬탕가",
 				CategoryEng: "ashtanga",
 				Description: utils.String("아쉬탕가 요가입니다."),
@@ -205,17 +211,40 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			ts.NoError(err)
 
 		case "TestElasticList":
-			// err := ts.yogaRepo.ElasticCreate(ts.ctx, &model.ElasticYoga{
-			// 	Id:   1,
-			// 	Name: "아쉬탕가",
-			// })
-			// ts.NoError(err)
+			err := ts.yogaRepo.ElasticCreate(ts.ctx, &model.ElasticYoga{
+				Id:   1,
+				Name: "아쉬탕가",
+			})
+			ts.NoError(err)
 
-			// err = ts.yogaRepo.ElasticCreate(ts.ctx, &model.ElasticYoga{
-			// 	Id:   2,
-			// 	Name: "ashtanga",
-			// })
-			// ts.NoError(err)
+			err = ts.yogaRepo.ElasticCreate(ts.ctx, &model.ElasticYoga{
+				Id:   2,
+				Name: "아쉬탕가 레드",
+			})
+			ts.NoError(err)
+
+			err = ts.yogaRepo.ElasticCreate(ts.ctx, &model.ElasticYoga{
+				Id:   3,
+				Name: "아쉬탕가 프리이머리",
+			})
+			ts.NoError(err)
+
+		case "TestElasticUpdate":
+			err := ts.yogaRepo.ElasticCreate(ts.ctx, &model.ElasticYoga{
+				Id:   1,
+				Name: "아쉬탕가",
+			})
+			ts.NoError(err)
+		}
+	}
+}
+
+func (ts *YogaRepositoryTestSuite) AfterTest(suiteName, testName string) {
+	if suiteName == "YogaRepositoryTestSuite" {
+		if testName == "TestElasticList" {
+			rowAffected, err := ts.yogaRepo.ElasitcDelete(ts.ctx, []int{1, 2, 3})
+			ts.NoError(err)
+			ts.Equal(3, rowAffected)
 		}
 	}
 }
@@ -223,7 +252,7 @@ func (ts *YogaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 // TEST GROUP
 func (ts *YogaRepositoryTestSuite) TestCreateGroup() {
 	ts.Run("success", func() {
-		err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+		_, err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
 			Category:    "아쉬탕가",
 			CategoryEng: "ashtanga",
 			Description: utils.String("아쉬탕가 요가입니다."),
@@ -235,7 +264,7 @@ func (ts *YogaRepositoryTestSuite) TestCreateGroup() {
 		ts.Equal(res.Category, "아쉬탕가")
 	})
 	ts.Run("null값으로 들어가는지.", func() {
-		err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
+		_, err := ts.yogaRepo.CreateGroup(ts.ctx, &ent.YogaGroup{
 			Category:    "하타",
 			CategoryEng: "Hata",
 			Description: nil,
@@ -415,7 +444,24 @@ func (ts *YogaRepositoryTestSuite) TestList() {
 
 func (ts *YogaRepositoryTestSuite) TestElasticList() {
 	ts.Run("success", func() {
-		ts.yogaRepo.ElasticList(ts.ctx, "ㅇ")
+		d, err := ts.yogaRepo.ElasticList(ts.ctx, "아쉬탕가 레")
+		ts.NoError(err)
+		fmt.Println(d)
+	})
+}
+
+func (ts *YogaRepositoryTestSuite) TestElasticUpdate() {
+	ts.Run("success", func() {
+		rawAffected, err := ts.yogaRepo.ElasticUpdate(ts.ctx, &model.ElasticYoga{
+			Id:   1,
+			Name: "아헹가",
+		})
+		ts.NoError(err)
+		ts.Equal(1, rawAffected)
+		time.Sleep(2 * time.Second)
+		d, err := ts.yogaRepo.ElasticList(ts.ctx, "아헹가")
+		ts.NoError(err)
+		fmt.Println(d)
 	})
 }
 

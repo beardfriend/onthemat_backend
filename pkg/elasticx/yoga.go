@@ -21,49 +21,36 @@ func (e *ElasticX) InitYoga() error {
 	settings := `
 	{
 		"settings": {
-		  "analysis": {
-			"filter": {
+		  "index": {
+			"analysis": {
+			  "filter": {
 			  "suggest_filter": {
 				"type": "edge_ngram",
 				"min_gram": 1,
 				"max_gram": 50
 			  }
 			},
-			"analyzer": {
-			  "autocomplete": {
-				"tokenizer": "autocomplete",
-				"filter": [
+			  "tokenizer": {
+				"nori_search_tokenizer": {
+				  "type": "nori_tokenizer",
+				  "decompound_mode": "mixed",
+				  "discard_punctuation": "false"
+				}
+			  },
+			  "analyzer": {
+				"nori_search_analyzer": {
+				  "type": "custom",
+				  "tokenizer": "nori_search_tokenizer",
+				  "filter": [
+				  "suggest_filter",
 				  "lowercase"
-				]
-			  },
-			  "autocomplete_search": {
-				"tokenizer": "lowercase"
-			  },
-			  "suggest_search_analyzer": {
-				"type": "custom",
-				"tokenizer": "jaso_tokenizer"
-			  },
-			  "suggest_index_analyzer": {
-				"type": "custom",
-				"tokenizer": "jaso_tokenizer",
-				"filter": [
-				  "suggest_filter"
-				]
-			  }
-			},
-			"tokenizer": {
-			  "autocomplete": {
-				"type": "edge_ngram",
-				"min_gram": 1,
-				"max_gram": 50,
-				"token_chars": [
-				  "letter"
-				]
+				  ]
+				}
 			  }
 			}
 		  }
 		}
-	}
+	  }
 	`
 	sbuf := strings.NewReader(settings)
 	req := esapi.IndicesCreateRequest{
@@ -78,13 +65,12 @@ func (e *ElasticX) InitYoga() error {
 	data := `
 	{
 		"properties": {
-			"name": {
-			  "type": "text",
-			  "store": true,
-			  "analyzer": "suggest_index_analyzer",
-			  "search_analyzer": "suggest_search_analyzer"
-			}
-		  }
+		"name": {
+		  "type": "text",
+		  "store": true,
+		  "analyzer": "nori_search_analyzer"
+		}
+	  }
 	}
 	`
 	pbuf := strings.NewReader(data)
