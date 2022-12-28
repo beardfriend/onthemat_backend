@@ -53,7 +53,7 @@ func NewAcademyHandler(
 @apiDescription 학원 생성
 @apiHeader Authorization accessToken (Bearer)
 @apiBody {Object} info
-@apiBody {String} info.sigunguId 시군구 id
+@apiBody {String} info.sigunguAdmCode 시군구 법정명 코드
 @apiBody {String} info.businessCode 사업자 번호
 @apiBody {String} info.name 학원 이름
 @apiBody {String} info.callNumber 연락가능한 번호

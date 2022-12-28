@@ -70,6 +70,25 @@ func (ts *AreaRepositoryTestSuite) BeforeTest(suiteName, testName string) {
 			}, sigungu)
 			ts.NoError(e)
 		}
+
+		if testName == "TestGetSigunguIdByAdmCode" {
+			var sigungu []*ent.AreaSiGungu
+			sigungu = append(sigungu, &ent.AreaSiGungu{
+				Name:    "강남구",
+				AdmCode: "11010",
+			})
+			sigungu = append(sigungu, &ent.AreaSiGungu{
+				Name:    "중구",
+				AdmCode: "11020",
+			})
+
+			e := ts.areaRepo.Create(ts.ctx, &ent.AreaSiDo{
+				Name:    "서울특별자치시",
+				AdmCode: "11",
+				Version: 1,
+			}, sigungu)
+			ts.NoError(e)
+		}
 	}
 }
 
@@ -105,6 +124,12 @@ func (ts *AreaRepositoryTestSuite) TestGetSigungu() {
 	data, err := ts.areaRepo.GetSigunGu(ts.ctx, "중구")
 	ts.NoError(err)
 	ts.Equal(data.Name, "중구")
+}
+
+func (ts *AreaRepositoryTestSuite) TestGetSigunguIdByAdmCode() {
+	id, err := ts.areaRepo.GetSigunguIdByAdmCode(ts.ctx, "11010")
+	ts.NoError(err)
+	ts.Equal(id, 1)
 }
 
 func TestAreaRepositoryTestSuite(t *testing.T) {

@@ -11,6 +11,7 @@ import (
 type AreaRepository interface {
 	Create(ctx context.Context, d *ent.AreaSiDo, sigungu []*ent.AreaSiGungu) error
 	GetSigunGu(ctx context.Context, name string) (*ent.AreaSiGungu, error)
+	GetSigunguIdByAdmCode(ctx context.Context, admCode string) (id int, err error)
 }
 
 type areaRepository struct {
@@ -51,4 +52,8 @@ func (repo *areaRepository) GetSigunGu(ctx context.Context, name string) (*ent.A
 	return repo.db.AreaSiGungu.Query().
 		Where(areasigungu.NameEQ(name)).
 		Only(ctx)
+}
+
+func (repo *areaRepository) GetSigunguIdByAdmCode(ctx context.Context, admCode string) (id int, err error) {
+	return repo.db.AreaSiGungu.Query().Where(areasigungu.AdmCodeEQ(admCode)).OnlyID(ctx)
 }

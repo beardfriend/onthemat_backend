@@ -19,5 +19,5 @@ func main() {
 	areaRepo := repository.NewAreaRepository(db)
 	areaService := service.NewAreaService()
 	areaUsecase := usecase.NewAreaUsecase(areaRepo, areaService)
-	areaUsecase.CreateSiDo(context.Background(), "/home/ubuntu/행정.xlsx")
+	areaUsecase.CreateSiDo(context.Background(), "/Users/sehun/Downloads/국토교통부.xlsx")
 }

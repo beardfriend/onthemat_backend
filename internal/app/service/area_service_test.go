@@ -19,6 +19,8 @@ func (ts *AreaServiceTestSuite) SetupSuite() {
 func (ts *AreaServiceTestSuite) TestParseExcel() {
 	ts.Run("성공", func() {
 		sido, sigungu, err := ts.areaService.ParseExcelData("/Users/sehun/Downloads/행정.xlsx")
+		ts.Equal(261, len(sigungu))
+		ts.Equal(17, len(sido))
 		ts.NoError(err)
 		fmt.Println(sido)
 		fmt.Println(sigungu)
@@ -27,13 +29,10 @@ func (ts *AreaServiceTestSuite) TestParseExcel() {
 	})
 }
 
-func (ts *AreaServiceTestSuite) TestParseBubjungDongExcel() {
-	ts.Run("성공", func() {
-		r, r1, _ := ts.areaService.ParseBubjungDongExcelData("/Users/sehun/Downloads/국토교통부.xlsx")
-		fmt.Println(len(r1))
-		fmt.Println(len(r))
-	})
-}
+// 성능 측정 결과 :
+// 엑셀 20000개 정도의 숫자에서는 비동기 처리해도 속도가 똑같다.
+// 대략 20000 * 8 개 정도 되어야
+// 1초 정도 차이가 벌어진다 이상.
 
 func TestAreaServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(AreaServiceTestSuite))

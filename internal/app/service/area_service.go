@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"runtime"
 	"sync"
 
 	"github.com/xuri/excelize/v2"
@@ -9,7 +10,7 @@ import (
 
 type AreaService interface {
 	ParseExcelData(fileUrl string) (SidoResult []Sido, SigunguResult []Sigungu, err error)
-	ParseBubjungDongExcelData(fileUrl string) (SidoResult []Sido, SigunguResult []Sigungu, err error)
+	ParesExcelDataV2(fileUrl string) (SidoResult []Sido, SigunguResult []Sigungu, err error)
 }
 
 type areaService struct{}
@@ -35,7 +36,85 @@ type Data struct {
 	SigunguCode string
 }
 
-func (*areaService) ParseBubjungDongExcelData(fileUrl string) (SidoResult []Sido, SigunguResult []Sigungu, err error) {
+func (*areaService) ParesExcelDataV2(fileUrl string) (SidoResult []Sido, SigunguResult []Sigungu, err error) {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	fmt.Println(runtime.NumCPU())
+	f, err := excelize.OpenFile(fileUrl)
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		if err := f.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+
+	rows, err := f.GetRows("Sheet1")
+	if err != nil {
+		return
+	}
+
+	keys := make(map[string]bool)
+	for _, row := range rows {
+		var lastAddedSidoCode string
+		var lastAddedSigunguCode string
+		if len(row) > 7 && len(row[7]) > 1 {
+			continue
+		}
+
+		var tempSigunguCode string
+		var tempSigunguName string
+		var tempSidoCode string
+		var tempSidoName string
+		for j, colName := range row {
+			if j == 0 && colName != "" {
+				tempSidoCode = colName[:2]
+				tempSigunguCode = colName[:5]
+			}
+
+			if j == 1 && tempSidoCode != "" && colName != "" {
+				tempSidoName = colName
+			}
+
+			if j == 2 && tempSigunguCode != "" && colName != "" {
+				tempSigunguName = colName
+			}
+
+			if tempSidoCode != "" && tempSidoName != "" && lastAddedSidoCode != tempSidoCode {
+				lastAddedSidoCode = tempSidoCode
+
+				if _, ok := keys[tempSidoCode]; !ok {
+					keys[tempSidoCode] = true
+					SidoResult = append(SidoResult, Sido{
+						SidoCode: tempSidoCode,
+						SidoName: tempSidoName,
+					})
+				}
+
+			}
+
+			if tempSigunguCode != "" && tempSigunguName != "" && lastAddedSigunguCode != tempSigunguCode {
+				lastAddedSigunguCode = tempSigunguCode
+
+				if _, ok := keys[tempSigunguCode]; !ok {
+					keys[tempSigunguCode] = true
+					SigunguResult = append(SigunguResult, Sigungu{
+						SigunguCode: tempSigunguCode,
+						SigunguName: tempSigunguName,
+					})
+
+				}
+
+			}
+		}
+	}
+	return
+}
+
+func (*areaService) ParesExcelDataV2Async(fileUrl string) (SidoResult []Sido, SigunguResult []Sigungu, err error) {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	fmt.Println(runtime.NumCPU())
 	f, err := excelize.OpenFile(fileUrl)
 	if err != nil {
 		return
@@ -56,15 +135,15 @@ func (*areaService) ParseBubjungDongExcelData(fileUrl string) (SidoResult []Sido
 		EndNum   int
 	}, 0)
 
-	chuk := len(rows) / 100
-	for i := 0; i <= 99; i++ {
+	chuk := len(rows) / 9
+	for i := 0; i <= 8; i++ {
 
 		startNum := (i * chuk)
 		endNum := ((i + 1) * chuk) - 1
 		if i == 0 {
 			startNum = 1
 		}
-		if i == 99 {
+		if i == 8 {
 			endNum = len(rows)
 		}
 		SheetIndexHash[i] = struct {
@@ -118,11 +197,13 @@ func (*areaService) ParseBubjungDongExcelData(fileUrl string) (SidoResult []Sido
 						lastAddedSidoCode = tempSidoCode
 						mutex.Lock()
 						if _, ok := keys[tempSidoCode]; !ok {
+
 							keys[tempSidoCode] = true
 							SidoResult = append(SidoResult, Sido{
 								SidoCode: tempSidoCode,
 								SidoName: tempSidoName,
 							})
+
 						}
 						mutex.Unlock()
 
@@ -132,6 +213,7 @@ func (*areaService) ParseBubjungDongExcelData(fileUrl string) (SidoResult []Sido
 						lastAddedSigunguCode = tempSigunguCode
 						mutex.Lock()
 						if _, ok := keys[tempSigunguCode]; !ok {
+
 							keys[tempSigunguCode] = true
 							SigunguResult = append(SigunguResult, Sigungu{
 								SigunguCode: tempSigunguCode,
@@ -140,6 +222,7 @@ func (*areaService) ParseBubjungDongExcelData(fileUrl string) (SidoResult []Sido
 
 						}
 						mutex.Unlock()
+
 					}
 				}
 			}

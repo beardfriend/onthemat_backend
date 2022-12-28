@@ -10,13 +10,13 @@ type AcademyCreateBody struct {
 }
 
 type AcademyInfoForCreate struct {
-	SigunguID     int     `json:"sigunguId" validate:"required"`
-	Name          string  `json:"name" validate:"required"`
-	LogoUrl       string  `json:"logoUrl" validate:"required,urlStartHttpHttps"`
-	CallNumber    string  `json:"callNumber"`
-	BusinessCode  string  `json:"businessCode" validate:"required"`
-	AddressRoad   string  `json:"addressRoad" validate:"required"`
-	AddressDetail *string `json:"addressDetail"`
+	SigunguAdmCode int     `json:"sigunguAdmCode" validate:"required"`
+	Name           string  `json:"name" validate:"required"`
+	LogoUrl        string  `json:"logoUrl" validate:"required,urlStartHttpHttps"`
+	CallNumber     string  `json:"callNumber"`
+	BusinessCode   string  `json:"businessCode" validate:"required"`
+	AddressRoad    string  `json:"addressRoad" validate:"required"`
+	AddressDetail  *string `json:"addressDetail"`
 }
 
 // ------------------- Update -------------------

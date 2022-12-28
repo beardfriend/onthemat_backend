@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	ex "onthemat/internal/app/common"
@@ -80,9 +81,15 @@ func (u *academyUseCase) Create(ctx context.Context, req *request.AcademyCreateB
 			yoga = append(yoga, &ent.Yoga{ID: v})
 		}
 	}
+	// integer to alphabet == Itoa
+	sigunguId, err := u.areaRepo.GetSigunguIdByAdmCode(ctx, strconv.Itoa(info.SigunguAdmCode))
+	if err != nil {
+		return
+	}
+
 	data := &ent.Academy{
 		UserID:        userId,
-		SigunguID:     info.SigunguID,
+		SigunguID:     sigunguId,
 		Name:          info.Name,
 		BusinessCode:  info.BusinessCode,
 		CallNumber:    info.CallNumber,

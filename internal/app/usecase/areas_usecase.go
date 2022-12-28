@@ -26,7 +26,7 @@ func NewAreaUsecase(areaRepo repository.AreaRepository, areaService service.Area
 }
 
 func (a *areaUsecase) CreateSiDo(ctx context.Context, fileUrl string) (err error) {
-	Sido, SiGungu, err := a.areaService.ParseExcelData(fileUrl)
+	Sido, SiGungu, err := a.areaService.ParesExcelDataV2(fileUrl)
 	version := 1
 	if err != nil {
 		return
