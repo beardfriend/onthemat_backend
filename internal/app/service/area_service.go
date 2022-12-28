@@ -2,12 +2,14 @@ package service
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/xuri/excelize/v2"
 )
 
 type AreaService interface {
 	ParseExcelData(fileUrl string) (SidoResult []Sido, SigunguResult []Sigungu, err error)
+	ParseBubjungDongExcelData(fileUrl string) (SidoResult []Sido, SigunguResult []Sigungu, err error)
 }
 
 type areaService struct{}
@@ -24,6 +26,129 @@ type Sido struct {
 type Sigungu struct {
 	SigunguName string
 	SigunguCode string
+}
+
+type Data struct {
+	SidoName    string
+	SidoCode    string
+	SigunguName string
+	SigunguCode string
+}
+
+func (*areaService) ParseBubjungDongExcelData(fileUrl string) (SidoResult []Sido, SigunguResult []Sigungu, err error) {
+	f, err := excelize.OpenFile(fileUrl)
+	if err != nil {
+		return
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+
+	rows, err := f.GetRows("Sheet1")
+	if err != nil {
+		return
+	}
+
+	SheetIndexHash := make(map[int]struct {
+		StratNum int
+		EndNum   int
+	}, 0)
+
+	chuk := len(rows) / 100
+	for i := 0; i <= 99; i++ {
+
+		startNum := (i * chuk)
+		endNum := ((i + 1) * chuk) - 1
+		if i == 0 {
+			startNum = 1
+		}
+		if i == 99 {
+			endNum = len(rows)
+		}
+		SheetIndexHash[i] = struct {
+			StratNum int
+			EndNum   int
+		}{
+			StratNum: startNum,
+			EndNum:   endNum,
+		}
+	}
+	var wg sync.WaitGroup
+	mutex := new(sync.Mutex)
+	keys := make(map[string]bool)
+	for _, val := range SheetIndexHash {
+		wg.Add(1)
+		go func(val struct {
+			StratNum int
+			EndNum   int
+		},
+		) {
+			defer wg.Done()
+			var lastAddedSidoCode string
+			var lastAddedSigunguCode string
+
+			for i := val.StratNum; i < val.EndNum; i++ {
+
+				if len(rows[i]) > 7 && len(rows[i][7]) > 1 {
+					continue
+				}
+
+				var tempSigunguCode string
+				var tempSigunguName string
+				var tempSidoCode string
+				var tempSidoName string
+				for j, colName := range rows[i] {
+
+					if j == 0 && colName != "" {
+						tempSidoCode = colName[:2]
+						tempSigunguCode = colName[:5]
+					}
+
+					if j == 1 && tempSidoCode != "" && colName != "" {
+						tempSidoName = colName
+					}
+
+					if j == 2 && tempSigunguCode != "" && colName != "" {
+						tempSigunguName = colName
+					}
+
+					if tempSidoCode != "" && tempSidoName != "" && lastAddedSidoCode != tempSidoCode {
+						lastAddedSidoCode = tempSidoCode
+						mutex.Lock()
+						if _, ok := keys[tempSidoCode]; !ok {
+							keys[tempSidoCode] = true
+							SidoResult = append(SidoResult, Sido{
+								SidoCode: tempSidoCode,
+								SidoName: tempSidoName,
+							})
+						}
+						mutex.Unlock()
+
+					}
+
+					if tempSigunguCode != "" && tempSigunguName != "" && lastAddedSigunguCode != tempSigunguCode {
+						lastAddedSigunguCode = tempSigunguCode
+						mutex.Lock()
+						if _, ok := keys[tempSigunguCode]; !ok {
+							keys[tempSigunguCode] = true
+							SigunguResult = append(SigunguResult, Sigungu{
+								SigunguCode: tempSigunguCode,
+								SigunguName: tempSigunguName,
+							})
+
+						}
+						mutex.Unlock()
+					}
+				}
+			}
+		}(val)
+	}
+
+	wg.Wait()
+
+	return
 }
 
 // 한국행정구역분류 항목표 엑셀파일 파싱

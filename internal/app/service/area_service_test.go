@@ -27,6 +27,14 @@ func (ts *AreaServiceTestSuite) TestParseExcel() {
 	})
 }
 
+func (ts *AreaServiceTestSuite) TestParseBubjungDongExcel() {
+	ts.Run("성공", func() {
+		r, r1, _ := ts.areaService.ParseBubjungDongExcelData("/Users/sehun/Downloads/국토교통부.xlsx")
+		fmt.Println(len(r1))
+		fmt.Println(len(r))
+	})
+}
+
 func TestAreaServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(AreaServiceTestSuite))
 }
