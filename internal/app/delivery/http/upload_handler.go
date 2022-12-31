@@ -47,6 +47,7 @@ func NewUploadHandler(
 @apiParam {String="profile,logo"} purpose 업로드 이후 사용할 목적
 @apiSuccess (201) {Number} code 201
 @apiSuccess (201) {String} message ""
+@apiSuccess (201) {String} result url
 @apiError ValidationError <code>400</code> code: 2xxx
 @apiError ImageExtensionUnavailable <code>400</code> code: 3003
 @apiError FormDataKeyUnavailable <code>400</code> code: 3004
@@ -74,12 +75,14 @@ func (h *uploadHandler) Upload(c *fiber.Ctx) error {
 			JSON(ex.NewHttpError(ex.ErrFormDataKeyUnavailable, "key name is file"))
 	}
 
-	if err := h.uploadUseCase.Upload(ctx, file, reqParams, userId); err != nil {
+	url, err := h.uploadUseCase.Upload(ctx, file, reqParams, userId)
+	if err != nil {
 		return utils.NewError(c, err)
 	}
 
-	return c.Status(http.StatusCreated).JSON(ex.Response{
+	return c.Status(http.StatusCreated).JSON(ex.ResponseWithData{
 		Code:    http.StatusCreated,
 		Message: "",
+		Result:  url,
 	})
 }

@@ -220,7 +220,7 @@ func (a *authUseCase) SocialLogin(ctx context.Context, socialName string, code s
 
 	userType := ""
 	if checkedUser.Type != nil {
-		userType = *user.Type.ToString()
+		userType = *checkedUser.Type.ToString()
 	}
 
 	// 토큰 발행

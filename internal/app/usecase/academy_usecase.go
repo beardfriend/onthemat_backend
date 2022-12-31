@@ -90,6 +90,7 @@ func (u *academyUseCase) Create(ctx context.Context, req *request.AcademyCreateB
 	data := &ent.Academy{
 		UserID:        userId,
 		SigunguID:     sigunguId,
+		LogoUrl:       info.LogoUrl,
 		Name:          info.Name,
 		BusinessCode:  info.BusinessCode,
 		CallNumber:    info.CallNumber,

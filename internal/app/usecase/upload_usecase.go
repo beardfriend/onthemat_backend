@@ -19,7 +19,7 @@ import (
 )
 
 type UploadUsecase interface {
-	Upload(ctx context.Context, file *multipart.FileHeader, params *request.UploadParams, userId int) error
+	Upload(ctx context.Context, file *multipart.FileHeader, params *request.UploadParams, userId int) (url string, err error)
 }
 
 type uploadUseCase struct {
@@ -34,7 +34,7 @@ func NewUploadUsecase(imageRepo repository.ImageRepository, s3 aws.S3) UploadUse
 	}
 }
 
-func (u *uploadUseCase) Upload(ctx context.Context, file *multipart.FileHeader, params *request.UploadParams, userId int) (err error) {
+func (u *uploadUseCase) Upload(ctx context.Context, file *multipart.FileHeader, params *request.UploadParams, userId int) (url string, err error) {
 	fileExt := filepath.Ext(file.Filename)
 
 	isUsable, _ := validatorx.ImageExtensionValidator(fileExt)
@@ -61,6 +61,8 @@ func (u *uploadUseCase) Upload(ctx context.Context, file *multipart.FileHeader, 
 	}, userId); err != nil {
 		return
 	}
+
+	url = resp.Location
 
 	return
 }

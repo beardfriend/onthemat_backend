@@ -67,7 +67,7 @@ func main() {
 	// db
 	db := infrastructure.NewPostgresDB(c)
 	redisCli := infrastructure.NewRedis(c)
-	// elastic := infrastructure.NewElasticSearch(c, "./configs/elastic.crt")
+	elastic := infrastructure.NewElasticSearch(c, configPath+"/elastic.crt")
 
 	// elaX := ela.NewElasticX(elastic)
 	// elaX.AuthMigration()
@@ -84,7 +84,7 @@ func main() {
 	imageRepo := repository.NewImageRepository(db)
 	academyRepo := repository.NewAcademyRepository(db)
 	areaRepo := repository.NewAreaRepository(db)
-	yogaRepo := repository.NewYogaRepository(db, nil)
+	yogaRepo := repository.NewYogaRepository(db, elastic)
 	teacherRepo := repository.NewTeacherRepository(db)
 	recruitmentRepo := repository.NewRecruitmentRepository(db)
 

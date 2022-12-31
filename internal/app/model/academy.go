@@ -61,6 +61,10 @@ func (Academy) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			Comment("상세주소"),
+
+		field.String("logoUrl").
+			NotEmpty().
+			Comment("학원 로고 주소"),
 	}
 }
 

@@ -55,6 +55,7 @@ func (repo *academyRepository) Create(ctx context.Context, d *ent.Academy) (err 
 			SetBusinessCode(d.BusinessCode).
 			SetCallNumber(d.CallNumber).
 			SetAddressRoad(d.AddressRoad).
+			SetLogoUrl(d.LogoUrl).
 			SetNillableAddressDetail(d.AddressDetail)
 
 		if len(d.Edges.Yoga) > 0 {
@@ -106,6 +107,7 @@ func (repo *academyRepository) Update(ctx context.Context, d *ent.Academy) error
 	clause.
 		SetSigunguID(d.SigunguID).
 		SetName(d.Name).
+		SetLogoUrl(d.LogoUrl).
 		SetCallNumber(d.CallNumber).
 		SetAddressRoad(d.AddressRoad).
 		SetNillableAddressDetail(d.AddressDetail).
