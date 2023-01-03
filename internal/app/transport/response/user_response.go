@@ -12,6 +12,7 @@ import (
 type UserMeResponse struct {
 	ID          int                  `json:"id"`
 	Email       *string              `json:"email"`
+	LogoUrl     string               `json:"logo_url"`
 	Nickname    *string              `json:"nickname"`
 	SocialName  *string              `json:"social_name"`
 	SocialKey   *string              `json:"social_key"`

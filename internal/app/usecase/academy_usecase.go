@@ -18,7 +18,7 @@ type AcademyUsecase interface {
 	Create(ctx context.Context, academy *request.AcademyCreateBody, userId int) error
 	Put(ctx context.Context, req *request.AcademyUpdateBody, id, userId int) (isUpdated bool, err error)
 	Patch(ctx context.Context, req *request.AcademyPatchBody, id, userId int) (err error)
-	Get(ctx context.Context, userId int) (*ent.Academy, error)
+	Get(ctx context.Context, id int) (*ent.Academy, error)
 	List(ctx context.Context, a *request.AcademyListQueries) ([]*ent.Academy, *utils.PagenationInfo, error)
 }
 
@@ -81,7 +81,7 @@ func (u *academyUseCase) Create(ctx context.Context, req *request.AcademyCreateB
 			yoga = append(yoga, &ent.Yoga{ID: v})
 		}
 	}
-	// integer to alphabet == Itoa
+
 	sigunguId, err := u.areaRepo.GetSigunguIdByAdmCode(ctx, strconv.Itoa(info.SigunguAdmCode))
 	if err != nil {
 		return
@@ -103,7 +103,6 @@ func (u *academyUseCase) Create(ctx context.Context, req *request.AcademyCreateB
 
 	// Do
 	err = u.academyRepo.Create(ctx, data)
-
 	if err != nil {
 		if ent.IsConstraintError(err) {
 			err = foreignKeyConstraintError(err)
@@ -111,6 +110,11 @@ func (u *academyUseCase) Create(ctx context.Context, req *request.AcademyCreateB
 		}
 		return
 	}
+	err = u.userRepo.UpdateLogoUrl(ctx, &ent.User{
+		ID:      userId,
+		LogoUrl: &info.LogoUrl,
+	})
+
 	return
 }
 
@@ -134,10 +138,24 @@ func (u *academyUseCase) Put(ctx context.Context, req *request.AcademyUpdateBody
 			yoga = append(yoga, &ent.Yoga{ID: v})
 		}
 	}
+
+	var sigunguId int
+	if info.SigunguID != 0 {
+		sigunguId = info.SigunguID
+	} else if info.SigunguID != 0 && info.SigunguAdmCode != 0 {
+		sigunguId = info.SigunguID
+	} else {
+		sigunguId, err = u.areaRepo.GetSigunguIdByAdmCode(ctx, strconv.Itoa(info.SigunguAdmCode))
+		if err != nil {
+			return
+		}
+	}
+
 	data := &ent.Academy{
 		ID:            id,
 		UserID:        userId,
-		SigunguID:     info.SigunguID,
+		LogoUrl:       info.LogoUrl,
+		SigunguID:     sigunguId,
 		Name:          info.Name,
 		CallNumber:    info.CallNumber,
 		AddressRoad:   info.AddressRoad,
@@ -184,8 +202,8 @@ func (u *academyUseCase) Patch(ctx context.Context, req *request.AcademyPatchBod
 	return
 }
 
-func (u *academyUseCase) Get(ctx context.Context, userId int) (result *ent.Academy, err error) {
-	result, err = u.academyRepo.Get(ctx, userId)
+func (u *academyUseCase) Get(ctx context.Context, id int) (result *ent.Academy, err error) {
+	result, err = u.academyRepo.Get(ctx, id)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			err = ex.NewNotFoundError(ex.ErrAcademyNotFound, nil)
@@ -222,5 +240,18 @@ func (u *academyUseCase) List(ctx context.Context, a *request.AcademyListQueries
 	}
 
 	paginationInfo = pginationModule.GetInfo(len(result))
+	return
+}
+
+func (u *academyUseCase) Me(ctx context.Context, id int) (result *ent.Academy, err error) {
+	result, err = u.academyRepo.Get(ctx, id)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			err = ex.NewNotFoundError(ex.ErrAcademyNotFound, nil)
+			return
+		}
+		return
+	}
+
 	return
 }

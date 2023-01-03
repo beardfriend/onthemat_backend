@@ -38,6 +38,8 @@ func NewAcademyHandler(
 	g.Put("/:id", middleware.Auth, middleware.OnlyAcademy, handler.Update)
 	// 학원 일부 수정
 	g.Patch("/:id", middleware.Auth, middleware.OnlyAcademy, handler.Patch)
+	// 학원 프로필 조회
+	g.Get("/me", middleware.Auth, middleware.OnlyAcademy, handler.Me)
 	// 학원 리스트
 	g.Get("/list", handler.List)
 	// 학원 상세조회
@@ -134,6 +136,10 @@ func (h *academyHandler) Update(c *fiber.Ctx) error {
 	}
 	if err := h.Validator.ValidateStruct(reqBody); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(ex.NewInvalidInputError(err))
+	}
+
+	if reqBody.Info.SigunguAdmCode == 0 && reqBody.Info.SigunguID == 0 {
+		return c.Status(http.StatusBadRequest).JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
 	}
 
 	reqParam := new(request.AcademyUpdateParam)
@@ -329,5 +335,23 @@ func (h *academyHandler) List(c *fiber.Ctx) error {
 		Message:    "",
 		Result:     resp,
 		Pagination: pagination,
+	})
+}
+
+func (h *academyHandler) Me(c *fiber.Ctx) error {
+	ctx := c.Context()
+	academyId := ctx.UserValue("academy_id").(int)
+
+	academy, err := h.academyUsecase.Get(ctx, academyId)
+	if err != nil {
+		return utils.NewError(c, err)
+	}
+
+	resp := response.NewAcademyDetailResponse(academy)
+
+	return c.Status(http.StatusOK).JSON(ex.ResponseWithData{
+		Code:    http.StatusOK,
+		Message: "",
+		Result:  resp,
 	})
 }

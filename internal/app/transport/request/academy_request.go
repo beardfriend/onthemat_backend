@@ -27,12 +27,13 @@ type AcademyUpdateBody struct {
 }
 
 type AcademyInfoForUpdate struct {
-	SigunguID     int     `json:"sigunguId" validate:"required"`
-	Name          string  `json:"name" validate:"required"`
-	LogoUrl       string  `json:"logoUrl" validate:"required,urlStartHttpHttps"`
-	CallNumber    string  `json:"callNumber"`
-	AddressRoad   string  `json:"addressRoad" validate:"required"`
-	AddressDetail *string `json:"addressDetail"`
+	SigunguID      int     `json:"sigunguId"`
+	SigunguAdmCode int     `json:"sigunguAdmCode"`
+	Name           string  `json:"name" validate:"required"`
+	LogoUrl        string  `json:"logoUrl" validate:"required,urlStartHttpHttps"`
+	CallNumber     string  `json:"callNumber"`
+	AddressRoad    string  `json:"addressRoad" validate:"required"`
+	AddressDetail  *string `json:"addressDetail"`
 }
 
 type AcademyUpdateParam struct {

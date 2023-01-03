@@ -10,10 +10,12 @@ import (
 type AcademyRepsonse struct {
 	ID             int                  `json:"id"`
 	Name           string               `json:"name"`
+	LogoUrl        string               `json:"logoUrl"`
 	CallNumber     string               `json:"callNumber"`
 	AddressRoad    string               `json:"addressRoad"`
 	AddressDetail  *string              `json:"addressDetail"`
 	AddressSigungu string               `json:"addressSigun"`
+	SigunguId      int                  `json:"sigunguId"`
 	Yoga           []yoga               `json:"yoga"`
 	CreatedAt      transport.TimeString `json:"createdAt"`
 	UpdatedAt      transport.TimeString `json:"updatedAt"`
@@ -49,10 +51,12 @@ func NewAcademyDetailResponse(m *ent.Academy) *AcademyRepsonse {
 	resp := &AcademyRepsonse{
 		ID:             m.ID,
 		Name:           m.Name,
+		LogoUrl:        m.LogoUrl,
 		CallNumber:     m.CallNumber,
 		AddressRoad:    m.AddressRoad,
 		AddressDetail:  m.AddressDetail,
 		AddressSigungu: m.Edges.AreaSigungu.Name,
+		SigunguId:      m.SigunguID,
 		CreatedAt:      m.CreatedAt,
 		UpdatedAt:      m.UpdatedAt,
 	}

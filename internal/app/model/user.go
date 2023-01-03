@@ -32,6 +32,11 @@ func (User) Fields() []ent.Field {
 			Unique().
 			Comment("이메일"),
 
+		field.String("logoUrl").
+			Optional().
+			Nillable().
+			Comment("로고 이미지 url"),
+
 		field.Bool("isEmailVerified").
 			Default(false).
 			Comment("이메일 인증 여부"),
