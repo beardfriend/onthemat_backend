@@ -6,6 +6,7 @@ import (
 
 	ex "onthemat/internal/app/common"
 	"onthemat/internal/app/delivery/middlewares"
+	"onthemat/internal/app/transport/request"
 	"onthemat/internal/app/transport/response"
 	"onthemat/internal/app/usecase"
 	"onthemat/internal/app/utils"
@@ -31,6 +32,7 @@ func NewUserHandler(
 	g := router.Group("/user")
 	// 유저 정보 조회
 	g.Get("/me", middleware.Auth, handler.GetMe)
+	g.Put("/:id", middleware.Auth, handler.Update)
 }
 
 // 유저 정보 조회
@@ -71,5 +73,36 @@ func (h *UserHandler) GetMe(c *fiber.Ctx) error {
 		Code:    200,
 		Message: "",
 		Result:  resp,
+	})
+}
+
+func (h *UserHandler) Update(c *fiber.Ctx) error {
+	ctx := c.Context()
+	param := new(request.UserUpdateParam)
+	if err := c.ParamsParser(param); err != nil {
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrParamsMissing, nil))
+	}
+
+	userId := c.Context().UserValue("user_id").(int)
+
+	if param.Id != userId {
+		return c.Status(http.StatusForbidden).JSON(ex.NewHttpError(ex.ErrOnlyOwnUser, nil))
+	}
+
+	body := new(request.UserUpdateBody)
+	if err := c.BodyParser(body); err != nil {
+		return c.Status(http.StatusBadRequest).
+			JSON(ex.NewHttpError(ex.ErrJsonMissing, nil))
+	}
+
+	err := h.UserUseCase.Update(ctx, body, userId)
+	if err != nil {
+		return utils.NewError(c, err)
+	}
+
+	return c.Status(http.StatusOK).JSON(ex.Response{
+		Code:    200,
+		Message: "",
 	})
 }
