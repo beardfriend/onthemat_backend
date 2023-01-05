@@ -1,5 +1,11 @@
 # onthemat_backend
 
+
+데모 (미완성)
+https://user-images.githubusercontent.com/97140962/210781527-ece2bf08-1c96-47fa-b04b-9a58e513239e.mov
+
+
+
 # 1. 개요
 
 ✔️ 서비스 : 요가 대강 매칭 서비스
@@ -21,6 +27,7 @@
 <div style="display:flex;">
   <img src="https://img.shields.io/badge/PostgreSQL-green?style=flat&logo=PostgreSQL&logoColor=4169E1"/>
   <img src="https://img.shields.io/badge/Redis-green?style=flat&logo=Redis&logoColor=DC382D"/>
+    <img src="https://img.shields.io/badge/Elastic-green?style=flat&logo=ElasticSearch&logoColor=005571"/>
 </div>
 <br>
 
