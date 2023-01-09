@@ -5,6 +5,16 @@
 
 https://user-images.githubusercontent.com/97140962/210781527-ece2bf08-1c96-47fa-b04b-9a58e513239e.mov
 
+주요 기술적 과제 
+
+- 확장 가능한 서버 아키텍처
+- 엘라스틱 서치를 활용하여 검색시스템 구축
+- RFC규격에 맞는 POST, PUT, DELETE, PATCH 구축
+- Mock 코드 자동생성, 유닛테스트 구축
+- jwt 토큰 인증, oauth
+- fiber, entGo (장점 : 코드제너레이팅을 통해, 컴파일 단계에서 에러를 잡을 수 있음) 학습 후 적용
+- 친절한 에러 메세지
+
 
 
 # 1. 개요
