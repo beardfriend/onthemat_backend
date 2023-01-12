@@ -42,13 +42,13 @@ https://user-images.githubusercontent.com/97140962/210781527-ece2bf08-1c96-47fa-
 </div>
 <br>
 
-fiber를 선택한 이유 : 압도적인 성능 때문입니다.
+fiber를 선택한 이유 : 성능
 
 ![image](https://user-images.githubusercontent.com/97140962/205558298-df3012cd-5f72-43a6-a158-1d987105198c.png)
 
-entGO를 선택한 이유 : generate된 인터페이스를 사용하기 떄문에 gORM에 비해 안정적이면서도 빠른 속도를 가져갈 수 있습니다. 
+entGO를 선택한 이유 : 컴파일 단계에서 에러를 잡을 수 있음. 
 
-postgres를 선택한 이유 fiber는 fasthttp기반으로 설계가 되어 있는데 fasthttp와 postgresql의 조합이 빠른 속도를 낸다고 알려져 있습니다.
+postgres를 선택한 이유 : fiber는 fasthttp기반으로 설계가 되어 있음, fasthttp와 postgresql의 조합이 빠른 속도를 냄.
 
 
 ## 1.2. 디렉토리 구조
@@ -154,69 +154,18 @@ RFC문서의 내용에 맞게 설계했습니다.
 > PATCH, which is used to apply partial modifications to a resource.
 
 
-PATCH는 사용자가 원하는 자원만 골라서    
-수정할 수 있습니다.
-
-PATCH를 한 번 만들어 놓는다면,  
-클라이언트 측에서 부분적으로 수정할 요소들이 계속 변해도  
-API를 수정하지 않아도 되는 장점이 있었습니다.  
-
-이는 Graphql과 닮았습니다.  
-Graphql은 조회할 때마저도 사용자가 원하는 자원을 가져올 수 있습니다.  
-서비스의 형태변경이 자주 필요하다면  
-꼭 Graphql을 사용해보려고 합니다. 
 
 ## 2.2. Repository
 
-### 2.2.1. 업데이트 로직 
-
-[업데이트 로직 예시 ](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/repository/teacher.go#L112)
-
-로직은 아래와 같습니다.
-
-1. 요청에 값이 존재하지 않으면 NULL 혹은 "", 0, false로 대체한다.
-2. 일대다 관계에서는
-   유저가 소유한 ID값과 요청값 ID를 비교하여
-	 각 상황에 맞게 생성, 업데이트, 삭제를 진행한다.
-3. 다대다 관계에서는
-   요청값 id로 모두 대체한다.
 
 
-
-### 2.2.2. Patch 로직
+[Put 로직 예시 ](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/repository/teacher.go#L112)
 
 [Patch로직 예시](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/repository/teacher.go#L292)
 
-로직은 아래와 같습니다.
-
-1. 요청정보가 NULL이 아닌 경우 해당 Field를 업데이트를 한다.
-2. 일대다 관계일 경우 요청 id가 존재하지 않으면 생성 존재하면 업데이트를 진행한다.
-
-
 [업데이트 가능한 컬럼 추출하는 코드](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/utils/repository.go#L52)
 
-요청받은 key가 데이터베이스에서 업데이트할 수 있는지 여부를 확인한 뒤,   
-key(컬럼이름)-value(요청값)을 배열에 담아 리턴합니다.
-
-### 2.2.3. List 로직
-
 [List로직 예시](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/repository/recruitment.go#L291)
-
-PostgreSQL에는 jsonb타입이 존재합니다.
-
-json에 있는 key를 불러오기 위해서는 
-`column ->> 'key'` 방식으로 코드를 작성해야 합니다.
-
-ent ORM에는 이러한 방식의 쿼리문을 작성할 수 있는 인터페이스가 존재하지 않습니다.
-
-제 프로젝트에서는  
-jsonb타입을 많이 사용하지 않고 있기 때문에,  
-다른 라이브러리를 찾아보기 보다는  
-entORM 인터페이스 내에서 해결하기로 했습니다.  
-
-`테이블 이름, Field이름을 변경해도 로직에 영향을 주지 않기` 중점으로  
-프로그램을 작성했습니다.
-
 
 
 ### 2.2.4. 테스트케이스
@@ -229,21 +178,17 @@ entORM 인터페이스 내에서 해결하기로 했습니다.
 1. 테스트 시작 시 로컬에서 도커 컨테이너에 DB를 생성
 2. 도커 컨테이너에 연결
 
-반복..
+...반복...
 
-3. 각기 다른 테스트 실행에 필요한 데이터 삽입
-4. 각각의 테스트 실행
+3. 테스트 실행에 필요한 데이터 삽입
+4. 테스트 실행
 5. 테스트한 데이터 모두 삭제
 
 ... 
 
-6. 도커 컨테이너 삭제 
 
-`BeforeTest` 함수에 
-실행에 필요한 데이터를 삽입하는 과정을 담았습니다.  
+6. 도커 컨테이너 삭제
 
-때문에 테스트케이스에서는 테스트할 함수들만 남아있어서  
-이해하기 쉬워졌습니다.  
 
 ## 2.3. Service
 
@@ -332,14 +277,10 @@ HTTP 400 BadReqeust
 
 [테스트케이스 예시](https://github.com/beardfriend/onthemat_backend/blob/main/internal/app/usecase/user_usecase_test.go#L28)
 
-Usecase에서는 repostiroy, service모듈이 사용됩니다.
-사용되는 모듈들은 테스트케이스를 통해 검증이 완료된 모듈입니다.
+Usecase에서는 repostiroy, service 모듈이 사용됩니다.
+repository, service 모듈들은 유닛테스트가 완료됐습니다.
 
-따라서 usecase에서는 테스트가 불필요합니다.
-
-mock을 사용하여 각 모듈의 리턴값을 원하는 값으로 정하여
-불필요한 과정들을 거치지 않아도 되게끔 하였습니다.
-
+mock을 사용하여 usecase에서만 작성된 로직만 테스트할 수 있도록 하였습니다.
 
 ## 2.4. handler
 
