@@ -9,8 +9,12 @@
     <img src="https://img.shields.io/badge/elastic-gray?style=flat&logo=ElasticSearch&logoColor=005571"/>
 </div>
 <br/>
-요가 채용서비스를 위한 API 서버 (진행중)
+요가 채용서비스를 위한 API 서버 
+
+
 ## 서버 아키텍처
+
+![onthemat](https://user-images.githubusercontent.com/97140962/216040777-6e06651a-2ae8-4b61-ada7-4c7b9f14ab7d.png)
 
 ## 특징
 
@@ -34,9 +38,13 @@ API 명세서 : http://13.125.48.238:3000/
 ## 로컬
 
 **환경**
-go 1.19.3
-docker
-redis  
+
+go 1.19.3  
+
+docker  
+
+redis    
+
 postgresSQL
 
 ```bash
