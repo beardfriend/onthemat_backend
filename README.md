@@ -1,4 +1,4 @@
-# Ontheamt API Server
+# Onthemat API Server
 
 <div style="display:flex;">
    <img src="https://img.shields.io/badge/Go-gray?style=flat&logo=Go&logoColor=00ADD8"/>
